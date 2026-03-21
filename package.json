@@ -12,6 +12,7 @@
         "@tailwindcss/postcss": "^4.2.2",
         "next": "latest",
         "next-auth": "latest",
+        "nodemailer": "^7.0.13",
         "react": "latest",
         "react-dom": "latest"
     },

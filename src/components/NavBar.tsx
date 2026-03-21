@@ -8,39 +8,29 @@ export default function NavBar() {
     const { data: session } = useSession()
 
     return (
-        <nav className="w-full bg-transparent py-4 px-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-                <Link href="/">
-                    <img src="/images/logo.png" alt="Raider Forge" className="h-10 w-auto" />
-                </Link>
-                <div className="hidden md:flex gap-4 text-sm text-gray-200">
-                    <Link href="/">Home</Link>
-                    <Link href="/map">Map</Link>
-                    <Link href="/guides">Guides</Link>
-                    <Link href="/builds">Builds</Link>
-                    <Link href="/blueprints">Blueprints</Link>
-                    <Link href="/profile">Profile</Link>
-                    <Link href="/marketplace">Marketplace</Link>
-                </div>
+        <nav className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-2">
+                <span className="h-8 w-8 rounded-md bg-gradient-to-tr from-rf-red via-rf-orange to-rf-yellow" />
+                <span className="text-sm font-semibold tracking-[0.2em] text-rf-text uppercase">
+                    RaiderForge
+                </span>
             </div>
 
-            <div className="hidden md:block">
+            <div className="flex items-center gap-3">
+                <button className="hidden text-xs text-rf-textSoft hover:text-white sm:inline-flex">
+                    Docs
+                </button>
                 {session?.user ? (
                     <div className="flex items-center gap-3">
                         {session.user.image && <img src={session.user.image as string} alt="avatar" className="h-8 w-8 rounded-full" />}
                         <div className="text-sm">{session.user.name}</div>
-                        <button onClick={() => signOut()} className="px-3 py-1 bg-gray-700 text-white rounded-md">Sign Out</button>
+                        <button onClick={() => signOut()} className="px-3 py-1 bg-rf-bgSoft text-rf-text rounded-md hover:bg-rf-border">Sign Out</button>
                     </div>
                 ) : (
-                    <div className="flex gap-2">
-                        <button onClick={() => signIn('google')} className="px-3 py-1 bg-rf-red text-black rounded-md">Sign in with Google</button>
-                        <button onClick={() => signIn('discord')} className="px-3 py-1 bg-gray-700 text-white rounded-md">Discord</button>
-                    </div>
+                    <button onClick={() => signIn('discord')} className="rounded-md border border-rf-red/60 bg-black/60 px-4 py-2 text-xs font-medium text-white shadow-sm shadow-rf-red/40 transition hover:bg-rf-red hover:border-rf-red">
+                        Sign in
+                    </button>
                 )}
-            </div>
-
-            <div className="md:hidden">
-                <button aria-label="Open menu" className="text-gray-200">☰</button>
             </div>
         </nav>
     )

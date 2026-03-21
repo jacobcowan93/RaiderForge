@@ -1,14 +1,14 @@
 @theme {
-    --color-rf-bg-900: #020617;
-    --color-rf-bg-800: #050816;
-    --color-rf-bg-700: #0f172a;
-    --color-rf-red: #e11d48;
-    --color-rf-red-dark: #991b1b;
-    --color-rf-red-light: #f87171;
-    --color-rf-orange: #ff8a29;
-    --color-rf-green: #10b981;
-    --color-rf-yellow: #f59e0b;
-    --color-white: #ffffff;
+    --color-rf-bg: #05060a;
+    --color-rf-bgSoft: #0b0f19;
+    --color-rf-border: #232734;
+    --color-rf-text: #f9fafb;
+    --color-rf-textSoft: #9ca3af;
+    --color-rf-red: #ff4040;
+    --color-rf-redSoft: #b91c1c;
+    --color-rf-orange: #f97316;
+    --color-rf-blue: #38bdf8;
+    --color-rf-yellow: #facc15;
 }
 
 ;
@@ -24,12 +24,12 @@ body,
 }
 
 body {
-    @apply bg-rf-bg-900 text-white;
+    @apply bg-rf-bg text-rf-text;
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
 .rf-card {
-    background: rgba(10, 11, 15, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.04);
+    background: rgba(11, 15, 25, 0.6);
+    border: 1px solid rgba(35, 39, 52, 0.5);
     backdrop-filter: blur(6px);
 }

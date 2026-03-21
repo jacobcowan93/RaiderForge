@@ -1,6 +1,7 @@
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import DiscordProvider from "next-auth/providers/discord"
+import EmailProvider from "next-auth/providers/email"
 
 // NextAuth route for App Router (route handler)
 // This file runs on the server only. Client secrets are read from process.env.
@@ -13,6 +14,17 @@ export const handler = NextAuth({
         DiscordProvider({
             clientId: process.env.DISCORD_CLIENT_ID || '',
             clientSecret: process.env.DISCORD_CLIENT_SECRET || ''
+        }),
+        EmailProvider({
+            server: {
+                host: process.env.EMAIL_SERVER_HOST,
+                port: Number(process.env.EMAIL_SERVER_PORT),
+                auth: {
+                    user: process.env.EMAIL_SERVER_USER,
+                    pass: process.env.EMAIL_SERVER_PASSWORD,
+                },
+            },
+            from: process.env.EMAIL_FROM,
         })
     ],
     secret: process.env.NEXTAUTH_SECRET,
