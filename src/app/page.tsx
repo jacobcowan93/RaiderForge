@@ -207,15 +207,8 @@ export default function Home() {
         </section>
 
         {/* ── Feature Grid ──────────────────────────────────────────────────── */}
-        <section id="features" className="py-24 px-6 bg-rf-bgSoft">
+        <section id="features" className="py-16 px-6 bg-rf-bgSoft">
           <div className="mx-auto max-w-7xl">
-            <div className="text-center mb-16">
-              <span className="text-xs uppercase tracking-widest text-rf-red font-semibold">Arsenal</span>
-              <h2 className="mt-3 text-3xl font-bold text-white">Command Your Loadout</h2>
-              <p className="mt-4 text-rf-textSoft max-w-xl mx-auto">
-                Every tool you need to prepare, deploy, and dominate in ARC Raiders.
-              </p>
-            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {features.map(({ title, desc, href, accent, icon }) => {
