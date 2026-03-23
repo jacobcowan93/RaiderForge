@@ -40,9 +40,9 @@ export default function NavBar() {
     }, [])
 
     return (
-        <nav className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+        <nav className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 border-b border-rf-red/40 ${
             scrolled
-                ? 'bg-rf-bg/95 backdrop-blur-md border-b border-rf-border shadow-lg shadow-black/50'
+                ? 'bg-rf-bg/95 backdrop-blur-md shadow-lg shadow-black/50'
                 : 'bg-gradient-to-b from-black/75 via-black/30 to-transparent'
         }`}>
             <div className="flex items-center justify-between px-6 py-3 max-w-7xl mx-auto">

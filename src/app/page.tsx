@@ -172,7 +172,7 @@ export default function Home() {
             <source src="/images/ARC_Home.mp4" type="video/mp4" />
           </video>
           {/* Gradient: dark at top for nav clarity, mid-dark for text, rf-bg at bottom */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/95 via-black/60 to-rf-bg" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/15 to-rf-bg" />
           {/* Subtle red atmospheric glow at bottom */}
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-rf-red/8 to-transparent pointer-events-none" />
 
