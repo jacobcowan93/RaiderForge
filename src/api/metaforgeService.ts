@@ -12,6 +12,7 @@
  */
 
 import type { MfEvent } from '../lib/events/conditions'
+import type { MfQuestRaw } from '../types/quests'
 
 // ── Base URLs ────────────────────────────────────────────────────────────────
 const ARC_BASE = 'https://metaforge.app/api/arc-raiders'
@@ -157,11 +158,23 @@ export async function fetchMfArcs(params?: Record<string, string>): Promise<MfAr
   }
 }
 
-/** Fetch quests with required items and rewards. TTL: 15 min. */
-export async function fetchMfQuests(): Promise<MfQuest[]> {
+/**
+ * Fetch quests with required items and rewards. TTL: 15 min.
+ *
+ * MetaForge wraps the response: { data: MfQuestRaw[], pagination: {...} }
+ * We extract `.data` here; falls back to treating the response as a plain array
+ * in case the shape changes.
+ */
+export async function fetchMfQuests(): Promise<MfQuestRaw[]> {
   try {
-    const data = await mfFetch<unknown>(`${ARC_BASE}/quests`, TTL_SEMI_STATIC)
-    return Array.isArray(data) ? (data as MfQuest[]) : []
+    const raw = await mfFetch<unknown>(`${ARC_BASE}/quests`, TTL_SEMI_STATIC)
+    // Unwrap { data: [...], pagination: {...} } envelope
+    if (raw && typeof raw === 'object' && 'data' in raw && Array.isArray((raw as Record<string, unknown>).data)) {
+      return (raw as { data: MfQuestRaw[] }).data
+    }
+    // Plain array fallback (future-proofing)
+    if (Array.isArray(raw)) return raw as MfQuestRaw[]
+    return []
   } catch (err) {
     console.error('[MetaForge] Failed to fetch quests:', err)
     return []

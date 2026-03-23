@@ -80,3 +80,35 @@ body {
 .leaflet-container:focus {
     outline: none;
 }
+
+/* ── Quest marker popup — dark RaiderForge theme ───────────────────────────── */
+/* Override Leaflet's default white popup to match the dark UI */
+.rf-map-popup .leaflet-popup-content-wrapper {
+    background: rgba(11, 15, 25, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.5);
+    color: #f9fafb;
+}
+
+.rf-map-popup .leaflet-popup-tip-container .leaflet-popup-tip {
+    background: rgba(11, 15, 25, 0.97);
+    box-shadow: none;
+}
+
+.rf-map-popup .leaflet-popup-content {
+    margin: 12px 14px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #f9fafb;
+}
+
+.rf-map-popup .leaflet-popup-close-button {
+    color: rgba(255, 255, 255, 0.3) !important;
+    font-size: 16px !important;
+    top: 6px !important;
+    right: 8px !important;
+}
+.rf-map-popup .leaflet-popup-close-button:hover {
+    color: rgba(255, 255, 255, 0.7) !important;
+}

@@ -12,11 +12,18 @@
  * The fallback ensures continuity for users even if the ARDB tile CDN is unavailable.
  * Floor switching (Stella Montis) drives both the tile layer and the fallback image
  * via the shared activeFloor index.
+ *
+ * Quest markers:
+ *   mapQuests (server-fetched, pre-filtered to this map) are passed down to MapTileViewer.
+ *   MapQuestFilter renders above the map and drives activeTraders state here.
+ *   Only quests from active traders (default: all) are forwarded to MapTileViewer.
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import type { MapMeta } from '../data/maps'
+import type { MergedQuest } from '../types/quests'
+import MapQuestFilter from './MapQuestFilter'
 
 // Dynamic import with SSR disabled: Leaflet uses window/document at runtime.
 // next/dynamic with ssr:false ensures MapTileViewer only runs in the browser.
@@ -25,18 +32,46 @@ const MapTileViewer = dynamic(() => import('./MapTileViewer'), {
   loading: () => <TileLoadingState />,
 })
 
-type Props = { map: MapMeta }
+interface Props {
+  map: MapMeta
+  /** Quests for this specific map, merged from MetaForge + ARDB. Empty if fetch failed. */
+  mapQuests?: MergedQuest[]
+}
 
-export default function MapImageDisplay({ map }: Props) {
+export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
   // Shared floor index for both tile layers and static fallback images
   const [activeFloor, setActiveFloor] = useState(0)
   // Set to true when MapTileViewer reports tile errors — triggers static image fallback
   const [tileFallback, setTileFallback] = useState(false)
 
+  // Active trader IDs — initialised with ALL traders from the quest list (= show all)
+  const [activeTraders, setActiveTraders] = useState<Set<string>>(
+    () => new Set(mapQuests.map(q => q.traderId)),
+  )
+
   const handleTileFallback = useCallback(() => setTileFallback(true), [])
 
-  const hasTiles = !!map.tileConfig && !tileFallback
+  const toggleTrader = useCallback((traderId: string) => {
+    setActiveTraders(prev => {
+      const next = new Set(prev)
+      if (next.has(traderId)) {
+        next.delete(traderId)
+      } else {
+        next.add(traderId)
+      }
+      return next
+    })
+  }, [])
+
+  // Quests filtered by active traders — passed to MapTileViewer for marker rendering
+  const filteredQuests = useMemo(
+    () => mapQuests.filter(q => activeTraders.has(q.traderId)),
+    [mapQuests, activeTraders],
+  )
+
+  const hasTiles    = !!map.tileConfig && !tileFallback
   const isMultiFloor = map.mapType === 'multi-floor' && Array.isArray(map.floors) && map.floors.length > 0
+  const hasQuests   = mapQuests.length > 0
 
   // Static fallback image path — tracks active floor for multi-floor maps
   const fallbackSrc = isMultiFloor
@@ -69,6 +104,15 @@ export default function MapImageDisplay({ map }: Props) {
         </div>
       )}
 
+      {/* Quest filter — only shown when tiles are active and there are quests */}
+      {hasTiles && hasQuests && (
+        <MapQuestFilter
+          quests={mapQuests}
+          activeTraders={activeTraders}
+          onToggle={toggleTrader}
+        />
+      )}
+
       {/* Map surface */}
       <div className="relative bg-black/40">
         {hasTiles ? (
@@ -78,6 +122,7 @@ export default function MapImageDisplay({ map }: Props) {
             tileConfig={map.tileConfig!}
             activeLayerIndex={activeFloor}
             onFallback={handleTileFallback}
+            quests={filteredQuests}
           />
         ) : (
           // Static fallback: original map images, maintained until tiles are verified
@@ -88,8 +133,7 @@ export default function MapImageDisplay({ map }: Props) {
           />
         )}
 
-        {/* Phase 1B: quest markers will replace this badge once ardb.app /quests data is wired */}
-        <MapStatusBadge hasTiles={hasTiles} tileFallback={tileFallback} />
+        <MapStatusBadge hasTiles={hasTiles} tileFallback={tileFallback} questCount={filteredQuests.filter(q => q.position !== null).length} />
       </div>
     </div>
   )
@@ -113,9 +157,16 @@ function TileLoadingState() {
   )
 }
 
-function MapStatusBadge({ hasTiles, tileFallback }: { hasTiles: boolean; tileFallback: boolean }) {
+function MapStatusBadge({
+  hasTiles,
+  tileFallback,
+  questCount,
+}: {
+  hasTiles: boolean
+  tileFallback: boolean
+  questCount: number
+}) {
   if (tileFallback) {
-    // Tile loading failed — show the reason
     return (
       <div className="absolute bottom-3 right-3">
         <span className="inline-flex items-center gap-1 text-[9px] text-white/20 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 border border-white/5">
@@ -129,7 +180,6 @@ function MapStatusBadge({ hasTiles, tileFallback }: { hasTiles: boolean; tileFal
   }
 
   if (hasTiles) {
-    // Tile viewer active — markers are the next phase
     return (
       <div className="absolute bottom-3 right-3">
         <span className="inline-flex items-center gap-1 text-[9px] text-white/20 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 border border-white/5">
@@ -137,7 +187,7 @@ function MapStatusBadge({ hasTiles, tileFallback }: { hasTiles: boolean; tileFal
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
           </svg>
-          Quest markers — coming in Phase 1B
+          {questCount > 0 ? `${questCount} quest marker${questCount !== 1 ? 's' : ''}` : 'No quest markers'}
         </span>
       </div>
     )

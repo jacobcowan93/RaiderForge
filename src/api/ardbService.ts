@@ -14,6 +14,8 @@
  * Schema may change without warning — cache and handle errors defensively.
  */
 
+import type { ArdbQuestRaw } from '../types/quests'
+
 export const ARDB_BASE = 'https://ardb.app/api'
 export const ARDB_STATIC = 'https://ardb.app/static'
 export const ARDB_ATTRIBUTION = 'Data provided by ardb.app'
@@ -93,11 +95,15 @@ export async function fetchArdbItem(id: string): Promise<ArdbItem | null> {
   }
 }
 
-/** Fetch all quests (basic data). */
-export async function fetchArdbQuests(): Promise<ArdbQuest[]> {
+/**
+ * Fetch all quests with full detail (maps[], steps[], trader, requiredItems).
+ * Returns ArdbQuestRaw[] which is the typed shape verified against the live API.
+ * ARDB returns a plain array (no wrapper envelope).
+ */
+export async function fetchArdbQuests(): Promise<ArdbQuestRaw[]> {
   try {
     const data = await ardbFetch<unknown>('/quests')
-    return Array.isArray(data) ? (data as ArdbQuest[]) : []
+    return Array.isArray(data) ? (data as ArdbQuestRaw[]) : []
   } catch (err) {
     console.error('[ARDB] Failed to fetch quests:', err)
     return []

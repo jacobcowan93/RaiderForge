@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { MAPS, getMapThumbnail } from '../../../data/maps'
 import { fetchMfEventsSchedule } from '../../../api/metaforgeService'
+import { fetchMfQuests } from '../../../api/metaforgeService'
+import { fetchArdbQuests } from '../../../api/ardbService'
+import { mergeQuests, filterQuestsByMap } from '../../../lib/quests/questUtils'
 import { getActiveConditionsForMap } from '../../../lib/events/conditions'
 import { getEventStyle, isMajorEvent } from '../../../lib/events/eventsConfig'
 import MapImageDisplay from '../../../components/MapImageDisplay'
@@ -20,18 +23,31 @@ export default async function MapDetailPage({ params }: Props) {
     const map = MAPS.find(m => m.id === mapId)
     if (!map) notFound()
 
-    let events: Awaited<ReturnType<typeof fetchMfEventsSchedule>> = []
-    try {
-        events = await fetchMfEventsSchedule()
-    } catch {
-        // Fail silently — page renders with rotation-fallback conditions
-    }
+    // ── Parallel data fetches ─────────────────────────────────────────────────
+    // Events + quests fetched concurrently; both fail gracefully.
+    const [events, mfQuests, ardbQuests] = await Promise.all([
+        fetchMfEventsSchedule().catch(() => []),
+        fetchMfQuests().catch(() => []),
+        fetchArdbQuests().catch(() => []),
+    ])
+
+    // Merge MetaForge position data with ARDB map/step/trader data,
+    // then filter to quests that appear on this specific map.
+    const allMergedQuests = mergeQuests(mfQuests, ardbQuests)
+    const mapQuests = filterQuestsByMap(allMergedQuests, map.id)
 
     const now = new Date()
     const conditions = getActiveConditionsForMap(map.id, now, events)
     const thumb = getMapThumbnail(map)
     const risk = riskStyle[map.risk]
     const hasEvents = conditions.activeConditions.length > 0
+
+    // Quest stats for the sidebar
+    const questsWithPosition = mapQuests.filter(q => q.position !== null)
+    const traderBreakdown = mapQuests.reduce<Record<string, number>>((acc, q) => {
+        acc[q.traderName] = (acc[q.traderName] ?? 0) + 1
+        return acc
+    }, {})
 
     return (
         <div className="xl:pr-[300px]">
@@ -111,7 +127,8 @@ export default async function MapDetailPage({ params }: Props) {
                                 </div>
                                 <span className="text-[10px] text-white/20">{map.displayName}</span>
                             </div>
-                            <MapImageDisplay map={map} />
+                            {/* Pass server-fetched quests into the client map component */}
+                            <MapImageDisplay map={map} mapQuests={mapQuests} />
                         </div>
 
                         {/* Zone overview */}
@@ -217,28 +234,50 @@ export default async function MapDetailPage({ params }: Props) {
                             </div>
                         </div>
 
-                        {/* Tactical Markers status */}
-                        <div className="rf-card rounded-2xl p-4 border-dashed">
+                        {/* Quest Markers */}
+                        <div className="rf-card rounded-2xl p-4">
                             <div className="flex items-center justify-between mb-3">
-                                <span className="text-xs uppercase tracking-widest text-white/35 font-semibold">Tactical Markers</span>
-                                <span className="text-[9px] font-bold uppercase tracking-wider border border-rf-yellow/25 bg-rf-yellow/8 text-rf-yellow/70 rounded-full px-2 py-0.5">
-                                    Unavailable
-                                </span>
+                                <span className="text-xs uppercase tracking-widest text-white/35 font-semibold">Quest Markers</span>
+                                {mapQuests.length > 0 ? (
+                                    <span className="text-[9px] font-bold uppercase tracking-wider border border-rf-blue/25 bg-rf-blue/8 text-rf-blue/70 rounded-full px-2 py-0.5">
+                                        {mapQuests.length} quests
+                                    </span>
+                                ) : (
+                                    <span className="text-[9px] font-bold uppercase tracking-wider border border-white/10 bg-white/5 text-white/30 rounded-full px-2 py-0.5">
+                                        None
+                                    </span>
+                                )}
                             </div>
-                            <p className="text-[11px] text-white/25 leading-relaxed">
-                                MetaForge <code className="text-white/20 font-mono">/game-map-data</code> is returning errors. POI markers, loot spawns, and ARC patrol routes will auto-populate when the API recovers.
-                            </p>
-                            <a
-                                href="https://metaforge.app/arc-raiders"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mt-3 inline-flex items-center gap-1 text-[10px] text-white/25 hover:text-white/50 transition-colors"
-                            >
-                                MetaForge status
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-2.5 h-2.5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                                </svg>
-                            </a>
+
+                            {mapQuests.length > 0 ? (
+                                <>
+                                    {/* Trader breakdown */}
+                                    <div className="space-y-2">
+                                        {Object.entries(traderBreakdown).map(([traderName, count]) => (
+                                            <div key={traderName} className="flex items-center justify-between">
+                                                <span className="text-xs text-white/45">{traderName}</span>
+                                                <span className="text-[11px] font-semibold text-white/55">{count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Marker coverage note */}
+                                    {questsWithPosition.length < mapQuests.length && (
+                                        <p className="text-[10px] text-white/20 mt-3 pt-3 border-t border-white/5 leading-relaxed">
+                                            {questsWithPosition.length} of {mapQuests.length} quests have map positions.
+                                            Remaining quests are tracked by MetaForge but not yet positioned.
+                                        </p>
+                                    )}
+
+                                    <p className="text-[10px] text-white/15 mt-2">
+                                        via MetaForge &amp; ardb.app
+                                    </p>
+                                </>
+                            ) : (
+                                <p className="text-[11px] text-white/25 leading-relaxed">
+                                    No quest data available for this map. Check back after the next MetaForge sync.
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
