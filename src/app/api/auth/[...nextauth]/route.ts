@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import type { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import DiscordProvider from "next-auth/providers/discord"
+import CredentialsProvider from "next-auth/providers/credentials"
 
 const providers: NextAuthOptions["providers"] = [
     GoogleProvider({
@@ -11,6 +12,21 @@ const providers: NextAuthOptions["providers"] = [
     DiscordProvider({
         clientId: process.env.DISCORD_CLIENT_ID || "",
         clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
+    }),
+    // Credentials provider — UI-ready, backend not yet wired.
+    // authorize() always returns null (controlled failure) until a real
+    // auth backend (email magic-link, OTP, etc.) is implemented.
+    CredentialsProvider({
+        id: "credentials",
+        name: "Email or Phone",
+        credentials: {
+            identifier: { label: "Email or phone", type: "text" },
+        },
+        async authorize() {
+            // TODO: implement real verification (magic link / OTP / password).
+            // Returning null tells NextAuth the credentials are invalid.
+            return null
+        },
     }),
 ]
 

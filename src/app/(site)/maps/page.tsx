@@ -34,8 +34,9 @@ export default async function MapsPage() {
                     </p>
                 </div>
 
-                {/* Map grid — 3 col on lg, 2 col on md, 1 on sm */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {/* Map grid — flex-wrap with justify-center so an incomplete last row
+                    (2 of 3 cards) stays horizontally centered rather than left-aligned */}
+                <div className="flex flex-wrap justify-center gap-5">
                     {MAPS.map(map => {
                         const thumb = getMapThumbnail(map)
                         const conditions = getActiveConditionsForMap(map.id, now, events)
@@ -46,7 +47,7 @@ export default async function MapsPage() {
                             <Link
                                 key={map.id}
                                 href={`/maps/${map.id}`}
-                                className="group flex flex-col rf-card rounded-2xl overflow-hidden hover:border-white/15 hover:shadow-xl hover:shadow-black/60 transition-all duration-300 hover:-translate-y-0.5"
+                                className="group flex flex-col rf-card rounded-2xl overflow-hidden hover:border-white/15 hover:shadow-xl hover:shadow-black/60 transition-all duration-300 hover:-translate-y-0.5 w-full md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)]"
                             >
                                 {/* Thumbnail */}
                                 <div className="relative h-52 overflow-hidden bg-rf-bgSoft shrink-0">
