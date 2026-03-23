@@ -30,7 +30,7 @@ async function EventStatusLine() {
   if (activeRows.length === 0) return null
 
   return (
-    <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left">
+    <div className="mt-6 rounded-xl border border-[rgba(255,215,0,0.25)] bg-[rgba(255,215,0,0.08)] backdrop-blur-md px-4 py-3 text-left" style={{ boxShadow: '0 0 20px rgba(255,215,0,0.15)' }}>
       <div className="flex items-center gap-2 mb-2">
         <span className="h-1.5 w-1.5 rounded-full bg-rf-red animate-pulse" />
         <span className="text-[10px] uppercase tracking-widest font-semibold text-rf-red">
