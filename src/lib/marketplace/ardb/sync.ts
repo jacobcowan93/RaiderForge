@@ -14,6 +14,10 @@ export type ArdbCatalogSyncOptions = {
     concurrency?: number
 }
 
+/**
+ * Fetches ARDB, normalizes items, then persists via replaceCatalogItems.
+ * In production, persistence is in-memory only (no disk); locally, JSON file.
+ */
 export async function syncMarketplaceCatalogFromArdb(
     opts: ArdbCatalogSyncOptions = {}
 ): Promise<{ count: number; syncedAt: string }> {

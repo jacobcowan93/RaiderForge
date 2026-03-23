@@ -11,6 +11,13 @@ export type MarketplaceCatalogFileV1 = {
     itemsById: Record<string, MarketplaceCatalogItem>
 }
 
+function useMemoryOnly(): boolean {
+    return process.env.NODE_ENV === 'production'
+}
+
+/** Production (e.g. Vercel): last sync result per instance; no disk I/O. */
+let memoryCatalog: MarketplaceCatalogFileV1 | null = null
+
 export function getMarketplaceCatalogStorePath(): string {
     const override = process.env.MARKETPLACE_CATALOG_PATH
     if (override && override.trim() !== '') return override
@@ -18,6 +25,9 @@ export function getMarketplaceCatalogStorePath(): string {
 }
 
 export async function readCatalogStore(): Promise<MarketplaceCatalogFileV1 | null> {
+    if (useMemoryOnly()) {
+        return memoryCatalog
+    }
     const p = getMarketplaceCatalogStorePath()
     try {
         const raw = await fs.readFile(p, 'utf8')
@@ -34,6 +44,10 @@ export async function readCatalogStore(): Promise<MarketplaceCatalogFileV1 | nul
 }
 
 export async function writeCatalogStore(data: MarketplaceCatalogFileV1): Promise<void> {
+    if (useMemoryOnly()) {
+        memoryCatalog = data
+        return
+    }
     const p = getMarketplaceCatalogStorePath()
     await fs.mkdir(path.dirname(p), { recursive: true })
     await fs.writeFile(p, `${JSON.stringify(data, null, 2)}\n`, 'utf8')
