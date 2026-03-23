@@ -52,40 +52,106 @@ export default function QuestDetailPanel({ quest, onClose }: Props) {
       onClick={e => e.stopPropagation()}
     >
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-start gap-2.5 px-4 pt-4 pb-3 border-b border-white/[0.06] flex-shrink-0">
-
-        {/* Trader icon */}
-        {quest.traderIcon ? (
-          // eslint-disable-next-line @next/next/no-img-element
+      {/* ── Quest art hero ──────────────────────────────────────────────────── */}
+      {quest.image && (
+        <div className="relative h-28 w-full flex-shrink-0 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={quest.traderIcon}
-            alt={quest.traderName}
-            className="w-7 h-7 rounded-full border border-white/15 flex-shrink-0 object-cover mt-0.5"
+            src={quest.image}
+            alt={quest.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
           />
-        ) : (
-          <div className="w-7 h-7 rounded-full bg-white/8 border border-white/10 flex-shrink-0" />
-        )}
+          {/* Bottom fade so header text sits on top cleanly */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
-        {/* Quest name + trader */}
-        <div className="min-w-0 flex-1">
-          <p className="text-[9px] uppercase tracking-widest text-white/30 leading-none mb-1">
-            {quest.traderName}
-          </p>
-          <h3 className="text-[13px] font-bold text-white leading-snug">{quest.name}</h3>
+          {/* Close button — float top-right over the image */}
+          <button
+            onClick={onClose}
+            aria-label="Close quest panel"
+            className="absolute top-2 right-2 flex-shrink-0 text-white/50 hover:text-white/90 transition-colors bg-black/40 rounded-full p-1"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Quest name + trader overlaid at bottom of image */}
+          <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 flex items-end gap-2.5">
+            {quest.traderIcon ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={quest.traderIcon}
+                alt={quest.traderName}
+                className="w-7 h-7 rounded-full border border-white/20 flex-shrink-0 object-cover"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-white/8 border border-white/10 flex-shrink-0" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] uppercase tracking-widest text-white/45 leading-none mb-0.5">
+                {quest.traderName}
+              </p>
+              <h3 className="text-[13px] font-bold text-white leading-snug truncate">{quest.name}</h3>
+            </div>
+            {/* XP badge */}
+            {quest.xp > 0 && (
+              <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-wider bg-rf-yellow/15 text-rf-yellow border border-rf-yellow/25 rounded-full px-2 py-0.5">
+                {quest.xp.toLocaleString()} XP
+              </span>
+            )}
+          </div>
         </div>
+      )}
 
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          aria-label="Close quest panel"
-          className="flex-shrink-0 text-white/25 hover:text-white/65 transition-colors mt-0.5"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+      {/* ── Header (no-art fallback) ─────────────────────────────────────────── */}
+      {!quest.image && (
+        <div className="flex items-start gap-2.5 px-4 pt-4 pb-3 border-b border-white/[0.06] flex-shrink-0">
+
+          {/* Trader icon */}
+          {quest.traderIcon ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={quest.traderIcon}
+              alt={quest.traderName}
+              className="w-7 h-7 rounded-full border border-white/15 flex-shrink-0 object-cover mt-0.5"
+            />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-white/8 border border-white/10 flex-shrink-0" />
+          )}
+
+          {/* Quest name + trader */}
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] uppercase tracking-widest text-white/30 leading-none mb-1">
+              {quest.traderName}
+            </p>
+            <h3 className="text-[13px] font-bold text-white leading-snug">{quest.name}</h3>
+          </div>
+
+          {/* XP badge */}
+          {quest.xp > 0 && (
+            <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-wider bg-rf-yellow/15 text-rf-yellow border border-rf-yellow/25 rounded-full px-2 py-0.5 mt-0.5">
+              {quest.xp.toLocaleString()} XP
+            </span>
+          )}
+
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            aria-label="Close quest panel"
+            className="flex-shrink-0 text-white/25 hover:text-white/65 transition-colors mt-0.5"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Separator — only needed when art hero is shown (adds visual divide) */}
+      {quest.image && (
+        <div className="h-px bg-white/[0.06] flex-shrink-0" />
+      )}
 
       {/* ── Scrollable body ────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 min-h-0">
@@ -176,8 +242,24 @@ export default function QuestDetailPanel({ quest, onClose }: Props) {
 
       </div>
 
-      {/* ── Footer attribution ────────────────────────────────────────────── */}
-      <div className="px-4 py-2 border-t border-white/[0.05] flex-shrink-0">
+      {/* ── Footer: guide CTA + attribution ─────────────────────────────── */}
+      <div className="px-4 py-2.5 border-t border-white/[0.05] flex-shrink-0 space-y-2">
+
+        {/* MetaForge guide link */}
+        {quest.guideUrl && (
+          <a
+            href={quest.guideUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 w-full text-[11px] font-semibold text-rf-red/80 hover:text-rf-red border border-rf-red/20 hover:border-rf-red/40 rounded-lg py-1.5 transition-all bg-rf-red/5 hover:bg-rf-red/10"
+          >
+            View Guide on MetaForge
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+          </a>
+        )}
+
         <p className="text-[9px] text-white/15">via MetaForge &amp; ardb.app</p>
       </div>
 

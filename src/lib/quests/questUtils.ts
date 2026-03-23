@@ -145,6 +145,10 @@ export function mergeQuests(
       position: mf?.position ?? null,
 
       maps: ardb.maps,
+
+      image:    mf?.image ?? null,
+      xp:       mf?.xp    ?? 0,
+      guideUrl: mf?.guide_links?.[0]?.url ?? null,
     } satisfies MergedQuest
   })
 }

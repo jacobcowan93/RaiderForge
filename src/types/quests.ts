@@ -132,4 +132,13 @@ export type MergedQuest = {
 
   /** Maps this quest appears on (from ARDB) */
   maps: Array<{ id: string; name: string }>
+
+  /** MetaForge quest art CDN URL, or null if unavailable */
+  image: string | null
+
+  /** XP reward from MetaForge (0 when not available) */
+  xp: number
+
+  /** First MetaForge guide link URL, or null if no guides listed */
+  guideUrl: string | null
 }
