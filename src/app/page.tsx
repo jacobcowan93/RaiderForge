@@ -170,10 +170,10 @@ export default function Home() {
 
           <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center pt-16">
             {/* Accent label */}
-            <span className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-rf-red/80 font-semibold mb-4">
-              <span className="h-px w-6 bg-rf-red/60" />
-              Tactical Hub
-              <span className="h-px w-6 bg-rf-red/60" />
+            <span className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-semibold mb-4">
+              <span className="h-px w-6 bg-[#f97316]" />
+              <span className="tracking-widest" style={{ color: '#22c55e' }}>Tactical Hub</span>
+              <span className="h-px w-6 bg-[#f97316]" />
             </span>
 
             {/* Title */}
