@@ -129,3 +129,12 @@ body {
 .rf-map-tooltip.leaflet-tooltip::before {
     border-right-color: rgba(255, 255, 255, 0.1);
 }
+
+/* ── Quest detail panel — slide-in from right ──────────────────────────────── */
+@keyframes rf-slide-in-right {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+.rf-panel-enter {
+    animation: rf-slide-in-right 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

@@ -38,6 +38,11 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
     })
   }, [])
 
+  /** Restore all traders to active. */
+  const clearAllFilters = useCallback(() => {
+    setActiveTraders(new Set(mapQuests.map(q => q.traderId)))
+  }, [mapQuests])
+
   // If the selected quest's trader is toggled off, close the panel
   useEffect(() => {
     if (selectedQuest && !activeTraders.has(selectedQuest.traderId)) {
@@ -45,6 +50,7 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
     }
   }, [activeTraders, selectedQuest])
 
+  /** Quests for active traders — drives MapTileViewer re-render and filter count. */
   const filteredQuests = useMemo(
     () => mapQuests.filter(q => activeTraders.has(q.traderId)),
     [mapQuests, activeTraders],
@@ -91,6 +97,7 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
           quests={mapQuests}
           activeTraders={activeTraders}
           onToggle={toggleTrader}
+          onClearAll={clearAllFilters}
           calibrationStatus={calibrationStatus}
         />
       )}
@@ -103,6 +110,8 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
             activeLayerIndex={activeFloor}
             onFallback={handleTileFallback}
             quests={filteredQuests}
+            allQuests={mapQuests}
+            selectedQuestName={selectedQuest?.name ?? null}
             rfMapId={map.id}
             onQuestSelect={handleQuestSelect}
           />
@@ -114,12 +123,18 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
           />
         )}
 
-        {/* Quest detail panel — overlays right side of map on marker click */}
+        {/* Quest detail panel — animates in from right on marker click.
+            key={quest.name} re-triggers the CSS enter animation when switching quests. */}
         {selectedQuest && (
-          <QuestDetailPanel
-            quest={selectedQuest}
-            onClose={() => setSelectedQuest(null)}
-          />
+          <div
+            key={selectedQuest.name}
+            className="rf-panel-enter absolute top-0 right-0 h-full w-64 z-[1000]"
+          >
+            <QuestDetailPanel
+              quest={selectedQuest}
+              onClose={() => setSelectedQuest(null)}
+            />
+          </div>
         )}
 
         <MapStatusBadge

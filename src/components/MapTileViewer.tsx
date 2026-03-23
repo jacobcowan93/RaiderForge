@@ -18,15 +18,17 @@
  *    Both work: Leaflet substitutes {x} and {y} by name, not position.
  *
  * 3. Quest markers:
- *    Rendered as Leaflet divIcon dots. Clicking a marker calls onQuestSelect(quest)
- *    which opens QuestDetailPanel in the parent. Clicking the map background calls
- *    onQuestSelect(null) to close the panel.
- *    L.DomEvent.stopPropagation prevents marker clicks from bubbling to the map.
+ *    All map quests are rendered. Active-trader quests render at full opacity;
+ *    inactive-trader quests render dimmed (opacity 0.2, no click handler).
+ *    The selected quest marker scales up and shows a bright ring.
+ *    Clicking a marker calls onQuestSelect(quest). Clicking the map background
+ *    calls onQuestSelect(null) to close the panel.
  *    Hover shows a Leaflet tooltip with the quest name.
  *
  * 4. Marker re-render:
- *    markerLayerRef holds a Leaflet LayerGroup. When the quests prop changes
- *    (trader filter toggle), the effect clears and repopulates it.
+ *    markerLayerRef holds a Leaflet LayerGroup. The effect re-runs when:
+ *    - quests (active trader quests) changes — trader filter toggle
+ *    - selectedQuestName changes — quest selected/deselected
  *    Per-map calibration worldBounds is looked up via getCalibrationForMap(rfMapId).
  *
  * 5. Graceful fallback:
@@ -59,7 +61,12 @@ interface Props {
   tileConfig: MapTileConfig
   activeLayerIndex: number
   onFallback: () => void
+  /** Active-trader quests (filtered). Used as dep to trigger marker re-render. */
   quests: MergedQuest[]
+  /** All quests for the map — inactive-trader quests render dimmed. */
+  allQuests: MergedQuest[]
+  /** Name of the currently selected quest, or null. Drives selected-marker highlight. */
+  selectedQuestName: string | null
   rfMapId: string
   /** Called when a marker is clicked (opens panel) or map background is clicked (null = close). */
   onQuestSelect: (quest: MergedQuest | null) => void
@@ -72,6 +79,8 @@ export default function MapTileViewer({
   activeLayerIndex,
   onFallback,
   quests,
+  allQuests,
+  selectedQuestName,
   rfMapId,
   onQuestSelect,
 }: Props) {
@@ -81,10 +90,13 @@ export default function MapTileViewer({
   const LRef           = useRef<any>(null)
   const markerLayerRef = useRef<any>(null)
 
-  // Keep a stable ref to onQuestSelect so marker click closures always call
-  // the latest version without re-creating markers on every render.
+  // Keep stable refs so marker click closures always call latest callbacks
+  // without re-creating all markers on every render.
   const onQuestSelectRef = useRef(onQuestSelect)
   useEffect(() => { onQuestSelectRef.current = onQuestSelect })
+
+  const allQuestsRef = useRef(allQuests)
+  useEffect(() => { allQuestsRef.current = allQuests })
 
   // --- Initialise Leaflet map on mount ---
   useEffect(() => {
@@ -137,7 +149,11 @@ export default function MapTileViewer({
 
         // Initial marker render
         const { worldBounds } = getCalibrationForMap(rfMapId)
-        renderQuestMarkers(L, map, markerLayerRef, quests, tileConfig, worldBounds, onQuestSelectRef)
+        renderQuestMarkers(
+          L, map, markerLayerRef,
+          quests, allQuestsRef.current, selectedQuestName,
+          tileConfig, worldBounds, onQuestSelectRef,
+        )
 
       } catch {
         if (!cancelled) onFallback()
@@ -177,12 +193,16 @@ export default function MapTileViewer({
     })()
   }, [activeLayerIndex]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // --- Re-render markers when trader filter changes ---
+  // --- Re-render markers when trader filter or selected quest changes ---
   useEffect(() => {
     if (!mapRef.current || !LRef.current) return
     const { worldBounds } = getCalibrationForMap(rfMapId)
-    renderQuestMarkers(LRef.current, mapRef.current, markerLayerRef, quests, tileConfig, worldBounds, onQuestSelectRef)
-  }, [quests]) // eslint-disable-line react-hooks/exhaustive-deps
+    renderQuestMarkers(
+      LRef.current, mapRef.current, markerLayerRef,
+      quests, allQuestsRef.current, selectedQuestName,
+      tileConfig, worldBounds, onQuestSelectRef,
+    )
+  }, [quests, selectedQuestName]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
@@ -219,17 +239,18 @@ function createTileLayer(
 /**
  * Clear + repopulate the marker LayerGroup.
  *
- * Each marker:
- *   - divIcon: colored dot in trader accent color
- *   - hover tooltip: quest name
- *   - click: calls onQuestSelectRef.current(quest)
- *             + L.DomEvent.stopPropagation to prevent map click from firing
+ * Rendering tiers:
+ *   selected   — 18px, solid white ring, stronger glow, scale-up on hover
+ *   active     — 12px normal dot, standard hover
+ *   inactive   — 12px dimmed (opacity 0.2), no click handler, no tooltip
  */
 function renderQuestMarkers(
   L: any,
   map: any,
   markerLayerRef: React.MutableRefObject<any>,
-  quests: MergedQuest[],
+  activeQuests: MergedQuest[],
+  allQuests: MergedQuest[],
+  selectedQuestName: string | null,
   tileConfig: MapTileConfig,
   worldBounds: WorldBounds,
   onQuestSelectRef: React.MutableRefObject<(quest: MergedQuest | null) => void>,
@@ -241,35 +262,54 @@ function renderQuestMarkers(
   }
 
   const maxNativeZoom = tileConfig.layers[0].maxNativeZoom
+  const activeNames = new Set(activeQuests.map(q => q.name))
 
-  for (const quest of quests) {
+  for (const quest of allQuests) {
     if (!quest.position) continue
 
     const pixels = mfPositionToPixels(quest.position, tileConfig, worldBounds)
     if (!pixels) continue
 
-    const latlng = map.unproject(pixels, maxNativeZoom)
-    const color  = TRADER_COLORS[quest.traderId] ?? '#9ca3af'
+    const latlng    = map.unproject(pixels, maxNativeZoom)
+    const isActive  = activeNames.has(quest.name)
+    const isSelected = quest.name === selectedQuestName
+    const color     = TRADER_COLORS[quest.traderId] ?? '#9ca3af'
+
+    if (!isActive) {
+      // Dimmed marker — no interaction
+      const icon = L.divIcon({
+        className: '',
+        html: buildMarkerHtml(color, false, false),
+        iconSize:   [12, 12],
+        iconAnchor: [6, 6],
+      })
+      L.marker(latlng, { icon, interactive: false }).addTo(markerLayerRef.current)
+      continue
+    }
+
+    // Active or selected marker
+    const size   = isSelected ? 18 : 12
+    const anchor = isSelected ? 9  : 6
 
     const icon = L.divIcon({
       className: '',
-      html: buildMarkerHtml(color),
-      iconSize:    [14, 14],
-      iconAnchor:  [7, 7],
-      tooltipAnchor: [8, 0],
+      html: buildMarkerHtml(color, true, isSelected),
+      iconSize:       [size, size],
+      iconAnchor:     [anchor, anchor],
+      tooltipAnchor:  [anchor + 2, 0],
     })
 
     const marker = L.marker(latlng, { icon })
 
-    // Hover: show quest name
+    // Hover tooltip — only on active markers
     marker.bindTooltip(quest.name, {
-      direction:   'right',
-      offset:      [6, 0],
-      opacity:     0.9,
-      className:   'rf-map-tooltip',
+      direction:  'right',
+      offset:     [6, 0],
+      opacity:    0.9,
+      className:  'rf-map-tooltip',
     })
 
-    // Click: open detail panel, stop event from reaching map background handler
+    // Click: open detail panel
     marker.on('click', (e: any) => {
       L.DomEvent.stopPropagation(e)
       onQuestSelectRef.current(quest)
@@ -279,7 +319,34 @@ function renderQuestMarkers(
   }
 }
 
-function buildMarkerHtml(color: string): string {
+function buildMarkerHtml(color: string, active: boolean, selected: boolean): string {
+  if (!active) {
+    // Dimmed — grayscale tint, low opacity, no pointer
+    return `<div style="
+      width:10px;
+      height:10px;
+      background:#6b7280;
+      border:1.5px solid rgba(255,255,255,0.15);
+      border-radius:50%;
+      opacity:0.22;
+      pointer-events:none;
+    "></div>`
+  }
+
+  if (selected) {
+    // Selected — larger, solid white ring, strong glow, no scale (already big)
+    return `<div style="
+      width:16px;
+      height:16px;
+      background:${color};
+      border:2.5px solid rgba(255,255,255,0.90);
+      border-radius:50%;
+      box-shadow:0 0 12px ${color}, 0 0 20px ${color}55, 0 1px 4px rgba(0,0,0,0.7);
+      cursor:pointer;
+    "></div>`
+  }
+
+  // Normal active marker
   return `<div style="
     width:12px;
     height:12px;

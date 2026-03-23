@@ -7,6 +7,7 @@
  * One button per trader who has quests on the current map.
  * Active traders (default: all) are shown with rf-red accent.
  * Clicking a trader toggles its markers on/off.
+ * When any trader is hidden, a "Show All" clear button appears.
  */
 
 import type { MergedQuest } from '../types/quests'
@@ -19,17 +20,18 @@ interface Props {
   activeTraders: Set<string>
   /** Called when a trader button is clicked — parent updates activeTraders. */
   onToggle: (traderId: string) => void
+  /** Called when "Show All" is clicked — parent resets all traders to active. */
+  onClearAll: () => void
   /**
    * Calibration status for this map from mapCalibration.ts.
-   * Drives the "positions approximate" indicator.
-   * 'verified' → no indicator (positions are ground-truthed)
-   * 'approximate' → subtle tilde prefix on visible count
+   * 'verified'     → no indicator
+   * 'approximate'  → subtle tilde prefix on visible count
    * 'uncalibrated' → note shown instead of count
    */
   calibrationStatus: CalibrationStatus
 }
 
-export default function MapQuestFilter({ quests, activeTraders, onToggle, calibrationStatus }: Props) {
+export default function MapQuestFilter({ quests, activeTraders, onToggle, onClearAll, calibrationStatus }: Props) {
   // Build unique trader list from quests on this map, preserving insertion order
   const traders = Array.from(
     quests.reduce<Map<string, { name: string; icon: string | null; count: number }>>(
@@ -48,6 +50,7 @@ export default function MapQuestFilter({ quests, activeTraders, onToggle, calibr
 
   if (traders.length === 0) return null
 
+  const hasFilter    = activeTraders.size < traders.length
   const visibleCount = quests.filter(q => activeTraders.has(q.traderId)).length
 
   return (
@@ -89,8 +92,19 @@ export default function MapQuestFilter({ quests, activeTraders, onToggle, calibr
         )
       })}
 
-      {/* Visible count + calibration status indicator */}
+      {/* Right side: clear-all + calibration status + visible count */}
       <span className="ml-auto flex items-center gap-1.5 flex-shrink-0">
+        {/* Clear-all — only visible when a filter is active */}
+        {hasFilter && (
+          <button
+            onClick={onClearAll}
+            title="Show all traders"
+            className="text-[9px] text-white/35 hover:text-white/70 border border-white/10 hover:border-white/25 rounded-full px-1.5 py-px transition-all"
+          >
+            Show all
+          </button>
+        )}
+
         {calibrationStatus === 'approximate' && (
           <span
             title="Marker positions are approximate. MetaForge world-space coordinates have not been verified against in-game landmarks."
