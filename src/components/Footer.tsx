@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 const toolLinks = [
     { label: 'Interactive Map',   href: '/maps'        },
@@ -18,7 +19,16 @@ export default function Footer() {
                     {/* Brand column */}
                     <div className="flex flex-col gap-4 max-w-xs">
                         <div className="flex items-center gap-2">
-                            <span className="h-8 w-8 rounded-md bg-gradient-to-tr from-rf-red via-rf-orange to-rf-yellow shrink-0" />
+                            <div className="relative h-8 w-8 rounded-md overflow-hidden ring-1 ring-white/10 shrink-0">
+                                <Image
+                                    src="/images/logo/ARC_Header.jpeg"
+                                    alt="RaiderForge"
+                                    fill
+                                    className="object-cover brightness-90"
+                                    sizes="32px"
+                                />
+                                <div className="absolute inset-0 bg-black/20" />
+                            </div>
                             <span className="text-sm font-semibold tracking-[0.2em] text-rf-text uppercase">
                                 RaiderForge
                             </span>

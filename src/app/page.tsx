@@ -1,14 +1,11 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { AuthButtons } from './components/auth/AuthButtons'
 import LivePanel from '../components/LivePanel'
 import { fetchMfEventsSchedule } from '../api/metaforgeService'
 import { getActiveConditionsForMap } from '../lib/events/conditions'
 import { MAPS } from '../data/maps'
-import { isMajorEvent } from '../lib/events/eventsConfig'
-
 // ── Event Status Line (Server Component) ─────────────────────────────────────
-// Fetches live events from MetaForge and shows the most prominent active event.
+// Fetches live events from MetaForge and shows all active events across maps.
 // Renders nothing if no events are active or if the fetch fails.
 
 async function EventStatusLine() {
@@ -20,25 +17,37 @@ async function EventStatusLine() {
   }
 
   const now = new Date()
-  // Find the first map with a major event active
+
+  // Collect all active events across every map
+  const activeRows: { event: string; mapName: string }[] = []
   for (const map of MAPS) {
     const cond = getActiveConditionsForMap(map.id, now, events)
-    const active = cond.major || cond.minor
-    if (active) {
-      const tier = isMajorEvent(active) ? 'MAJOR' : 'ACTIVE'
-      return (
-        <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-rf-red animate-pulse" />
-          <span className="text-xs text-white/60">
-            <span className="text-rf-red font-semibold">{tier}: </span>
-            {active} — {map.displayName}
-          </span>
-        </div>
-      )
+    for (const event of cond.activeConditions) {
+      activeRows.push({ event, mapName: map.displayName })
     }
   }
 
-  return null // No active events — renders nothing
+  if (activeRows.length === 0) return null
+
+  return (
+    <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="h-1.5 w-1.5 rounded-full bg-rf-red animate-pulse" />
+        <span className="text-[10px] uppercase tracking-widest font-semibold text-rf-red">
+          Current Events
+        </span>
+      </div>
+      <div className="space-y-1">
+        {activeRows.map(({ event, mapName }) => (
+          <p key={`${event}-${mapName}`} className="text-xs text-white/60">
+            <span className="text-white/85 font-medium">{event}</span>
+            <span className="text-white/30 mx-1.5">—</span>
+            {mapName}
+          </p>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 // ── Feature Grid ──────────────────────────────────────────────────────────────
@@ -173,28 +182,16 @@ export default function Home() {
             </h1>
 
             {/* Tagline */}
-            <p className="text-shadow-hero mt-6 max-w-xl text-sm sm:text-base text-white/85 leading-relaxed">
-              Your ARC Raiders command center — interactive maps with live event conditions,
-              blueprint tracking, builds, guides, and a secure marketplace.
+            <p className="text-shadow-hero mt-6 max-w-2xl text-sm sm:text-base text-white/85 leading-relaxed">
+              Sync your Raider profile, track blueprints, explore interactive maps, follow trial
+              guides to maximize points, trade through a secure marketplace, and build, browse, and
+              share powerful skill tree loadouts.
             </p>
 
             {/* Live event status — server-fetched from MetaForge, renders nothing if no events */}
             <Suspense fallback={null}>
               <EventStatusLine />
             </Suspense>
-
-            {/* Auth CTA */}
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <AuthButtons />
-            </div>
-
-            <p className="mt-4 text-xs text-white/35">
-              By signing in you agree to the RaiderForge{' '}
-              <a href="/terms" className="underline underline-offset-2 hover:text-white/60 transition-colors">
-                terms of service
-              </a>
-              .
-            </p>
           </div>
 
           {/* Scroll indicator */}
