@@ -11,16 +11,25 @@
  *   4. filterQuestsByMap()     → MergedQuest[]  (filtered to current RF map ID)
  *
  * Coordinate transform note:
- *   MetaForge stores quest positions in an internal ~1024×1024 coordinate space.
- *   Our tile maps are 8192×8192 pixels at maxNativeZoom.
- *   mfPositionToPixels() scales MetaForge coords to pixel space.
+ *   MetaForge stores quest positions in a game-world coordinate space.
+ *   mfPositionToPixels() normalises these to [0, mapPixelSize] pixel coordinates
+ *   using empirically-observed world bounds (see MF_WORLD_BOUNDS below).
  *   mfPositionToLatLng() then converts pixels → Leaflet CRS.Simple LatLng
  *   via map.unproject([px, py], maxNativeZoom).
  *
- * CALIBRATION NOTE:
- *   MF_QUEST_COORD_MAX = 1024 is an empirical assumption based on the observed
- *   position values (e.g. {x:210, y:800}) being well below 8192. If markers
- *   appear misaligned, adjust MF_QUEST_COORD_MAX. Common values: 512, 1024, 2048.
+ * CALIBRATION STATUS (verified 2026-03 from live API — 40 quests):
+ *   MetaForge uses a game-world coordinate space, NOT a normalised [0, 1024] space.
+ *   Observed ranges across all 40 quests:
+ *     X: approximately -960  to +1509
+ *     Y: approximately  +319 to +7664
+ *   MF_WORLD_BOUNDS reflects this range with padding.
+ *
+ *   IMPORTANT CAVEAT:
+ *   Some quests appear on multiple maps but carry a single position — suggesting
+ *   MetaForge coordinates may be global world-space coordinates that span all maps,
+ *   rather than per-map tile coordinates. Marker placement is therefore approximate.
+ *   Positions within the observed world-space bounds are rendered; outliers are dropped.
+ *   Refine MF_WORLD_BOUNDS through in-game calibration when possible.
  */
 
 import type { MfQuestRaw, ArdbQuestRaw, MergedQuest } from '../../types/quests'
@@ -30,9 +39,29 @@ import type { MapTileConfig } from '../../data/maps'
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 /**
- * Assumed range of MetaForge quest position coordinates.
- * MetaForge positions like {x:210, y:800} suggest a ~0–1024 space.
- * Adjust if map markers appear significantly off-position when tested.
+ * Empirically-observed MetaForge game-world coordinate bounds.
+ * Derived from live API data (40 quests, verified 2026-03).
+ *
+ * Values are padded by ~10% beyond the observed min/max to avoid clipping
+ * quests at map edges if new quests are added near the extremes.
+ *
+ * Calibration: cross-reference known in-game locations with MF position values
+ * to verify accuracy. Adjust if markers appear systematically offset.
+ *
+ * Observed:  x ∈ [-960, 1509],   y ∈ [319, 7664]
+ * Padded:    x ∈ [-1100, 1700],  y ∈ [0, 8400]
+ */
+export const MF_WORLD_BOUNDS = {
+  xMin: -1100,
+  xMax:  1700,
+  yMin:     0,
+  yMax:  8400,
+} as const
+
+/**
+ * @deprecated Use MF_WORLD_BOUNDS. MF_QUEST_COORD_MAX = 1024 was incorrect —
+ * live API shows MetaForge uses a game-world coordinate space, not a 0-1024 space.
+ * Kept for backward compatibility if any external code references it.
  */
 export const MF_QUEST_COORD_MAX = 1024
 
@@ -47,6 +76,15 @@ export const ARDB_MAP_ID_TO_RF: Record<string, string> = {
   'buried-city':   'burial-city',
   'blue-gate':     'blue-gate',
   'stella-montis': 'stella-montis',
+}
+
+/**
+ * Known ARDB title typos that prevent name-based joining with MetaForge.
+ * Key = incorrect ARDB title, value = corrected form (matching MetaForge name).
+ * Update when ARDB fixes upstream or new mismatches are discovered.
+ */
+const ARDB_TITLE_CORRECTIONS: Record<string, string> = {
+  'A Primse Specimen': 'A Prime Specimen',  // ARDB typo, verified 2026-03
 }
 
 // ── Name normalisation ────────────────────────────────────────────────────────
@@ -74,6 +112,9 @@ function normalise(name: string): string {
  * - ARDB quests with no MetaForge match → position: null, rewards: []
  * - MetaForge quests with no ARDB match → excluded (no maps[] data to filter)
  *
+ * Pre-processing: known ARDB title typos are corrected before normalisation
+ * (see ARDB_TITLE_CORRECTIONS) to prevent silent join failures.
+ *
  * Result is driven by ARDB's 84-quest dataset since it has the maps[] field
  * needed for per-map filtering.
  */
@@ -88,7 +129,9 @@ export function mergeQuests(
   }
 
   return ardbQuests.map(ardb => {
-    const mf = mfByName.get(normalise(ardb.title)) ?? null
+    // Apply known typo corrections before normalising for join
+    const correctedTitle = ARDB_TITLE_CORRECTIONS[ardb.title] ?? ardb.title
+    const mf = mfByName.get(normalise(correctedTitle)) ?? null
 
     return {
       name: ardb.title,
@@ -142,10 +185,20 @@ export function filterQuestsByMap(quests: MergedQuest[], rfMapId: string): Merge
  * Convert a MetaForge quest position to Leaflet pixel coordinates
  * for use with map.unproject().
  *
- * MetaForge positions are in a ~0–MF_QUEST_COORD_MAX coordinate space.
- * We scale linearly to the tile map's pixel dimensions.
+ * MetaForge positions are in a game-world coordinate space (see MF_WORLD_BOUNDS).
+ * We normalise via min-max scaling to [0, mapPixelSize].
  *
- * Returns null if the position is null or out of expected bounds.
+ * CALIBRATION NOTE:
+ *   The world bounds in MF_WORLD_BOUNDS are empirically derived from the
+ *   distribution of live API position values. Marker placement is approximate
+ *   until cross-referenced against known in-game locations.
+ *
+ *   Some quests appear on multiple maps with a single shared position — this
+ *   suggests the coordinate space may be global (not per-map), which means
+ *   the same position renders at the same relative location on every map it
+ *   appears on. This is expected behaviour given current data.
+ *
+ * Returns null if position is null or lies outside the padded world bounds.
  */
 export function mfPositionToPixels(
   position: { x: number; y: number } | null,
@@ -153,17 +206,22 @@ export function mfPositionToPixels(
 ): [number, number] | null {
   if (!position) return null
 
-  // Bounds check: discard positions clearly outside the MetaForge coord space
-  if (
-    position.x < 0 || position.x > MF_QUEST_COORD_MAX ||
-    position.y < 0 || position.y > MF_QUEST_COORD_MAX
-  ) {
+  const { xMin, xMax, yMin, yMax } = MF_WORLD_BOUNDS
+  const xRange = xMax - xMin
+  const yRange = yMax - yMin
+
+  // Normalise to [0, 1] using observed world-space bounds
+  const xNorm = (position.x - xMin) / xRange
+  const yNorm = (position.y - yMin) / yRange
+
+  // Discard positions that fall outside the padded bounds (data anomaly or
+  // new content beyond the calibrated range — avoid off-map marker placement)
+  if (xNorm < 0 || xNorm > 1 || yNorm < 0 || yNorm > 1) {
     return null
   }
 
-  const scale = tileConfig.mapPixelSize / MF_QUEST_COORD_MAX
   return [
-    position.x * scale,
-    position.y * scale,
+    xNorm * tileConfig.mapPixelSize,
+    yNorm * tileConfig.mapPixelSize,
   ]
 }

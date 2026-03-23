@@ -51,12 +51,14 @@ import type { MergedQuest } from '../types/quests'
 import { mfPositionToPixels } from '../lib/quests/questUtils'
 
 // ── Trader accent colors for map markers ──────────────────────────────────────
+// traderId values come from ardb.trader.id.toLowerCase() — ARDB uses underscores,
+// not spaces: "tian_wen", not "tian wen". Keep keys here in sync with ARDB's IDs.
 const TRADER_COLORS: Record<string, string> = {
-  apollo:     '#38bdf8',  // sky-400
-  celeste:    '#22c55e',  // green-500
-  lance:      '#f97316',  // orange-500
-  shani:      '#a855f7',  // purple-500
-  'tian wen': '#facc15',  // yellow-400
+  apollo:    '#38bdf8',  // sky-400
+  celeste:   '#22c55e',  // green-500
+  lance:     '#f97316',  // orange-500
+  shani:     '#a855f7',  // purple-500
+  tian_wen:  '#facc15',  // yellow-400
 }
 
 // ── Prop types ────────────────────────────────────────────────────────────────

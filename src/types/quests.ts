@@ -93,9 +93,13 @@ export type MergedQuest = {
   /** Normalised display name (from ARDB title, same string as MetaForge name) */
   name: string
 
-  /** Lowercase trader ID: "celeste" | "apollo" | "lance" | "shani" | "tian wen" */
+  /**
+   * Lowercase trader ID from ARDB (ardb.trader.id.toLowerCase()).
+   * ARDB uses underscores: "celeste" | "apollo" | "lance" | "shani" | "tian_wen"
+   * Note: "tian_wen" uses an underscore, not a space.
+   */
   traderId: string
-  /** Display name: "Celeste" | "Apollo" | "Lance" | "Shani" | "TianWen" */
+  /** Display name: "Celeste" | "Apollo" | "Lance" | "Shani" | "Tian Wen" */
   traderName: string
   /** Full ARDB static URL for trader icon, or null if unavailable */
   traderIcon: string | null
