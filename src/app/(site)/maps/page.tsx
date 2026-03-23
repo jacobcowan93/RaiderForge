@@ -23,7 +23,7 @@ export default async function MapsPage() {
 
     return (
         <div className="xl:pr-[300px]">
-            <div className="py-12 px-6 max-w-7xl mx-auto">
+            <div className="py-12 px-6 max-w-5xl mx-auto">
 
                 {/* Header */}
                 <div className="mb-10">
@@ -34,9 +34,12 @@ export default async function MapsPage() {
                     </p>
                 </div>
 
-                {/* Map grid — flex-wrap with justify-center so an incomplete last row
-                    (2 of 3 cards) stays horizontally centered rather than left-aligned */}
-                <div className="flex flex-wrap justify-center gap-5">
+                {/* Map grid — flex-wrap + justify-center so every row, including the
+                    incomplete last row, stays centred in the content area.
+                    gap-6 (24px) with matching calc() widths so 3 cards fill exactly 100%:
+                      3 × (33.333% - 16px) + 2 × 24px = 100%  ✓
+                      2 × (50%    - 12px)  + 1 × 24px = 100%  ✓  */}
+                <div className="flex flex-wrap justify-center gap-6">
                     {MAPS.map(map => {
                         const thumb = getMapThumbnail(map)
                         const conditions = getActiveConditionsForMap(map.id, now, events)
@@ -47,7 +50,7 @@ export default async function MapsPage() {
                             <Link
                                 key={map.id}
                                 href={`/maps/${map.id}`}
-                                className="group flex flex-col rf-card rounded-2xl overflow-hidden hover:border-white/15 hover:shadow-xl hover:shadow-black/60 transition-all duration-300 hover:-translate-y-0.5 w-full md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)]"
+                                className="group flex flex-col rf-card rounded-2xl overflow-hidden hover:border-white/15 hover:shadow-xl hover:shadow-black/40 transition-all duration-300 hover:-translate-y-0.5 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]"
                             >
                                 {/* Thumbnail */}
                                 <div className="relative h-52 overflow-hidden bg-rf-bgSoft shrink-0">
@@ -109,7 +112,7 @@ export default async function MapsPage() {
                                             })}
                                         </div>
                                     ) : (
-                                        <p className="text-xs text-white/20 mb-4">No active events</p>
+                                        <p className="text-xs text-white/35 mb-4">No active events</p>
                                     )}
 
                                     {/* Bottom row: features + CTA */}
