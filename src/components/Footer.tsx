@@ -24,13 +24,12 @@ export default function Footer() {
                                 src="/images/logo/ARC_Header.jpeg"
                                 alt="RaiderForge"
                                 fill
-                                className="object-cover brightness-90"
+                                className="object-cover"
                                 sizes="32px"
                             />
-                            <div className="absolute inset-0 bg-black/20" />
                         </div>
-                        <span className="text-sm font-semibold tracking-[0.2em] text-rf-text uppercase">
-                            RaiderForge
+                        <span className="text-sm font-semibold tracking-[0.2em] uppercase">
+                            <span className="text-white">Raider</span><span className="text-rf-red">Forge</span>
                         </span>
                     </div>
                     <p className="text-xs text-rf-textSoft leading-relaxed max-w-sm">

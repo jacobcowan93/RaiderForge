@@ -54,14 +54,13 @@ export default function NavBar() {
                             src="/images/logo/ARC_Header.jpeg"
                             alt="RaiderForge"
                             fill
-                            className="object-cover brightness-90"
+                            className="object-cover"
                             sizes="32px"
                             priority
                         />
-                        <div className="absolute inset-0 bg-black/20" />
                     </div>
-                    <span className="text-sm font-bold tracking-[0.18em] text-white uppercase">
-                        RaiderForge
+                    <span className="text-sm font-bold tracking-[0.18em] uppercase">
+                        <span className="text-white">Raider</span><span className="text-rf-red">Forge</span>
                     </span>
                 </Link>
 
