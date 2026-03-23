@@ -62,6 +62,7 @@ const accentClasses: Record<Accent, { idle: string; hover: string; text: string 
 }
 
 const features: {
+  label: string
   title: string
   desc: string
   href: string
@@ -69,8 +70,9 @@ const features: {
   icon: React.ReactNode
 }[] = [
   {
-    title: 'Interactive Map',
-    desc: 'Live event conditions, POI markers, and tactical overlays for every ARC Raiders zone.',
+    label: 'INTERACTIVE MAPS',
+    title: 'Master the Battlefield',
+    desc: 'Navigate live maps with real-time event conditions, quest markers, and tactical overlays across every ARC Raiders zone.',
     href: '/maps',
     accent: 'green',
     icon: (
@@ -80,8 +82,9 @@ const features: {
     ),
   },
   {
-    title: 'Builds',
-    desc: 'Craft and share optimal skill trees and loadouts. Find what works for your playstyle.',
+    label: 'LOADOUT SYSTEM',
+    title: 'Build. Optimize. Dominate.',
+    desc: 'Craft powerful loadouts, analyze gear stats, and refine your strategy for every raid. From weapon tuning to full build planning, RaiderForge gives you the edge.',
     href: '/builds',
     accent: 'orange',
     icon: (
@@ -91,8 +94,9 @@ const features: {
     ),
   },
   {
-    title: 'Blueprint Tracker',
-    desc: 'Track your blueprint collection and unlock progress at a glance.',
+    label: 'BLUEPRINT TRACKING',
+    title: 'Control Your Progression',
+    desc: 'Track blueprint unlocks, manage crafting paths, and plan your upgrades with precision.',
     href: '/blueprints',
     accent: 'yellow',
     icon: (
@@ -102,8 +106,9 @@ const features: {
     ),
   },
   {
-    title: 'Strategy Guides',
-    desc: 'Deep-dive community guides for every zone, boss encounter, and meta shift.',
+    label: 'TRIAL SYSTEM',
+    title: 'Maximize Every Run',
+    desc: 'Follow optimized trial routes, complete objectives efficiently, and earn maximum rewards every cycle.',
     href: '/guides',
     accent: 'red',
     icon: (
@@ -113,8 +118,9 @@ const features: {
     ),
   },
   {
-    title: 'Raider Profile',
-    desc: 'Your RaiderForge identity — connect your Embark account to track your full raid history.',
+    label: 'RAIDER PROFILE',
+    title: 'Track Your Performance',
+    desc: 'Sync your Raider identity, monitor progression, and prepare for full Embark account integration.',
     href: '/profile',
     accent: 'red',
     icon: (
@@ -124,8 +130,9 @@ const features: {
     ),
   },
   {
-    title: 'Marketplace',
-    desc: 'Peer-to-peer trading for blueprints and gear with escrow-protected transactions.',
+    label: 'SECURE MARKETPLACE',
+    title: 'Trade With Confidence',
+    desc: 'Buy and sell safely with a secure escrow system designed for trusted peer-to-peer transactions.',
     href: '/marketplace',
     accent: 'orange',
     icon: (
@@ -182,10 +189,9 @@ export default function Home() {
             </h1>
 
             {/* Tagline */}
-            <p className="text-shadow-hero mt-6 max-w-2xl text-sm sm:text-base text-white/85 leading-relaxed">
-              Sync your Raider profile, track blueprints, explore interactive maps, follow trial
-              guides to maximize points, trade through a secure marketplace, and build, browse, and
-              share powerful skill tree loadouts.
+            <p className="text-shadow-hero mt-6 max-w-xl text-sm sm:text-base text-white/75 leading-relaxed">
+              Live map intelligence. Tactical loadout planning. Blueprint progression. Secure trading.
+              Built for Raiders who compete.
             </p>
 
             {/* Live event status — server-fetched from MetaForge, renders nothing if no events */}
@@ -211,7 +217,7 @@ export default function Home() {
           <div className="mx-auto max-w-7xl">
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {features.map(({ title, desc, href, accent, icon }) => {
+              {features.map(({ label, title, desc, href, accent, icon }) => {
                 const a = accentClasses[accent]
                 return (
                   <Link
@@ -222,10 +228,11 @@ export default function Home() {
                     <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${a.idle} ${a.hover}`}>
                       <div className="h-5 w-5">{icon}</div>
                     </div>
+                    <p className={`text-[10px] uppercase tracking-widest font-semibold mb-1.5 ${a.text}`}>{label}</p>
                     <h3 className="font-semibold text-white mb-2">{title}</h3>
-                    <p className="text-sm text-rf-textSoft">{desc}</p>
+                    <p className="text-sm text-white/70 leading-relaxed">{desc}</p>
                     <span className={`mt-4 inline-flex items-center gap-1 text-xs group-hover:gap-2 transition-all ${a.text}`}>
-                      Open
+                      Deploy
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                       </svg>
