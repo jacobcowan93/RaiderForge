@@ -74,13 +74,16 @@ export default function NavBar() {
                             <Link
                                 key={href}
                                 href={href}
-                                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                                className={`relative px-3 py-1.5 text-xs font-medium rounded transition-colors ${
                                     isActive
-                                        ? 'text-white bg-white/10'
+                                        ? 'text-white'
                                         : 'text-white/55 hover:text-white hover:bg-white/5'
                                 }`}
                             >
                                 {label}
+                                {isActive && (
+                                    <span className="absolute inset-x-1 -bottom-[11px] h-[2px] rounded-full bg-rf-red" />
+                                )}
                             </Link>
                         )
                     })}
