@@ -3,3 +3,7 @@ node_modules
 .DS_Store
 .env
 .env.local
+# Ignore env files in subfolders (root `.env` alone does not match `src/.env`)
+**/.env
+**/.env.local
+**/.env.*.local

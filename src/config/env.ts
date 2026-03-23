@@ -11,7 +11,7 @@ function getG2GEnv(): G2GEnv {
 
     if (process.env.NODE_ENV === 'development') {
         if (!apiKey || !secret || !username) {
-            throw new Error('Missing G2G environment variables. Ensure G2G_API_KEY, G2G_SECRET, and G2G_USERNAME are set in your .env for development.')
+            console.warn('[G2G] Missing env vars (G2G_API_KEY, G2G_SECRET, G2G_USERNAME). Marketplace features will be disabled.')
         }
     }
 

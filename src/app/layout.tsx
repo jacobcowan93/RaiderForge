@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Providers>
                     <div className="flex min-h-screen flex-col bg-gradient-to-b from-black via-rf-bg to-black">
                         <NavBar />
-                        <main className="flex-1">{children}</main>
+                        <main className="flex-1 pt-16">{children}</main>
                         <Footer />
                     </div>
                 </Providers>

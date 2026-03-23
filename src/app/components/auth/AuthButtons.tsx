@@ -17,12 +17,6 @@ export function AuthButtons() {
             >
                 Sign in with Google
             </button>
-            <button
-                onClick={() => signIn("email")}
-                className="inline-flex w-full items-center justify-center rounded-md border border-rf-border bg-rf-bgSoft/70 px-5 py-3 text-sm font-medium text-rf-text transition hover:border-rf-red hover:text-white sm:w-auto"
-            >
-                Sign in with Email
-            </button>
         </div>
     );
 }

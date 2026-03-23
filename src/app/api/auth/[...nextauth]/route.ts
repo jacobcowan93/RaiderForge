@@ -1,32 +1,23 @@
 import NextAuth from "next-auth"
+import type { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import DiscordProvider from "next-auth/providers/discord"
-import EmailProvider from "next-auth/providers/email"
+
+const providers: NextAuthOptions["providers"] = [
+    GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID || "",
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
+    DiscordProvider({
+        clientId: process.env.DISCORD_CLIENT_ID || "",
+        clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
+    }),
+]
 
 // NextAuth route for App Router (route handler)
 // This file runs on the server only. Client secrets are read from process.env.
 export const handler = NextAuth({
-    providers: [
-        GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID || '',
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET || ''
-        }),
-        DiscordProvider({
-            clientId: process.env.DISCORD_CLIENT_ID || '',
-            clientSecret: process.env.DISCORD_CLIENT_SECRET || ''
-        }),
-        EmailProvider({
-            server: {
-                host: process.env.EMAIL_SERVER_HOST,
-                port: Number(process.env.EMAIL_SERVER_PORT),
-                auth: {
-                    user: process.env.EMAIL_SERVER_USER,
-                    pass: process.env.EMAIL_SERVER_PASSWORD,
-                },
-            },
-            from: process.env.EMAIL_FROM,
-        })
-    ],
+    providers,
     secret: process.env.NEXTAUTH_SECRET,
     session: {
         strategy: 'jwt'
