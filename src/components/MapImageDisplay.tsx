@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import type { MapMeta } from '../data/maps'
 import type { MergedQuest } from '../types/quests'
+import type { ContainerMarker, MapLayerType } from '../types/mapLayers'
 import { getCalibrationForMap } from '../data/mapCalibration'
 import MapQuestFilter from './MapQuestFilter'
 import QuestDetailPanel from './QuestDetailPanel'
@@ -19,21 +20,33 @@ interface Props {
 }
 
 export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
-  const [activeFloor, setActiveFloor]       = useState(0)
-  const [tileFallback, setTileFallback]     = useState(false)
-  const [selectedQuest, setSelectedQuest]   = useState<MergedQuest | null>(null)
-  const [activeTraders, setActiveTraders]   = useState<Set<string>>(
+  const [activeFloor, setActiveFloor]     = useState(0)
+  const [tileFallback, setTileFallback]   = useState(false)
+  const [selectedQuest, setSelectedQuest] = useState<MergedQuest | null>(null)
+  const [activeTraders, setActiveTraders] = useState<Set<string>>(
     () => new Set(mapQuests.map(q => q.traderId)),
   )
+  const [activeLayers, setActiveLayers]   = useState<Set<MapLayerType>>(
+    () => new Set<MapLayerType>(['quests', 'containers']),
+  )
 
-  const handleTileFallback  = useCallback(() => setTileFallback(true), [])
-  const handleQuestSelect   = useCallback((q: MergedQuest | null) => setSelectedQuest(q), [])
+  const handleTileFallback = useCallback(() => setTileFallback(true), [])
+  const handleQuestSelect  = useCallback((q: MergedQuest | null) => setSelectedQuest(q), [])
 
   const toggleTrader = useCallback((traderId: string) => {
     setActiveTraders(prev => {
       const next = new Set(prev)
       if (next.has(traderId)) next.delete(traderId)
       else next.add(traderId)
+      return next
+    })
+  }, [])
+
+  const toggleLayer = useCallback((type: MapLayerType) => {
+    setActiveLayers(prev => {
+      const next = new Set(prev)
+      if (next.has(type)) next.delete(type)
+      else next.add(type)
       return next
     })
   }, [])
@@ -50,6 +63,13 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
     }
   }, [activeTraders, selectedQuest])
 
+  // If the quest layer is toggled off, close the quest panel
+  useEffect(() => {
+    if (selectedQuest && !activeLayers.has('quests')) {
+      setSelectedQuest(null)
+    }
+  }, [activeLayers, selectedQuest])
+
   // ESC closes the quest detail panel
   useEffect(() => {
     if (!selectedQuest) return
@@ -58,11 +78,28 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [selectedQuest])
 
-  /** Quests for active traders — drives MapTileViewer re-render and filter count. */
-  const filteredQuests = useMemo(
-    () => mapQuests.filter(q => activeTraders.has(q.traderId)),
-    [mapQuests, activeTraders],
+  /**
+   * Quests for active traders — drives MapTileViewer quest marker re-render.
+   * Empty when quest layer is toggled off (hides all quest markers).
+   */
+  const visibleQuestPool = activeLayers.has('quests') ? mapQuests : []
+  const filteredQuests   = useMemo(
+    () => visibleQuestPool.filter(q => activeTraders.has(q.traderId)),
+    [visibleQuestPool, activeTraders],
   )
+
+  /**
+   * All container markers for this map.
+   * Empty until real positional data is sourced — no fake coordinates.
+   * Gated by activeLayers: empty array passed when container layer is off.
+   *
+   * To populate: add ContainerMarker[] entries here keyed by map.id,
+   * then replace the empty array with the relevant entries.
+   */
+  const ALL_CONTAINERS: ContainerMarker[] = []
+  const visibleContainers: ContainerMarker[] = activeLayers.has('containers')
+    ? ALL_CONTAINERS
+    : []
 
   const hasTiles      = !!map.tileConfig && !tileFallback
   const isMultiFloor  = map.mapType === 'multi-floor' && Array.isArray(map.floors) && map.floors.length > 0
@@ -76,6 +113,10 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
   const fallbackAlt = isMultiFloor
     ? `${map.displayName} — ${map.floors![activeFloor]?.label ?? ''}`
     : map.displayName
+
+  // Visible marker counts for the status badge
+  const visibleQuestMarkerCount     = filteredQuests.filter(q => q.position !== null).length
+  const visibleContainerMarkerCount = visibleContainers.length
 
   return (
     <div>
@@ -99,7 +140,7 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
         </div>
       )}
 
-      {/* Quest filter bar */}
+      {/* Filter bar — layer toggles + trader toggles */}
       {hasTiles && hasQuests && (
         <MapQuestFilter
           quests={mapQuests}
@@ -107,6 +148,9 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
           onToggle={toggleTrader}
           onClearAll={clearAllFilters}
           calibrationStatus={calibrationStatus}
+          activeLayers={activeLayers}
+          onLayerToggle={toggleLayer}
+          containerCount={ALL_CONTAINERS.length}
         />
       )}
 
@@ -118,10 +162,11 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
             activeLayerIndex={activeFloor}
             onFallback={handleTileFallback}
             quests={filteredQuests}
-            allQuests={mapQuests}
+            allQuests={visibleQuestPool}
             selectedQuestName={selectedQuest?.name ?? null}
             rfMapId={map.id}
             onQuestSelect={handleQuestSelect}
+            containers={visibleContainers}
           />
         ) : (
           <img
@@ -148,7 +193,8 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
         <MapStatusBadge
           hasTiles={hasTiles}
           tileFallback={tileFallback}
-          questCount={filteredQuests.filter(q => q.position !== null).length}
+          questMarkerCount={visibleQuestMarkerCount}
+          containerMarkerCount={visibleContainerMarkerCount}
         />
       </div>
     </div>
@@ -173,11 +219,13 @@ function TileLoadingState() {
 function MapStatusBadge({
   hasTiles,
   tileFallback,
-  questCount,
+  questMarkerCount,
+  containerMarkerCount,
 }: {
   hasTiles: boolean
   tileFallback: boolean
-  questCount: number
+  questMarkerCount: number
+  containerMarkerCount: number
 }) {
   if (tileFallback) {
     return (
@@ -193,6 +241,11 @@ function MapStatusBadge({
   }
 
   if (hasTiles) {
+    const totalMarkers = questMarkerCount + containerMarkerCount
+    const label = totalMarkers > 0
+      ? `${totalMarkers} marker${totalMarkers !== 1 ? 's' : ''}`
+      : 'No markers'
+
     return (
       <div className="absolute bottom-3 right-3">
         <span className="inline-flex items-center gap-1 text-[9px] text-white/20 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 border border-white/5">
@@ -200,7 +253,7 @@ function MapStatusBadge({
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
           </svg>
-          {questCount > 0 ? `${questCount} quest marker${questCount !== 1 ? 's' : ''}` : 'No quest markers'}
+          {label}
         </span>
       </div>
     )
