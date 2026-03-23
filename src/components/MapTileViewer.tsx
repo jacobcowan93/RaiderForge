@@ -9,40 +9,32 @@
  * Key technical notes:
  *
  * 1. CRS.Simple coordinate system:
- *    Leaflet's CRS.Simple maps pixel coordinates to a flat x/y space.
- *    Images have y=0 at top (y-down); CRS.Simple has y=0 at bottom (y-up).
- *    We use map.unproject([px, py], zoom) to bridge this — it converts pixel
- *    coordinates at a given zoom level to CRS.Simple lat/lng, handling y-inversion
- *    automatically via Leaflet's internal scale math.
+ *    y=0 is top in image space; y=0 is bottom in CRS.Simple.
+ *    map.unproject([px, py], zoom) handles the inversion automatically.
  *
  * 2. ARDB URL axis order:
- *    dam/spaceport use .../tiles/{z}/{y}/{x}.webp (row before column in URL path)
- *    buried-city/blue-gate/stella-montis use .../tiles/{z}/{x}/{y}.webp (column before row)
- *    Leaflet uses string substitution: {z}→zoom, {x}→column, {y}→row.
- *    Both patterns work correctly since Leaflet always substitutes {x} and {y} by name,
- *    not by position — the URL path order is just the CDN's file organisation.
+ *    dam/spaceport: .../tiles/{z}/{y}/{x}.webp  (row, col)
+ *    others:        .../tiles/{z}/{x}/{y}.webp  (col, row)
+ *    Both work: Leaflet substitutes {x} and {y} by name, not position.
  *
- * 3. Stella Montis multi-floor:
- *    tileConfig.layers[] is indexed to match map.floors[]:
- *      layers[0] = stella-montis-l2 = Upper Level
- *      layers[1] = stella-montis-l1 = Lower Level
- *    The activeLayerIndex prop is driven by the floor switcher in MapImageDisplay.
+ * 3. Quest markers:
+ *    Rendered as Leaflet divIcon dots. Clicking a marker calls onQuestSelect(quest)
+ *    which opens QuestDetailPanel in the parent. Clicking the map background calls
+ *    onQuestSelect(null) to close the panel.
+ *    L.DomEvent.stopPropagation prevents marker clicks from bubbling to the map.
+ *    Hover shows a Leaflet tooltip with the quest name.
  *
- * 4. Quest markers:
- *    Markers use MetaForge position coordinates (scaled from ~0–1024 to pixel space)
- *    converted to Leaflet LatLng via map.unproject().
- *    Managed in a layerGroup (markerLayerRef) — cleared and re-populated when
- *    the quests prop changes (trader filter toggle).
- *    Only quests with non-null positions get a marker.
+ * 4. Marker re-render:
+ *    markerLayerRef holds a Leaflet LayerGroup. When the quests prop changes
+ *    (trader filter toggle), the effect clears and repopulates it.
+ *    Per-map calibration worldBounds is looked up via getCalibrationForMap(rfMapId).
  *
  * 5. Graceful fallback:
- *    If 4+ tiles fail to load (CDN unreachable, tile missing, CORS), onFallback()
- *    is called and MapImageDisplay renders the static image instead.
+ *    4+ tile errors → onFallback() → parent renders static image.
  *
  * 6. SSR safety:
- *    Leaflet requires window/document. Both the L import and tile layer creation
- *    happen inside useEffect (browser-only). The module-level import at the top
- *    is only the TypeScript type — no runtime Leaflet code executes on the server.
+ *    Leaflet is dynamically imported inside useEffect. No runtime Leaflet code
+ *    executes on the server.
  */
 
 import { useEffect, useRef } from 'react'
@@ -51,48 +43,48 @@ import type { MergedQuest } from '../types/quests'
 import { mfPositionToPixels } from '../lib/quests/questUtils'
 import { getCalibrationForMap, type WorldBounds } from '../data/mapCalibration'
 
-// ── Trader accent colors for map markers ──────────────────────────────────────
-// traderId values come from ardb.trader.id.toLowerCase() — ARDB uses underscores,
-// not spaces: "tian_wen", not "tian wen". Keep keys here in sync with ARDB's IDs.
+// ── Trader accent colors ──────────────────────────────────────────────────────
+// Keys match ardb.trader.id.toLowerCase() — underscores, not spaces.
 const TRADER_COLORS: Record<string, string> = {
-  apollo:    '#38bdf8',  // sky-400
-  celeste:   '#22c55e',  // green-500
-  lance:     '#f97316',  // orange-500
-  shani:     '#a855f7',  // purple-500
-  tian_wen:  '#facc15',  // yellow-400
+  apollo:    '#38bdf8',
+  celeste:   '#22c55e',
+  lance:     '#f97316',
+  shani:     '#a855f7',
+  tian_wen:  '#facc15',
 }
 
-// ── Prop types ────────────────────────────────────────────────────────────────
+// ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
   tileConfig: MapTileConfig
-  /** Index into tileConfig.layers — drives floor switching for Stella Montis. */
   activeLayerIndex: number
-  /** Called when tile loading fails; triggers static image fallback in parent. */
   onFallback: () => void
-  /**
-   * Quests to render as markers on the map.
-   * Only quests with non-null MetaForge position get a marker.
-   * Changes when the trader filter toggles — re-renders marker layer.
-   */
   quests: MergedQuest[]
-  /**
-   * RaiderForge map ID (e.g. "dam-battlegrounds").
-   * Used to look up per-map calibration in mapCalibration.ts.
-   */
   rfMapId: string
+  /** Called when a marker is clicked (opens panel) or map background is clicked (null = close). */
+  onQuestSelect: (quest: MergedQuest | null) => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback, quests, rfMapId }: Props) {
-  const containerRef  = useRef<HTMLDivElement>(null)
-  const mapRef        = useRef<any>(null)
-  const layerRef      = useRef<any>(null)
-  /** Cached Leaflet instance — available after async init, needed for marker updates */
-  const LRef          = useRef<any>(null)
-  /** LayerGroup holding all quest markers — cleared + repopulated on filter change */
+export default function MapTileViewer({
+  tileConfig,
+  activeLayerIndex,
+  onFallback,
+  quests,
+  rfMapId,
+  onQuestSelect,
+}: Props) {
+  const containerRef   = useRef<HTMLDivElement>(null)
+  const mapRef         = useRef<any>(null)
+  const layerRef       = useRef<any>(null)
+  const LRef           = useRef<any>(null)
   const markerLayerRef = useRef<any>(null)
+
+  // Keep a stable ref to onQuestSelect so marker click closures always call
+  // the latest version without re-creating markers on every render.
+  const onQuestSelectRef = useRef(onQuestSelect)
+  useEffect(() => { onQuestSelectRef.current = onQuestSelect })
 
   // --- Initialise Leaflet map on mount ---
   useEffect(() => {
@@ -103,7 +95,6 @@ export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback
 
     ;(async () => {
       try {
-        // Dynamic import: Leaflet accesses window/document at module level
         const L = (await import('leaflet')).default
 
         if (cancelled || !containerRef.current || mapRef.current) return
@@ -117,19 +108,10 @@ export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback
           maxZoom,
           minZoom,
           zoomControl: true,
-          // Attribution is shown in the RaiderForge footer ("Data provided by ardb.app")
           attributionControl: false,
-          // Prevent panning beyond map edges
           maxBoundsViscosity: 1.0,
         })
 
-        // --- Bounds setup ---
-        // map.unproject([px_x, px_y], zoom) converts pixel coordinates at a specific zoom
-        // level into CRS.Simple coordinates. Using the image's pixel dimensions at
-        // maxNativeZoom as our reference, this correctly places the tile layer on the canvas.
-        //
-        // sw = bottom-left pixel [0, mapPixelSize]  → image bottom-left corner
-        // ne = top-right pixel   [mapPixelSize, 0]  → image top-right corner
         const sw = map.unproject([0, mapPixelSize], maxNativeZoom)
         const ne = map.unproject([mapPixelSize, 0], maxNativeZoom)
         const bounds = L.latLngBounds(sw, ne)
@@ -139,8 +121,6 @@ export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback
 
         const tileLayer = createTileLayer(L, tileUrl, tileSize, maxNativeZoom, maxZoom, minZoom, bounds)
 
-        // Graceful fallback: accumulate tile errors; if 4+ fail, the CDN or
-        // tile set is unavailable and we surface the static image instead.
         let tileErrorCount = 0
         tileLayer.on('tileerror', () => {
           tileErrorCount++
@@ -148,13 +128,16 @@ export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback
         })
 
         tileLayer.addTo(map)
-        mapRef.current = map
+        mapRef.current  = map
         layerRef.current = tileLayer
-        LRef.current = L
+        LRef.current    = L
 
-        // Render quest markers with the initial quests prop + per-map calibration
+        // Clicking the map background closes the quest detail panel
+        map.on('click', () => onQuestSelectRef.current(null))
+
+        // Initial marker render
         const { worldBounds } = getCalibrationForMap(rfMapId)
-        renderQuestMarkers(L, map, markerLayerRef, quests, tileConfig, worldBounds)
+        renderQuestMarkers(L, map, markerLayerRef, quests, tileConfig, worldBounds, onQuestSelectRef)
 
       } catch {
         if (!cancelled) onFallback()
@@ -163,20 +146,15 @@ export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback
 
     return () => {
       cancelled = true
-      if (map) {
-        map.remove()
-        map = null
-      }
-      mapRef.current    = null
-      layerRef.current  = null
-      LRef.current      = null
+      if (map) { map.remove(); map = null }
+      mapRef.current       = null
+      layerRef.current     = null
+      LRef.current         = null
       markerLayerRef.current = null
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps — intentionally run once
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // --- Handle floor switching (Stella Montis) ---
-  // Swaps the active tile layer when activeLayerIndex changes.
-  // Markers are on a separate layerGroup and survive the tile layer swap.
+  // --- Floor switching (Stella Montis) ---
   useEffect(() => {
     if (!mapRef.current || !layerRef.current) return
 
@@ -188,12 +166,10 @@ export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback
       const { tileUrl, maxNativeZoom } = newLayerDef
       const { tileSize, mapPixelSize, maxZoom, minZoom } = tileConfig
 
-      // Recalculate bounds for the new layer (maxNativeZoom may differ between layers)
       const sw = mapRef.current.unproject([0, mapPixelSize], maxNativeZoom)
       const ne = mapRef.current.unproject([mapPixelSize, 0], maxNativeZoom)
       const bounds = L.latLngBounds(sw, ne)
 
-      // Remove old layer, add new one
       layerRef.current.remove()
       const newLayer = createTileLayer(L, tileUrl, tileSize, maxNativeZoom, maxZoom, minZoom, bounds)
       newLayer.addTo(mapRef.current)
@@ -201,18 +177,14 @@ export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback
     })()
   }, [activeLayerIndex]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // --- Re-render quest markers when trader filter changes ---
-  // quests prop is filtered in MapImageDisplay before being passed here.
-  // This effect fires whenever the filtered set changes.
+  // --- Re-render markers when trader filter changes ---
   useEffect(() => {
     if (!mapRef.current || !LRef.current) return
     const { worldBounds } = getCalibrationForMap(rfMapId)
-    renderQuestMarkers(LRef.current, mapRef.current, markerLayerRef, quests, tileConfig, worldBounds)
+    renderQuestMarkers(LRef.current, mapRef.current, markerLayerRef, quests, tileConfig, worldBounds, onQuestSelectRef)
   }, [quests]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    // Explicit pixel height is required — Leaflet needs a non-zero container height to initialise.
-    // 520px matches the max-h-[520px] used by the static image fallback in MapImageDisplay.
     <div
       ref={containerRef}
       className="w-full"
@@ -223,10 +195,6 @@ export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback
 
 // ── Tile layer factory ────────────────────────────────────────────────────────
 
-/**
- * Builds a Leaflet TileLayer with shared options.
- * Extracted to avoid duplication between init and floor-switch code paths.
- */
 function createTileLayer(
   L: any,
   tileUrl: string,
@@ -238,25 +206,24 @@ function createTileLayer(
 ) {
   return L.tileLayer(tileUrl, {
     tileSize,
-    maxNativeZoom, // Leaflet upscales above this zoom level
+    maxNativeZoom,
     maxZoom,
     minZoom,
     noWrap: true,
     bounds,
-    // errorTileUrl intentionally omitted — we count errors and trigger onFallback() instead
   })
 }
 
 // ── Quest marker rendering ────────────────────────────────────────────────────
 
 /**
- * Clear and re-populate the marker layer group with the given quests.
+ * Clear + repopulate the marker LayerGroup.
  *
- * Uses MetaForge position coordinates → mfPositionToPixels(worldBounds) → map.unproject()
- * to place markers at the correct CRS.Simple LatLng positions.
- *
- * worldBounds comes from getCalibrationForMap() in mapCalibration.ts.
- * Quests with null positions are silently skipped (majority of ARDB-only quests).
+ * Each marker:
+ *   - divIcon: colored dot in trader accent color
+ *   - hover tooltip: quest name
+ *   - click: calls onQuestSelectRef.current(quest)
+ *             + L.DomEvent.stopPropagation to prevent map click from firing
  */
 function renderQuestMarkers(
   L: any,
@@ -265,16 +232,14 @@ function renderQuestMarkers(
   quests: MergedQuest[],
   tileConfig: MapTileConfig,
   worldBounds: WorldBounds,
+  onQuestSelectRef: React.MutableRefObject<(quest: MergedQuest | null) => void>,
 ) {
-  // Create the layer group on first call; clear it on subsequent calls
   if (!markerLayerRef.current) {
     markerLayerRef.current = L.layerGroup().addTo(map)
   } else {
     markerLayerRef.current.clearLayers()
   }
 
-  // Use layers[0].maxNativeZoom as the reference zoom for coord transform.
-  // Quest positions are in a single 2D plane — not floor-specific.
   const maxNativeZoom = tileConfig.layers[0].maxNativeZoom
 
   for (const quest of quests) {
@@ -289,68 +254,40 @@ function renderQuestMarkers(
     const icon = L.divIcon({
       className: '',
       html: buildMarkerHtml(color),
-      iconSize:    [16, 16],
-      iconAnchor:  [8, 8],
-      popupAnchor: [0, -12],
+      iconSize:    [14, 14],
+      iconAnchor:  [7, 7],
+      tooltipAnchor: [8, 0],
     })
 
-    L.marker(latlng, { icon })
-      .bindPopup(buildPopupHtml(quest), {
-        maxWidth: 240,
-        className: 'rf-map-popup',
-      })
-      .addTo(markerLayerRef.current)
+    const marker = L.marker(latlng, { icon })
+
+    // Hover: show quest name
+    marker.bindTooltip(quest.name, {
+      direction:   'right',
+      offset:      [6, 0],
+      opacity:     0.9,
+      className:   'rf-map-tooltip',
+    })
+
+    // Click: open detail panel, stop event from reaching map background handler
+    marker.on('click', (e: any) => {
+      L.DomEvent.stopPropagation(e)
+      onQuestSelectRef.current(quest)
+    })
+
+    markerLayerRef.current.addLayer(marker)
   }
 }
 
-/** Circular glow dot in the trader's accent color. */
 function buildMarkerHtml(color: string): string {
   return `<div style="
     width:12px;
     height:12px;
     background:${color};
-    border:2px solid rgba(255,255,255,0.45);
+    border:2px solid rgba(255,255,255,0.50);
     border-radius:50%;
-    box-shadow:0 0 8px ${color}90, 0 0 3px rgba(0,0,0,0.7);
+    box-shadow:0 0 7px ${color}85, 0 1px 3px rgba(0,0,0,0.65);
     cursor:pointer;
-  "></div>`
-}
-
-/** Dark-themed popup HTML for a quest marker. */
-function buildPopupHtml(quest: MergedQuest): string {
-  const visibleSteps = quest.steps.slice(0, 4)
-  const extraSteps   = quest.steps.length - visibleSteps.length
-
-  const stepRows = visibleSteps
-    .map(
-      s => `<div style="display:flex;align-items:flex-start;gap:5px;font-size:11px;
-                        padding:3px 0;border-top:1px solid rgba(255,255,255,0.06)">
-              <span style="opacity:0.35;flex-shrink:0;margin-top:1px">›</span>
-              <span style="line-height:1.4">${s.title}${s.amount ? ` ×${s.amount}` : ''}</span>
-            </div>`,
-    )
-    .join('')
-
-  const requiredRow = quest.requiredItems.length > 0
-    ? `<div style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,0.08);
-                   font-size:10px;opacity:0.4">
-         ${quest.requiredItems.length} required item${quest.requiredItems.length !== 1 ? 's' : ''}
-       </div>`
-    : ''
-
-  const moreRow = extraSteps > 0
-    ? `<div style="font-size:10px;opacity:0.3;margin-top:3px">+${extraSteps} more steps</div>`
-    : ''
-
-  return `
-    <div style="min-width:180px;font-family:inherit">
-      <div style="font-weight:700;font-size:13px;line-height:1.3;margin-bottom:2px">
-        ${quest.name}
-      </div>
-      <div style="font-size:11px;opacity:0.5;margin-bottom:7px">${quest.traderName}</div>
-      ${stepRows}
-      ${moreRow}
-      ${requiredRow}
-    </div>
-  `
+    transition:transform 0.1s;
+  " onmouseenter="this.style.transform='scale(1.4)'" onmouseleave="this.style.transform='scale(1)'"></div>`
 }

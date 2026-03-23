@@ -4,6 +4,7 @@ import LivePanel from '../components/LivePanel'
 import { fetchMfEventsSchedule } from '../api/metaforgeService'
 import { getActiveConditionsForMap } from '../lib/events/conditions'
 import { MAPS } from '../data/maps'
+import homeVideo from '../assets/images/ARC_Home.mp4'
 // ── Event Status Line (Server Component) ─────────────────────────────────────
 // Fetches live events from MetaForge and shows all active events across maps.
 // Renders nothing if no events are active or if the fetch fails.
@@ -168,8 +169,9 @@ export default function Home() {
             autoPlay muted loop playsInline
             poster="/images/header/ARC_Header.jpeg"
             className="absolute inset-0 h-full w-full object-cover"
-            src="/images/ARC_Home.mp4"
-          />
+          >
+            <source src={homeVideo} type="video/mp4" />
+          </video>
           {/* Gradient: dark at top for nav clarity, mid-dark for text, rf-bg at bottom */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/95 via-black/60 to-rf-bg" />
           {/* Subtle red atmospheric glow at bottom */}
