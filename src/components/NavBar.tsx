@@ -144,7 +144,7 @@ export default function NavBar() {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => signIn()}
-                                className="px-4 py-2 text-xs font-medium text-white/75 hover:text-white transition-colors"
+                                className="rounded-md bg-[#22c55e] px-4 py-2 text-xs font-semibold text-white shadow-md shadow-[#22c55e]/40 transition-all hover:bg-[#16a34a] hover:shadow-[#22c55e]/20"
                             >
                                 Sign In
                             </button>
