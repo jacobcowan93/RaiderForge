@@ -192,8 +192,9 @@ export default function Home() {
 
             {/* Tagline */}
             <p className="text-shadow-hero mt-6 max-w-xl text-sm sm:text-base text-white/75 leading-relaxed">
-              Live map intelligence. Tactical loadout planning. Blueprint progression. Secure trading.
-              Built for Raiders who compete.
+              Welcome to RaiderForge — your ultimate ARC Raiders command center.
+              <br className="hidden sm:block" />
+              Track blueprints in real time, sync your raider profile, explore interactive maps, dominate trials, and buy, sell, or trade with verified players in a secure, reputation-driven marketplace.
             </p>
 
             {/* Live event status — server-fetched from MetaForge, renders nothing if no events */}

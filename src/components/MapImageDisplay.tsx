@@ -50,6 +50,14 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
     }
   }, [activeTraders, selectedQuest])
 
+  // ESC closes the quest detail panel
+  useEffect(() => {
+    if (!selectedQuest) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedQuest(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedQuest])
+
   /** Quests for active traders — drives MapTileViewer re-render and filter count. */
   const filteredQuests = useMemo(
     () => mapQuests.filter(q => activeTraders.has(q.traderId)),
