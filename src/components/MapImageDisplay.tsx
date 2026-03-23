@@ -6,6 +6,7 @@ import type { MapMeta } from '../data/maps'
 import type { MergedQuest } from '../types/quests'
 import type { ContainerMarker, MapLayerType } from '../types/mapLayers'
 import { getCalibrationForMap } from '../data/mapCalibration'
+import { CONTAINERS_BY_MAP } from '../data/containers'
 import MapQuestFilter from './MapQuestFilter'
 import QuestDetailPanel from './QuestDetailPanel'
 
@@ -88,15 +89,8 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
     [visibleQuestPool, activeTraders],
   )
 
-  /**
-   * All container markers for this map.
-   * Empty until real positional data is sourced — no fake coordinates.
-   * Gated by activeLayers: empty array passed when container layer is off.
-   *
-   * To populate: add ContainerMarker[] entries here keyed by map.id,
-   * then replace the empty array with the relevant entries.
-   */
-  const ALL_CONTAINERS: ContainerMarker[] = []
+  /** All curated container markers for this map. Empty for maps with no data yet. */
+  const ALL_CONTAINERS: ContainerMarker[] = CONTAINERS_BY_MAP[map.id] ?? []
   const visibleContainers: ContainerMarker[] = activeLayers.has('containers')
     ? ALL_CONTAINERS
     : []

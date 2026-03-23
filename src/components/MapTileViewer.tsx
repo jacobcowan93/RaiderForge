@@ -413,7 +413,19 @@ function renderContainerMarkers(
   const maxNativeZoom = tileConfig.layers[0].maxNativeZoom
 
   for (const container of containers) {
-    const pixels = mfPositionToPixels(container.position, tileConfig, worldBounds)
+    let pixels: [number, number] | null
+
+    if (container.normalized) {
+      // Manually curated [0, 1] tile-fraction → pixel space (top-left origin)
+      pixels = [
+        container.position.x * tileConfig.mapPixelSize,
+        container.position.y * tileConfig.mapPixelSize,
+      ]
+    } else {
+      // MetaForge world-space → pixel space via calibrated bounds
+      pixels = mfPositionToPixels(container.position, tileConfig, worldBounds)
+    }
+
     if (!pixels) continue
 
     const latlng = map.unproject(pixels, maxNativeZoom)

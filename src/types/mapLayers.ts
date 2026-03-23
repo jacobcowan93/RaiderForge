@@ -33,6 +33,9 @@ export type ContainerType =
   | 'safe'
   | 'duffle_bag'
   | 'backpack'
+  | 'raider_cache'
+  | 'weapon_case'
+  | 'medical_bag'
 
 export type ContainerTypeMeta = {
   label: string
@@ -48,6 +51,9 @@ export const CONTAINER_TYPE_META: Record<ContainerType, ContainerTypeMeta> = {
   safe:          { label: 'Safe',          color: '#38bdf8' },
   duffle_bag:    { label: 'Duffle Bag',    color: '#a855f7' },
   backpack:      { label: 'Backpack',      color: '#22c55e' },
+  raider_cache:  { label: 'Raider Cache',  color: '#ef4444' },
+  weapon_case:   { label: 'Weapon Case',   color: '#fb923c' },
+  medical_bag:   { label: 'Medical Bag',   color: '#34d399' },
 }
 
 // ── Container marker ──────────────────────────────────────────────────────────
@@ -66,8 +72,23 @@ export const CONTAINER_TYPE_META: Record<ContainerType, ContainerTypeMeta> = {
 export type ContainerMarker = {
   id:            string
   containerType: ContainerType
-  /** MetaForge world-space position — same coordinate system as MfQuestRaw positions. */
+  /**
+   * Marker position.
+   *
+   * Default (no `normalized` flag): MetaForge world-space coordinates,
+   * same system as MfQuestRaw positions. Converted via mfPositionToPixels().
+   *
+   * With `normalized: true`: x and y are fractions of the tile image [0, 1]
+   * measured from the top-left corner. Used for manually curated data that
+   * doesn't originate from MetaForge. The renderer maps these directly to
+   * pixel space: [x * mapPixelSize, y * mapPixelSize].
+   */
   position:      { x: number; y: number }
+  /**
+   * When true, position is a [0, 1] normalized tile fraction (top-left origin).
+   * Omit for MetaForge world-space coordinates.
+   */
+  normalized?:   true
   /** Optional display label, e.g. room name or landmark reference. */
   label?:        string
 }
