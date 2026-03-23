@@ -138,3 +138,14 @@ body {
 .rf-panel-enter {
     animation: rf-slide-in-right 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* ── Container info badge — scale + fade in ────────────────────────────────── */
+/* Uses scale rather than translate so it doesn't conflict with the parent's    */
+/* left-1/2 -translate-x-1/2 centering transform.                              */
+@keyframes rf-badge-enter {
+    from { opacity: 0; scale: 0.92; }
+    to   { opacity: 1; scale: 1; }
+}
+.rf-badge-enter {
+    animation: rf-badge-enter 0.15s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

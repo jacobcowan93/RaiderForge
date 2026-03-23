@@ -29,12 +29,14 @@
  *    Rendered as diamond-shaped (rotated-square) divIcons, color-coded by
  *    container type via CONTAINER_TYPE_META. Accepts ContainerMarker[] — when
  *    the array is empty, the container layer renders nothing. No fake data.
- *    Hover shows a Leaflet tooltip with the container label or type name.
+ *    Hover shows a Leaflet tooltip with the container label and type name.
+ *    Clicking a container calls onContainerSelect(container); clicking the
+ *    selected container again deselects it. Map background click deselects all.
  *
  * 5. Marker re-render:
  *    markerLayerRef (quests) and containerLayerRef each hold a Leaflet LayerGroup.
  *    Quest effect re-runs on [quests, selectedQuestName].
- *    Container effect re-runs on [containers].
+ *    Container effect re-runs on [containers, selectedContainerId].
  *    Per-map calibration worldBounds is looked up via getCalibrationForMap(rfMapId).
  *
  * 6. Graceful fallback:
@@ -84,6 +86,10 @@ interface Props {
    * Gated by parent (MapImageDisplay) based on activeLayers state.
    */
   containers?: ContainerMarker[]
+  /** ID of the currently selected container, or null. Drives selected-marker highlight. */
+  selectedContainerId?: string | null
+  /** Called when a container marker is clicked or map background deselects. */
+  onContainerSelect?: (container: ContainerMarker | null) => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -98,6 +104,8 @@ export default function MapTileViewer({
   rfMapId,
   onQuestSelect,
   containers = [],
+  selectedContainerId = null,
+  onContainerSelect,
 }: Props) {
   const containerRef      = useRef<HTMLDivElement>(null)
   const mapRef            = useRef<any>(null)
@@ -110,6 +118,9 @@ export default function MapTileViewer({
   // without re-creating all markers on every render.
   const onQuestSelectRef = useRef(onQuestSelect)
   useEffect(() => { onQuestSelectRef.current = onQuestSelect })
+
+  const onContainerSelectRef = useRef(onContainerSelect)
+  useEffect(() => { onContainerSelectRef.current = onContainerSelect })
 
   const allQuestsRef = useRef(allQuests)
   useEffect(() => { allQuestsRef.current = allQuests })
@@ -160,8 +171,11 @@ export default function MapTileViewer({
         layerRef.current = tileLayer
         LRef.current    = L
 
-        // Clicking the map background closes the quest detail panel
-        map.on('click', () => onQuestSelectRef.current(null))
+        // Clicking the map background closes both the quest panel and container selection
+        map.on('click', () => {
+          onQuestSelectRef.current(null)
+          onContainerSelectRef.current?.(null)
+        })
 
         const { worldBounds } = getCalibrationForMap(rfMapId)
 
@@ -173,7 +187,11 @@ export default function MapTileViewer({
         )
 
         // Initial container marker render (empty until real data is available)
-        renderContainerMarkers(L, map, containerLayerRef, containers, tileConfig, worldBounds)
+        renderContainerMarkers(
+          L, map, containerLayerRef,
+          containers, tileConfig, worldBounds,
+          selectedContainerId, onContainerSelectRef,
+        )
 
       } catch {
         if (!cancelled) onFallback()
@@ -225,15 +243,16 @@ export default function MapTileViewer({
     )
   }, [quests, selectedQuestName]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // --- Re-render container markers when container data changes ---
+  // --- Re-render container markers when data or selection changes ---
   useEffect(() => {
     if (!mapRef.current || !LRef.current) return
     const { worldBounds } = getCalibrationForMap(rfMapId)
     renderContainerMarkers(
       LRef.current, mapRef.current, containerLayerRef,
       containers, tileConfig, worldBounds,
+      selectedContainerId, onContainerSelectRef,
     )
-  }, [containers]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [containers, selectedContainerId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
@@ -393,6 +412,10 @@ function buildQuestMarkerHtml(color: string, active: boolean, selected: boolean)
  * Markers are diamond-shaped (rotated square) divIcons, color-coded by
  * container type. When containers[] is empty, the layer renders nothing —
  * no placeholder or fake data is used.
+ *
+ * Selected container renders with a white ring + stronger glow (16px).
+ * Normal containers render at 11px with hover scale effect.
+ * Tooltip shows: "Label · Type Name" (or just "Type Name" if no label).
  */
 function renderContainerMarkers(
   L: any,
@@ -401,6 +424,8 @@ function renderContainerMarkers(
   containers: ContainerMarker[],
   tileConfig: MapTileConfig,
   worldBounds: WorldBounds,
+  selectedContainerId: string | null,
+  onContainerSelectRef: React.MutableRefObject<((c: ContainerMarker | null) => void) | undefined>,
 ) {
   if (!containerLayerRef.current) {
     containerLayerRef.current = L.layerGroup().addTo(map)
@@ -428,41 +453,73 @@ function renderContainerMarkers(
 
     if (!pixels) continue
 
-    const latlng = map.unproject(pixels, maxNativeZoom)
-    const meta   = CONTAINER_TYPE_META[container.containerType]
-    const label  = container.label ?? meta.label
+    const latlng     = map.unproject(pixels, maxNativeZoom)
+    const meta       = CONTAINER_TYPE_META[container.containerType]
+    const label      = container.label ?? meta.label
+    const isSelected = container.id === selectedContainerId
+
+    const markerSize   = isSelected ? 16 : 11
+    const markerAnchor = markerSize / 2
 
     const icon = L.divIcon({
       className:     '',
-      html:          buildContainerMarkerHtml(meta.color),
-      iconSize:      [12, 12],
-      iconAnchor:    [6, 6],
-      tooltipAnchor: [8, 0],
+      html:          buildContainerMarkerHtml(meta.color, isSelected),
+      iconSize:      [markerSize, markerSize],
+      iconAnchor:    [markerAnchor, markerAnchor],
+      tooltipAnchor: [markerAnchor + 4, 0],
     })
 
     const marker = L.marker(latlng, { icon })
 
-    marker.bindTooltip(label, {
+    // Tooltip: "East Ridge Cache · Raider Cache" or just "Raider Cache"
+    const tooltipText = container.label
+      ? `${container.label} · ${meta.label}`
+      : meta.label
+
+    marker.bindTooltip(tooltipText, {
       direction: 'right',
       offset:    [6, 0],
       opacity:   0.9,
       className: 'rf-map-tooltip',
     })
 
+    marker.on('click', (e: any) => {
+      L.DomEvent.stopPropagation(e)
+      // Toggle: click selected container deselects it
+      if (isSelected) {
+        onContainerSelectRef.current?.(null)
+      } else {
+        onContainerSelectRef.current?.(container)
+      }
+    })
+
     containerLayerRef.current.addLayer(marker)
   }
 }
 
-function buildContainerMarkerHtml(color: string): string {
-  // Diamond (rotated square) — visually distinct from circular quest markers
+function buildContainerMarkerHtml(color: string, selected: boolean): string {
+  if (selected) {
+    // Selected: larger, white ring, strong directional glow — mirrors quest selected state
+    return `<div style="
+      width:14px;
+      height:14px;
+      background:${color};
+      border:2.5px solid rgba(255,255,255,0.90);
+      transform:rotate(45deg);
+      box-shadow:0 0 12px ${color}, 0 0 22px ${color}55, 0 1px 4px rgba(0,0,0,0.7);
+      cursor:pointer;
+    "></div>`
+  }
+
+  // Normal: diamond with hover scale
   return `<div style="
-    width:9px;
-    height:9px;
+    width:11px;
+    height:11px;
     background:${color};
-    border:2px solid rgba(255,255,255,0.55);
+    border:1.5px solid rgba(255,255,255,0.55);
     transform:rotate(45deg);
-    box-shadow:0 0 7px ${color}85, 0 1px 3px rgba(0,0,0,0.65);
+    box-shadow:0 0 8px ${color}90, 0 1px 3px rgba(0,0,0,0.65);
     cursor:pointer;
-    transition:transform 0.1s;
-  " onmouseenter="this.style.transform='rotate(45deg) scale(1.4)'" onmouseleave="this.style.transform='rotate(45deg) scale(1)'"></div>`
+    transition:transform 0.12s ease;
+  " onmouseenter="this.style.transform='rotate(45deg) scale(1.55)'" onmouseleave="this.style.transform='rotate(45deg) scale(1)'"></div>`
 }
