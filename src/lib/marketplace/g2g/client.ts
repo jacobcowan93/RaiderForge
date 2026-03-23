@@ -49,7 +49,15 @@ export function createG2GApiClient(): G2GApiClient | null {
             pace(async () => {
                 const method = init.method ?? 'GET'
                 const path = init.path.startsWith('/') ? init.path : `/${init.path}`
-                const url = `${config.apiBaseUrl}${path}`
+
+                const search = new URLSearchParams()
+                if (init.query) {
+                    for (const [key, value] of Object.entries(init.query)) {
+                        if (value !== undefined) search.append(key, value)
+                    }
+                }
+                const qs = search.toString()
+                const url = `${config.apiBaseUrl}${path}${qs ? `?${qs}` : ''}`
 
                 const headers: Record<string, string> = {
                     ...init.headers
@@ -86,7 +94,10 @@ export function createG2GApiClient(): G2GApiClient | null {
 
                 if (!res.ok) {
                     const rid = isRecord(json) && typeof json.request_id === 'string' ? json.request_id : undefined
-                    const code = isRecord(json) && typeof json.code === 'string' ? json.code : undefined
+                    let code: string | undefined
+                    if (isRecord(json) && json.code !== undefined) {
+                        code = typeof json.code === 'string' || typeof json.code === 'number' ? String(json.code) : undefined
+                    }
                     throw new G2GResponseError(`G2G HTTP ${res.status}`, {
                         status: res.status,
                         requestId: rid,

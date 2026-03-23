@@ -12,8 +12,10 @@ export type G2GApiEnvelope<TPayload = unknown> = {
 
 export type G2GRequestInit = {
     method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
-    /** Path beginning with `/`, e.g. `/v2/...` (see Migrate To V2). */
+    /** Path beginning with `/`, e.g. `/v2/...` (see Migrate To V2). Signed without query string. */
     path: string
+    /** URL query parameters (GET). Omitted keys are not sent. */
+    query?: Record<string, string | undefined>
     /** Serialized JSON body for POST/PATCH/DELETE when applicable. */
     body?: unknown
     /** Optional override; default `application/json` when body is set. */
