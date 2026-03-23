@@ -49,6 +49,7 @@ import { useEffect, useRef } from 'react'
 import type { MapTileConfig } from '../data/maps'
 import type { MergedQuest } from '../types/quests'
 import { mfPositionToPixels } from '../lib/quests/questUtils'
+import { getCalibrationForMap, type WorldBounds } from '../data/mapCalibration'
 
 // ── Trader accent colors for map markers ──────────────────────────────────────
 // traderId values come from ardb.trader.id.toLowerCase() — ARDB uses underscores,
@@ -75,11 +76,16 @@ interface Props {
    * Changes when the trader filter toggles — re-renders marker layer.
    */
   quests: MergedQuest[]
+  /**
+   * RaiderForge map ID (e.g. "dam-battlegrounds").
+   * Used to look up per-map calibration in mapCalibration.ts.
+   */
+  rfMapId: string
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback, quests }: Props) {
+export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback, quests, rfMapId }: Props) {
   const containerRef  = useRef<HTMLDivElement>(null)
   const mapRef        = useRef<any>(null)
   const layerRef      = useRef<any>(null)
@@ -146,8 +152,9 @@ export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback
         layerRef.current = tileLayer
         LRef.current = L
 
-        // Render quest markers with the initial quests prop
-        renderQuestMarkers(L, map, markerLayerRef, quests, tileConfig)
+        // Render quest markers with the initial quests prop + per-map calibration
+        const { worldBounds } = getCalibrationForMap(rfMapId)
+        renderQuestMarkers(L, map, markerLayerRef, quests, tileConfig, worldBounds)
 
       } catch {
         if (!cancelled) onFallback()
@@ -199,7 +206,8 @@ export default function MapTileViewer({ tileConfig, activeLayerIndex, onFallback
   // This effect fires whenever the filtered set changes.
   useEffect(() => {
     if (!mapRef.current || !LRef.current) return
-    renderQuestMarkers(LRef.current, mapRef.current, markerLayerRef, quests, tileConfig)
+    const { worldBounds } = getCalibrationForMap(rfMapId)
+    renderQuestMarkers(LRef.current, mapRef.current, markerLayerRef, quests, tileConfig, worldBounds)
   }, [quests]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -244,9 +252,10 @@ function createTileLayer(
 /**
  * Clear and re-populate the marker layer group with the given quests.
  *
- * Uses MetaForge position coordinates → mfPositionToPixels() → map.unproject()
+ * Uses MetaForge position coordinates → mfPositionToPixels(worldBounds) → map.unproject()
  * to place markers at the correct CRS.Simple LatLng positions.
  *
+ * worldBounds comes from getCalibrationForMap() in mapCalibration.ts.
  * Quests with null positions are silently skipped (majority of ARDB-only quests).
  */
 function renderQuestMarkers(
@@ -255,6 +264,7 @@ function renderQuestMarkers(
   markerLayerRef: React.MutableRefObject<any>,
   quests: MergedQuest[],
   tileConfig: MapTileConfig,
+  worldBounds: WorldBounds,
 ) {
   // Create the layer group on first call; clear it on subsequent calls
   if (!markerLayerRef.current) {
@@ -270,7 +280,7 @@ function renderQuestMarkers(
   for (const quest of quests) {
     if (!quest.position) continue
 
-    const pixels = mfPositionToPixels(quest.position, tileConfig)
+    const pixels = mfPositionToPixels(quest.position, tileConfig, worldBounds)
     if (!pixels) continue
 
     const latlng = map.unproject(pixels, maxNativeZoom)

@@ -35,32 +35,14 @@
 import type { MfQuestRaw, ArdbQuestRaw, MergedQuest } from '../../types/quests'
 import { ARDB_STATIC } from '../../api/ardbService'
 import type { MapTileConfig } from '../../data/maps'
+import { type WorldBounds, GLOBAL_WORLD_BOUNDS } from '../../data/mapCalibration'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 /**
- * Empirically-observed MetaForge game-world coordinate bounds.
- * Derived from live API data (40 quests, verified 2026-03).
- *
- * Values are padded by ~10% beyond the observed min/max to avoid clipping
- * quests at map edges if new quests are added near the extremes.
- *
- * Calibration: cross-reference known in-game locations with MF position values
- * to verify accuracy. Adjust if markers appear systematically offset.
- *
- * Observed:  x ∈ [-960, 1509],   y ∈ [319, 7664]
- * Padded:    x ∈ [-1100, 1700],  y ∈ [0, 8400]
- */
-export const MF_WORLD_BOUNDS = {
-  xMin: -1100,
-  xMax:  1700,
-  yMin:     0,
-  yMax:  8400,
-} as const
-
-/**
- * @deprecated Use MF_WORLD_BOUNDS. MF_QUEST_COORD_MAX = 1024 was incorrect —
- * live API shows MetaForge uses a game-world coordinate space, not a 0-1024 space.
+ * @deprecated Use GLOBAL_WORLD_BOUNDS from src/data/mapCalibration.ts.
+ * MF_QUEST_COORD_MAX = 1024 was incorrect — live API shows MetaForge uses a
+ * game-world coordinate space, not a 0-1024 space.
  * Kept for backward compatibility if any external code references it.
  */
 export const MF_QUEST_COORD_MAX = 1024
@@ -185,37 +167,47 @@ export function filterQuestsByMap(quests: MergedQuest[], rfMapId: string): Merge
  * Convert a MetaForge quest position to Leaflet pixel coordinates
  * for use with map.unproject().
  *
- * MetaForge positions are in a game-world coordinate space (see MF_WORLD_BOUNDS).
- * We normalise via min-max scaling to [0, mapPixelSize].
+ * MetaForge positions are in a game-world coordinate space.
+ * We normalise via min-max scaling to [0, mapPixelSize] using the
+ * provided worldBounds (from mapCalibration.ts). Falls back to
+ * GLOBAL_WORLD_BOUNDS if no per-map bounds are supplied.
  *
  * CALIBRATION NOTE:
- *   The world bounds in MF_WORLD_BOUNDS are empirically derived from the
- *   distribution of live API position values. Marker placement is approximate
+ *   worldBounds is empirically derived. Marker placement is approximate
  *   until cross-referenced against known in-game locations.
+ *   See src/data/mapCalibration.ts for per-map calibration status and
+ *   instructions for deriving verified bounds.
  *
- *   Some quests appear on multiple maps with a single shared position — this
- *   suggests the coordinate space may be global (not per-map), which means
- *   the same position renders at the same relative location on every map it
- *   appears on. This is expected behaviour given current data.
+ *   Some quests appear on multiple maps with a single shared position —
+ *   the coordinate space appears to be global (not per-map-zone).
+ *   The same (x, y) therefore renders at the same relative position on
+ *   every map it appears on. This is expected given current MF data.
  *
- * Returns null if position is null or lies outside the padded world bounds.
+ * @param position    Raw MetaForge { x, y } world-space position, or null.
+ * @param tileConfig  Tile config for the target map (provides mapPixelSize).
+ * @param worldBounds Calibrated world bounds for this map. If omitted,
+ *                    GLOBAL_WORLD_BOUNDS is used as fallback.
+ *
+ * Returns null if position is null or lies outside the supplied bounds.
  */
 export function mfPositionToPixels(
   position: { x: number; y: number } | null,
   tileConfig: MapTileConfig,
+  worldBounds?: WorldBounds,
 ): [number, number] | null {
   if (!position) return null
 
-  const { xMin, xMax, yMin, yMax } = MF_WORLD_BOUNDS
+  const bounds = worldBounds ?? GLOBAL_WORLD_BOUNDS
+  const { xMin, xMax, yMin, yMax } = bounds
   const xRange = xMax - xMin
   const yRange = yMax - yMin
 
-  // Normalise to [0, 1] using observed world-space bounds
+  // Normalise to [0, 1] using provided world-space bounds
   const xNorm = (position.x - xMin) / xRange
   const yNorm = (position.y - yMin) / yRange
 
-  // Discard positions that fall outside the padded bounds (data anomaly or
-  // new content beyond the calibrated range — avoid off-map marker placement)
+  // Discard positions outside the calibrated bounds — data anomaly or
+  // new content beyond the current calibration range
   if (xNorm < 0 || xNorm > 1 || yNorm < 0 || yNorm > 1) {
     return null
   }

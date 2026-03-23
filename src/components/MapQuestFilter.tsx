@@ -10,6 +10,7 @@
  */
 
 import type { MergedQuest } from '../types/quests'
+import type { CalibrationStatus } from '../data/mapCalibration'
 
 interface Props {
   /** All quests for this map — used to build the trader list + counts. */
@@ -18,9 +19,17 @@ interface Props {
   activeTraders: Set<string>
   /** Called when a trader button is clicked — parent updates activeTraders. */
   onToggle: (traderId: string) => void
+  /**
+   * Calibration status for this map from mapCalibration.ts.
+   * Drives the "positions approximate" indicator.
+   * 'verified' → no indicator (positions are ground-truthed)
+   * 'approximate' → subtle tilde prefix on visible count
+   * 'uncalibrated' → note shown instead of count
+   */
+  calibrationStatus: CalibrationStatus
 }
 
-export default function MapQuestFilter({ quests, activeTraders, onToggle }: Props) {
+export default function MapQuestFilter({ quests, activeTraders, onToggle, calibrationStatus }: Props) {
   // Build unique trader list from quests on this map, preserving insertion order
   const traders = Array.from(
     quests.reduce<Map<string, { name: string; icon: string | null; count: number }>>(
@@ -80,9 +89,27 @@ export default function MapQuestFilter({ quests, activeTraders, onToggle }: Prop
         )
       })}
 
-      {/* Summary count */}
-      <span className="ml-auto text-[10px] text-white/15 flex-shrink-0">
-        {visibleCount} visible
+      {/* Visible count + calibration status indicator */}
+      <span className="ml-auto flex items-center gap-1.5 flex-shrink-0">
+        {calibrationStatus === 'approximate' && (
+          <span
+            title="Marker positions are approximate. MetaForge world-space coordinates have not been verified against in-game landmarks."
+            className="text-[9px] text-rf-yellow/40 border border-rf-yellow/15 rounded-full px-1.5 py-px cursor-help"
+          >
+            ~pos
+          </span>
+        )}
+        {calibrationStatus === 'uncalibrated' && (
+          <span
+            title="Marker positions are uncalibrated for this map."
+            className="text-[9px] text-white/25 border border-white/10 rounded-full px-1.5 py-px cursor-help"
+          >
+            unverified
+          </span>
+        )}
+        <span className="text-[10px] text-white/15">
+          {visibleCount} visible
+        </span>
       </span>
     </div>
   )

@@ -23,6 +23,7 @@ import { useState, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import type { MapMeta } from '../data/maps'
 import type { MergedQuest } from '../types/quests'
+import { getCalibrationForMap } from '../data/mapCalibration'
 import MapQuestFilter from './MapQuestFilter'
 
 // Dynamic import with SSR disabled: Leaflet uses window/document at runtime.
@@ -73,6 +74,10 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
   const isMultiFloor = map.mapType === 'multi-floor' && Array.isArray(map.floors) && map.floors.length > 0
   const hasQuests   = mapQuests.length > 0
 
+  // Look up the calibration status for this map — passed to MapQuestFilter for
+  // the "positions approximate" indicator, and to MapTileViewer for marker rendering.
+  const { status: calibrationStatus } = getCalibrationForMap(map.id)
+
   // Static fallback image path — tracks active floor for multi-floor maps
   const fallbackSrc = isMultiFloor
     ? (map.floors![activeFloor]?.image ?? '/images/ARC_Maps.PNG')
@@ -110,6 +115,7 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
           quests={mapQuests}
           activeTraders={activeTraders}
           onToggle={toggleTrader}
+          calibrationStatus={calibrationStatus}
         />
       )}
 
@@ -123,6 +129,7 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
             activeLayerIndex={activeFloor}
             onFallback={handleTileFallback}
             quests={filteredQuests}
+            rfMapId={map.id}
           />
         ) : (
           // Static fallback: original map images, maintained until tiles are verified
