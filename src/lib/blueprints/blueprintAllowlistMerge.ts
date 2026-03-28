@@ -22,6 +22,8 @@ export function placeholderBlueprintFromAllowlistEntry(entry: BlueprintAllowlist
         imageUrl: null,
         sourceImageUrls: [],
         craftedItemIconUrl: null,
+        craftingIngredients: [],
+        ardbUpdatedAt: null,
     }
 }
 

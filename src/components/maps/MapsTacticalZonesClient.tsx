@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
+import { getEventDescription } from '@/lib/events/eventsConfig'
 
 // ── DTO ────────────────────────────────────────────────────────────────────────
 // Server component (page.tsx) serialises MapMeta + live event data into this
@@ -172,7 +173,8 @@ export function MapsTacticalZonesClient({ zones }: Props) {
                                         {map.conditionBadges.map((c) => (
                                             <span
                                                 key={c.name}
-                                                className="inline-flex items-center gap-1.5
+                                                title={getEventDescription(c.name)}
+                                                className="inline-flex items-center gap-1.5 cursor-help
                                                            text-[11px] font-semibold rounded-full px-2.5 py-1 border"
                                                 style={{
                                                     backgroundColor: c.bg,

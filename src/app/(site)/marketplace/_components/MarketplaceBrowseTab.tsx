@@ -7,9 +7,11 @@ import type { MarketplaceCatalogItem } from '@/lib/marketplace/catalog-types'
 import { ARDB_CATALOG_ATTRIBUTION } from '@/lib/marketplace/catalog-types'
 
 import { inputCls } from '../_lib/marketplace-constants'
-import { ErrorMsg, Spinner } from './MarketplaceShared'
+import { ErrorMsg } from './MarketplaceShared'
 import { MarketplaceEmptyState } from './MarketplaceEmptyState'
 import { MarketplaceCatalogItemCard } from './MarketplaceCatalogItemCard'
+
+/** Catalog browse: name search + item type filter (distinct ARDB `itemType`), not blueprint spreadsheet category. */
 
 type CatalogResponse = {
     syncedAt: string | null
@@ -134,26 +136,45 @@ export function MarketplaceBrowseTab() {
             </div>
 
             {loading ? (
-                <div className="flex items-center justify-center py-16 gap-2.5 text-rf-textSoft">
-                    <Spinner size={20} />
-                    <span className="text-sm">Loading catalog…</span>
+                <div className="rf-card rounded-xl px-4 py-8 overflow-hidden border border-white/[0.06]" aria-busy="true">
+                    <div className="animate-pulse space-y-3">
+                        <div className="h-6 bg-white/10 rounded w-48" />
+                        <div className="h-3 bg-white/[0.06] rounded w-full max-w-md" />
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-3.5 pt-3">
+                            {Array.from({ length: 12 }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="rf-card rounded-lg border border-white/5 overflow-hidden flex flex-col gap-1.5 p-2"
+                                >
+                                    <div className="h-2.5 bg-white/[0.08] rounded w-[85%]" />
+                                    <div className="h-2 bg-white/[0.05] rounded w-1/2" />
+                                    <div className="aspect-[5/4] rounded-md bg-white/[0.06] border border-white/[0.04]" />
+                                    <div className="h-2 bg-white/[0.06] rounded w-full" />
+                                    <div className="h-7 rounded-md bg-white/[0.07] border border-white/5" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             ) : error ? (
                 <div className="rf-card rounded-xl px-6 py-10 text-center border border-rf-red/25">
                     <ErrorMsg msg={error} />
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="rf-card rounded-xl px-6 py-10 text-center border border-white/[0.06]">
+                <div className="rf-card rounded-xl px-6 py-8 text-center border border-white/[0.06] border-l-rf-red/20">
                     <MarketplaceEmptyState
-                        title="No items match your filters"
+                        compact
+                        title={items.length === 0 ? 'Catalog empty' : 'No matches for this sweep'}
                         description={
-                            search || typeFilter !== '__all__'
-                                ? 'Try a different search or set type to “All types”.'
-                                : 'The catalog is empty. Check back after the next server sync.'
+                            items.length === 0
+                                ? 'Nothing is synced on the server yet. Try again after the next catalog refresh, or reload the page.'
+                                : search || typeFilter !== '__all__'
+                                  ? 'Your search or type filter excluded every item. Widen the name filter, set type to “All types”, or reset to repopulate the grid from the full ARDB-backed index.'
+                                  : 'Unexpected empty result set. Reload the page or try again shortly.'
                         }
                     />
-                    {(search || typeFilter !== '__all__') && (
-                        <div className="mt-4 flex flex-wrap justify-center gap-2">
+                    {items.length > 0 && (search || typeFilter !== '__all__') ? (
+                        <div className="mt-2 flex flex-wrap justify-center gap-2">
                             <button
                                 type="button"
                                 className={btnReset}
@@ -165,14 +186,23 @@ export function MarketplaceBrowseTab() {
                                 Reset filters
                             </button>
                         </div>
-                    )}
+                    ) : null}
                 </div>
             ) : (
                 <>
-                    <p className="text-xs text-rf-textSoft/80">
-                        Showing <strong className="text-rf-text">{filtered.length}</strong> of{' '}
-                        <strong className="text-rf-text">{items.length}</strong> items
-                    </p>
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-rf-textSoft/80">
+                            <span className="text-xl sm:text-2xl font-black tabular-nums text-rf-red tracking-tight mr-2 align-middle">
+                                {filtered.length}
+                            </span>
+                            <span className="align-middle">items found</span>
+                        </p>
+                        {filtered.length < items.length ? (
+                            <p className="text-[11px] text-rf-textSoft/55 tabular-nums font-medium">
+                                {items.length} total in catalog
+                            </p>
+                        ) : null}
+                    </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-3.5 justify-items-stretch">
                         {filtered.map((it) => (
                             <MarketplaceCatalogItemCard key={it.ardbId} item={it} />

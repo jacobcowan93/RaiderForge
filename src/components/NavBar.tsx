@@ -6,11 +6,14 @@ import { usePathname } from 'next/navigation'
 import React, { useState, useEffect, useRef } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
 
-const navLinks = [
+import { PageMaturityBadge } from '@/components/PageMaturityBadge'
+
+const navLinks: { href: string; label: string; badge?: 'beta' }[] = [
     { href: '/',             label: 'Home'        },
     { href: '/blueprints',   label: 'Blueprints'  },
     { href: '/marketplace',  label: 'Marketplace' },
     { href: '/maps',         label: 'Maps'        },
+    { href: '/loadouts',     label: 'Loadouts',    badge: 'beta' },
     // /skill-trees route is in development; links to future page
     { href: '/skill-trees',  label: 'Skill Trees' },
     { href: '/guides',       label: 'Guides'      },
@@ -68,7 +71,7 @@ export default function NavBar() {
 
                 {/* ── Center: Nav links ── */}
                 <div className="hidden md:flex items-center gap-0.5">
-                    {navLinks.map(({ href, label }) => {
+                    {navLinks.map(({ href, label, badge }) => {
                         const isActive = href === '/'
                             ? pathname === '/'
                             : pathname.startsWith(href)
@@ -76,13 +79,16 @@ export default function NavBar() {
                             <Link
                                 key={href}
                                 href={href}
-                                className={`relative px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                                className={`relative px-3 py-1.5 text-xs font-medium rounded transition-colors inline-flex items-center gap-1.5 ${
                                     isActive
                                         ? 'text-white'
                                         : 'text-white/55 hover:text-white hover:bg-white/5'
                                 }`}
                             >
-                                {label}
+                                <span>{label}</span>
+                                {badge === 'beta' ? (
+                                    <PageMaturityBadge level="beta" className="!px-1 !py-0 !text-[8px] !leading-tight" />
+                                ) : null}
                                 {isActive && (
                                     // bg-rf-green = #22c55e, same token as "Tactical Hub" in hero
                                     <span className="absolute inset-x-1 -bottom-[11px] h-[3px] rounded-full bg-rf-green transition-all duration-200" />

@@ -1,5 +1,5 @@
 import { ARDB_STATIC_BASE } from './constants'
-import type { MarketplaceCatalogItem } from '@/lib/marketplace/catalog-types'
+import type { CatalogCraftingIngredient, MarketplaceCatalogItem } from '@/lib/marketplace/catalog-types'
 import type { ArdbItemDetail, ArdbItemListEntry } from './types'
 
 /** Map ARDB `type` (or rare `itemType`) onto catalog `itemType` without changing blueprint detection semantics. */
@@ -47,6 +47,8 @@ export function normalizeArdbItemToCatalog(
 
     const itemType = resolveArdbItemType(merged, listEntry)
 
+    const craftingIngredients = extractCraftingIngredients(detail)
+
     return {
         source: 'ardb',
         ardbId: listEntry.id,
@@ -67,7 +69,22 @@ export function normalizeArdbItemToCatalog(
         craftedItemIconUrl,
         stackSize: typeof detail?.stackSize === 'number' ? detail.stackSize : null,
         weight: typeof detail?.weight === 'number' ? detail.weight : null,
+        ...(craftingIngredients.length > 0 ? { craftingIngredients } : {}),
         ardbUpdatedAt: typeof merged.updatedAt === 'string' ? merged.updatedAt : listEntry.updatedAt,
         syncedAt,
     }
+}
+
+function extractCraftingIngredients(detail: ArdbItemDetail | undefined) {
+    const req = detail?.craftingRequirement?.requiredItems
+    if (!Array.isArray(req) || req.length === 0) return []
+    const out: CatalogCraftingIngredient[] = []
+    for (const row of req) {
+        const item = row?.item
+        if (!item || typeof item.name !== 'string' || item.name.trim() === '') continue
+        const id = typeof item.id === 'string' && item.id.trim() !== '' ? item.id : item.name
+        const amount = typeof row.amount === 'number' && row.amount > 0 ? row.amount : 1
+        out.push({ itemId: id, name: item.name.trim(), amount })
+    }
+    return out
 }

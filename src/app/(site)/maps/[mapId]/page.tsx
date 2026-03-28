@@ -6,13 +6,14 @@ import { fetchMfEventsSchedule, fetchMfQuests } from '@/api/metaforgeService'
 import { fetchArdbQuests } from '@/api/ardbService'
 import { mergeQuests, filterQuestsByMap } from '@/lib/quests/questUtils'
 import { getActiveConditionsForMap } from '@/lib/events/conditions'
-import { getEventStyle, isMajorEvent } from '@/lib/events/eventsConfig'
+import { getEventStyle, getEventDescription, isMajorEvent } from '@/lib/events/eventsConfig'
 import { getMapGuide } from '@/lib/maps/mapGuideContent'
 import { getMetaforgeMapLootAreas } from '@/lib/maps/metaforgeMapData'
 import MapFieldGuide from '@/components/MapFieldGuide'
 import { getGameDataProvider } from '@/lib/game-data/provider'
 import { indexGameMapsByRfId, resolveMapThumbWithGameData } from '@/lib/maps/rfGameMapBridge'
 import NativeMapExplorer from './_components/NativeMapExplorer'
+import { getTcnoUrl } from '@/lib/maps/tcnoMaps'
 
 type Props = { params: Promise<{ mapId: string }> }
 
@@ -64,8 +65,8 @@ export default async function MapDetailPage({ params }: Props) {
     return (
         <div className="py-8 px-6 max-w-7xl mx-auto">
 
-            {/* ── Breadcrumb ────────────────────────────────────────────────────── */}
-            <div className="mb-6">
+            {/* ── Breadcrumb + TroubleChute ───────────────────────────────────── */}
+            <div className="mb-6 flex flex-wrap items-center gap-2">
                 <Link
                     href="/maps"
                     className="inline-flex items-center gap-2 text-xs font-medium
@@ -79,8 +80,23 @@ export default async function MapDetailPage({ params }: Props) {
                         <path strokeLinecap="round" strokeLinejoin="round"
                               d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
                     </svg>
-                    All Zones
+                    Maps hub
                 </Link>
+                <a
+                    href={getTcnoUrl(map.id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold
+                               text-red-400/90 hover:text-red-300
+                               bg-red-500/10 hover:bg-red-500/15
+                               border border-red-500/25 hover:border-red-500/40
+                               rounded-full px-3 py-1.5 transition-all"
+                >
+                    TroubleChute map
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                </a>
             </div>
 
             {/* ── Compact hero ─────────────────────────────────────────────────── */}
@@ -107,7 +123,8 @@ export default async function MapDetailPage({ params }: Props) {
                             return (
                                 <span
                                     key={name}
-                                    className="inline-flex items-center gap-1.5
+                                    title={getEventDescription(name)}
+                                    className="inline-flex items-center gap-1.5 cursor-help
                                                text-[11px] font-semibold
                                                rounded-full px-3 py-1
                                                backdrop-blur-md border"
@@ -212,7 +229,8 @@ export default async function MapDetailPage({ params }: Props) {
                                     return (
                                         <div
                                             key={name}
-                                            className="flex items-center gap-3 rounded-xl p-3 border"
+                                            title={getEventDescription(name)}
+                                            className="flex items-center gap-3 rounded-xl p-3 border cursor-help"
                                             style={{
                                                 backgroundColor: style.bg,
                                                 borderColor:     style.border,

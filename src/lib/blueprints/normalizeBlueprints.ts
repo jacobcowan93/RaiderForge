@@ -1,4 +1,4 @@
-import type { MarketplaceCatalogItem } from '@/lib/marketplace/catalog-types'
+import type { CatalogCraftingIngredient, MarketplaceCatalogItem } from '@/lib/marketplace/catalog-types'
 
 /** ARDB list/detail `type` for craft recipe items (observed live API value: lowercase `"blueprint"`). */
 const ARDB_BLUEPRINT_ITEM_TYPE = 'blueprint'
@@ -26,6 +26,10 @@ export type NormalizedBlueprint = {
     sourceImageUrls: string[]
     /** ARDB `blueprintFor.icon` — crafted item icon when present. */
     craftedItemIconUrl: string | null
+    /** From catalog detail sync when ARDB exposes `craftingRequirement`. */
+    craftingIngredients: CatalogCraftingIngredient[]
+    /** ARDB item `updatedAt` — for “recently added” sort. */
+    ardbUpdatedAt: string | null
 }
 
 export function isBlueprintCatalogItem(item: MarketplaceCatalogItem): boolean {
@@ -34,6 +38,7 @@ export function isBlueprintCatalogItem(item: MarketplaceCatalogItem): boolean {
 }
 
 export function normalizeBlueprintFromCatalogItem(item: MarketplaceCatalogItem): NormalizedBlueprint {
+    const ingredients = item.craftingIngredients ?? []
     return {
         id: item.ardbId,
         name: item.name,
@@ -45,6 +50,8 @@ export function normalizeBlueprintFromCatalogItem(item: MarketplaceCatalogItem):
         imageUrl: item.imageUrl,
         sourceImageUrls: Array.isArray(item.sourceImageUrls) ? [...item.sourceImageUrls] : [],
         craftedItemIconUrl: item.craftedItemIconUrl ?? null,
+        craftingIngredients: ingredients.map((c) => ({ ...c })),
+        ardbUpdatedAt: typeof item.ardbUpdatedAt === 'string' && item.ardbUpdatedAt.trim() !== '' ? item.ardbUpdatedAt : null,
     }
 }
 
@@ -71,6 +78,16 @@ export function collectFoundInTags(blueprints: NormalizedBlueprint[]): string[] 
     const set = new Set<string>()
     for (const b of blueprints) {
         for (const t of b.foundIn) set.add(t)
+    }
+    return [...set].sort((a, b) => a.localeCompare(b))
+}
+
+/** Distinct allowlist `Type` values (Weapon, Attachment, …) for category filter. */
+export function collectSpreadsheetTypeTags(blueprints: NormalizedBlueprint[]): string[] {
+    const set = new Set<string>()
+    for (const b of blueprints) {
+        const t = b.spreadsheetType?.trim()
+        if (t) set.add(t)
     }
     return [...set].sort((a, b) => a.localeCompare(b))
 }

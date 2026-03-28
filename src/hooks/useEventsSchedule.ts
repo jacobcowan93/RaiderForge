@@ -24,7 +24,12 @@ export function useEventsSchedule(): State & { refresh: () => void } {
   const [state, setState] = useState<State>({ events: [], loading: true, error: null })
 
   const fetchEvents = useCallback(async () => {
-    setState(s => ({ ...s, loading: true, error: null }))
+    setState(s => ({
+      ...s,
+      // Avoid flashing the panel skeleton on the 5‑minute poll when we already have data.
+      loading: s.events.length === 0,
+      error: null,
+    }))
     try {
       const res = await fetch('/api/events', { cache: 'no-store' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)

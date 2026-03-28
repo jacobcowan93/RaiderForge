@@ -79,3 +79,31 @@ export function getEventStyle(name: string): EventColor {
 export function isMajorEvent(name: string): boolean {
   return (MAJOR_EVENTS as readonly string[]).includes(name)
 }
+
+/**
+ * Short tooltip copy for map condition badges (sidebar, hub, live panel).
+ * Community-sourced names; descriptions are editorial summaries for players.
+ */
+export const EVENT_DESCRIPTIONS: Record<string, string> = {
+  Hurricane: 'Severe weather: reduced visibility and traversal pressure across the map.',
+  'Electromagnetic Storm': 'Electrical interference — expect disrupted sensors or equipment-themed pressure.',
+  'Night Raid': 'Night-time conditions with heightened ARC activity and pacing.',
+  'Cold Snap': 'Freezing conditions — stamina and exposure matter more than usual.',
+  'Hidden Bunker': 'Extra sealed areas or bunkers may be accessible this rotation.',
+  'Locked Gate': 'Certain gates or routes are sealed; plan alternate paths.',
+  Matriarch: 'Matriarch-class threat emphasis — expect heavier ARC presence.',
+  Harvester: 'Harvester event active — high-value objective with concentrated risk.',
+  'Husk Graveyard': 'Increased husk / remnant activity in marked sectors.',
+  'Bird City': 'Avian-themed environmental or objective modifier on this rotation.',
+  'Launch Tower Loot': 'Launch complex loot emphasis — Spaceport-relevant when live.',
+  'Lush Blooms': 'Overgrowth or bloom effects altering sightlines and cover.',
+  'Prospecting Probes': 'Extra probe / survey activity — watch for objective spawns.',
+  'Uncovered Caches': 'More exposed caches and loot opportunities this cycle.',
+}
+
+export function getEventDescription(name: string): string {
+  return (
+    EVENT_DESCRIPTIONS[name] ??
+    `Map modifier: ${name}. Check in-raid intel and community trackers for current effects.`
+  )
+}

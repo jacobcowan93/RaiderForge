@@ -7,6 +7,7 @@ import {
     type SkillTreeSaveV1,
 } from '@/lib/skill-tree/skillTreeSave'
 import { loadSkillTreeSave, saveSkillTreeSave } from '@/lib/skill-tree/skillTreeSaveStorage'
+import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 import { useSession } from 'next-auth/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -229,7 +230,10 @@ export default function SkillTreesPage() {
     return (
         <div className="max-w-3xl mx-auto py-10 px-6">
             <header className="mb-8">
-                <h1 className="text-3xl font-bold text-white">Skill trees</h1>
+                <div className="flex flex-wrap items-center gap-3">
+                    <h1 className="text-3xl font-bold text-white">Skill trees</h1>
+                    <PageMaturityBadge level="beta" />
+                </div>
                 <p className="mt-2 text-sm text-rf-textSoft leading-relaxed">
                     Allocate points per node from live game data. Your build persists in this browser as a guest, or to your
                     account when signed in with cloud sync enabled.

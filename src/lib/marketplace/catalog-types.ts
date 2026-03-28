@@ -1,3 +1,10 @@
+/** Summarized from ARDB `craftingRequirement.requiredItems` on item detail. */
+export type CatalogCraftingIngredient = {
+    itemId: string
+    name: string
+    amount: number
+}
+
 /** Local marketplace item row synced from ARDB (metadata only; G2G handles offers). */
 export type MarketplaceCatalogItem = {
     source: 'ardb'
@@ -15,6 +22,8 @@ export type MarketplaceCatalogItem = {
     craftedItemIconUrl: string | null
     stackSize: number | null
     weight: number | null
+    /** Present when detail sync included `craftingRequirement`. */
+    craftingIngredients?: CatalogCraftingIngredient[]
     ardbUpdatedAt: string
     syncedAt: string
 }

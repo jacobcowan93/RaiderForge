@@ -9,6 +9,8 @@ export type SortMode =
     | 'name_desc'
     | 'rarity_asc'
     | 'rarity_desc'
+    | 'recent_desc'
+    | 'recent_asc'
 
 export function blueprintDisplayName(b: NormalizedBlueprint): string {
     return b.trackerDisplayName ?? b.name
@@ -16,6 +18,12 @@ export function blueprintDisplayName(b: NormalizedBlueprint): string {
 
 function displayName(b: NormalizedBlueprint): string {
     return blueprintDisplayName(b)
+}
+
+function recentTimestamp(iso: string | null): number {
+    if (iso == null || iso.trim() === '') return 0
+    const t = Date.parse(iso)
+    return Number.isFinite(t) ? t : 0
 }
 
 export function applyBlueprintSort(list: NormalizedBlueprint[], mode: SortMode): NormalizedBlueprint[] {
@@ -49,6 +57,28 @@ export function applyBlueprintSort(list: NormalizedBlueprint[], mode: SortMode):
                 const d = raritySortKey(b.rarity) - raritySortKey(a.rarity)
                 return d !== 0 ? d : displayName(a).localeCompare(displayName(b))
             })
+        case 'recent_desc': {
+            return next.sort((a, b) => {
+                const ta = recentTimestamp(a.ardbUpdatedAt)
+                const tb = recentTimestamp(b.ardbUpdatedAt)
+                const ua = ta === 0 ? 1 : 0
+                const ub = tb === 0 ? 1 : 0
+                if (ua !== ub) return ua - ub
+                if (ta !== tb) return tb - ta
+                return displayName(a).localeCompare(displayName(b))
+            })
+        }
+        case 'recent_asc': {
+            return next.sort((a, b) => {
+                const ta = recentTimestamp(a.ardbUpdatedAt)
+                const tb = recentTimestamp(b.ardbUpdatedAt)
+                const ua = ta === 0 ? 1 : 0
+                const ub = tb === 0 ? 1 : 0
+                if (ua !== ub) return ua - ub
+                if (ta !== tb) return ta - tb
+                return displayName(a).localeCompare(displayName(b))
+            })
+        }
         default:
             return next
     }

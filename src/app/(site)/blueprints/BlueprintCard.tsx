@@ -15,9 +15,10 @@ import {
 } from '@/lib/blueprints/rarityCardStyles'
 import { getWikiBlueprintLocation } from '@/lib/blueprints/blueprintWikiLocations'
 
+/** In-game blueprint UI: dark blue panel + faint grid (red reserved for accents elsewhere). */
 const blueprintGridStyle: CSSProperties = {
-    backgroundImage: `linear-gradient(rgba(56, 189, 248, 0.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(56, 189, 248, 0.07) 1px, transparent 1px)`,
+    backgroundImage: `linear-gradient(rgba(59, 91, 150, 0.085) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59, 91, 150, 0.075) 1px, transparent 1px)`,
     backgroundSize: '12px 12px',
 }
 
@@ -202,6 +203,39 @@ function BlueprintInspectPanel({
             ) : null}
             {desc ? <p className="mt-2 text-xs text-rf-textSoft leading-relaxed">{desc}</p> : null}
 
+            {!isAllowlistPlaceholderBlueprint(b) && b.craftingIngredients.length > 0 ? (
+                <div className="mt-3 pt-3 border-t border-white/[0.08] space-y-2.5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-200">Required materials</p>
+                    <ul className="space-y-2 text-xs text-rf-text leading-snug">
+                        {b.craftingIngredients.map((c) => (
+                            <li
+                                key={`${c.itemId}-${c.name}`}
+                                className="flex justify-between gap-3 border-b border-white/[0.05] pb-2 last:border-0 last:pb-0"
+                            >
+                                <span className="min-w-0 truncate font-medium text-white/85">{c.name}</span>
+                                <span className="shrink-0 tabular-nums text-amber-300/95 font-bold">×{c.amount}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ) : null}
+
+            {!isAllowlistPlaceholderBlueprint(b) ? (
+                <div className="mt-2 pt-2 border-t border-white/[0.06]">
+                    <a
+                        href={`https://ardb.app/db/items/${encodeURIComponent(b.id)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-rf-red/95 hover:text-rf-red underline-offset-2 hover:underline"
+                    >
+                        View on ARDB
+                        <span className="text-[9px] opacity-80" aria-hidden>
+                            ↗
+                        </span>
+                    </a>
+                </div>
+            ) : null}
+
             {wiki ? (
                 <div className="mt-2 pt-2 border-t border-white/[0.06] space-y-1.5">
                     {wiki.questReward ? (
@@ -346,26 +380,36 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                 aria-pressed={quickToggleMode ? owned : undefined}
             >
                 <label
-                    className="absolute top-1.5 right-1.5 z-[2] flex cursor-pointer touch-manipulation rounded-md bg-black/35 p-1 backdrop-blur-[2px] border border-white/[0.08] shadow-sm"
+                    className={`absolute top-1.5 right-1.5 z-[2] flex cursor-pointer touch-manipulation rounded-md p-1.5 backdrop-blur-[2px] shadow-md transition-all ${
+                        owned
+                            ? 'bg-emerald-500/20 border-2 border-emerald-400/75 ring-2 ring-emerald-400/25'
+                            : 'bg-black/45 border border-white/[0.1]'
+                    }`}
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                 >
                     <span className="sr-only">Owned</span>
-                    <span className="relative flex shrink-0">
+                    <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
                         <input
                             type="checkbox"
                             checked={owned}
                             onChange={(e) => onOwnedChange(e.target.checked)}
                             onClick={(e) => e.stopPropagation()}
-                            className="rf-checkbox peer"
+                            className="rf-checkbox peer h-4 w-4"
                         />
                         <svg
                             viewBox="0 0 10 10"
                             fill="none"
                             aria-hidden
-                            className="pointer-events-none absolute inset-0 w-full h-full p-[2px] opacity-0 peer-checked:opacity-100 transition-opacity duration-100"
+                            className="pointer-events-none absolute inset-0 m-auto h-3 w-3 opacity-0 peer-checked:opacity-100 transition-opacity duration-150"
                         >
-                            <polyline points="1.5,5.5 4,8 8.5,2" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                            <polyline
+                                points="1.5,5.5 4,8 8.5,2"
+                                stroke="#4ade80"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
                         </svg>
                     </span>
                 </label>
@@ -380,7 +424,7 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                     </h2>
 
                     <div
-                        className="relative w-full aspect-[5/4] max-h-[6.5rem] sm:max-h-[7.5rem] rounded-md border border-sky-500/15 bg-[#050810] flex items-center justify-center overflow-hidden p-0.5"
+                        className="relative w-full aspect-[5/4] max-h-[6.5rem] sm:max-h-[7.5rem] rounded-md border border-blue-950/60 bg-[#040b18] flex items-center justify-center overflow-hidden p-0.5"
                         style={blueprintGridStyle}
                     >
                         <div className={`${rarityImageBackdropClass(tier)} rounded-md`} aria-hidden />

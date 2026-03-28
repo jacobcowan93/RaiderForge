@@ -12,6 +12,7 @@ import {
 import {
     blueprintsFromCatalogItems,
     collectFoundInTags,
+    collectSpreadsheetTypeTags,
     type NormalizedBlueprint,
 } from '@/lib/blueprints/normalizeBlueprints'
 import { groupBlueprintsByRarityTier } from '@/lib/blueprints/rarityGroups'
@@ -22,6 +23,7 @@ import {
     blueprintDisplayName,
     type SortMode,
 } from '@/lib/blueprints/sortBlueprints'
+import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 import { warnIfAllowlistDriftFromGameOrder } from '@/lib/blueprints/blueprintInGameOrder'
 import { mergeAllowlistMatchedBlueprints } from '@/lib/blueprints/blueprintAllowlistMerge'
 import {
@@ -49,6 +51,8 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
     { value: 'rarity_asc', label: 'Rarity (low → high)' },
     { value: 'name_asc', label: 'Name (A–Z)' },
     { value: 'name_desc', label: 'Name (Z–A)' },
+    { value: 'recent_desc', label: 'Recently updated (ARDB)' },
+    { value: 'recent_asc', label: 'Oldest ARDB update first' },
 ]
 
 const btnExport =
@@ -65,6 +69,7 @@ export default function BlueprintsPage() {
     const [blueprints, setBlueprints] = useState<NormalizedBlueprint[]>([])
 
     const [query, setQuery] = useState('')
+    const [categoryFilter, setCategoryFilter] = useState<string>('__all__')
     const [foundInFilter, setFoundInFilter] = useState<string>('__all__')
     const [sortMode, setSortMode] = useState<SortMode>('ingame_asc')
     const [onlyMissing, setOnlyMissing] = useState(false)
@@ -217,17 +222,21 @@ export default function BlueprintsPage() {
     }, [])
 
     const foundInOptions = useMemo(() => collectFoundInTags(blueprints), [blueprints])
+    const categoryOptions = useMemo(() => collectSpreadsheetTypeTags(blueprints), [blueprints])
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase()
         let list = blueprints
         if (onlyMissing) list = list.filter((b) => trackMap[b.id] !== 'owned')
         if (q) list = list.filter((b) => blueprintDisplayName(b).toLowerCase().includes(q))
+        if (categoryFilter !== '__all__') {
+            list = list.filter((b) => (b.spreadsheetType ?? '').trim() === categoryFilter)
+        }
         if (foundInFilter !== '__all__') {
             list = list.filter((b) => b.foundIn.includes(foundInFilter))
         }
         return applyBlueprintSort(list, sortMode)
-    }, [blueprints, query, foundInFilter, sortMode, onlyMissing, trackMap])
+    }, [blueprints, query, categoryFilter, foundInFilter, sortMode, onlyMissing, trackMap])
 
     const missingBlueprints = useMemo(
         () => blueprints.filter((b) => trackMap[b.id] !== 'owned'),
@@ -273,16 +282,19 @@ export default function BlueprintsPage() {
                 aria-hidden
                 style={{
                     background:
-                        'radial-gradient(ellipse 70% 40% at 50% 0%, rgba(56,189,248,0.055) 0%, transparent 70%)',
+                        'radial-gradient(ellipse 70% 40% at 50% 0%, rgba(239,68,68,0.06) 0%, transparent 70%)',
                 }}
             />
             <div className="print:hidden space-y-4 md:space-y-5">
-                <header className="rf-card rounded-xl px-4 py-4 sm:px-5 border border-white/[0.06]">
+                <header className="rf-card rounded-xl px-4 py-4 sm:px-5 border border-white/[0.06] border-l-2 border-l-rf-red/70">
                     <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 lg:gap-6">
                         <div className="min-w-0">
-                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                                Blueprint <span className="text-sky-500">Tracker</span>
-                            </h1>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                    Blueprint <span className="text-rf-red">Tracker</span>
+                                </h1>
+                                <PageMaturityBadge level="beta" />
+                            </div>
                             <p className="mt-2 text-xs text-rf-textSoft max-w-2xl leading-relaxed">
                                 Track which blueprints you&apos;ve collected and quickly see what&apos;s still missing.
                                 Mark items as owned to update your progress and generate a clean list of remaining blueprints to hunt.
@@ -299,13 +311,23 @@ export default function BlueprintsPage() {
                             ) : null}
                         </div>
                         {!catalogLoading && !catalogError && blueprints.length > 0 ? (
-                            <p className="shrink-0 text-sm font-semibold tabular-nums tracking-tight lg:text-right">
-                                <span className="text-rf-textSoft uppercase text-[10px] tracking-widest block sm:inline sm:mr-2">
-                                    Missing
-                                </span>
-                                <span className="text-white text-lg">{missingBlueprints.length}</span>
-                                <span className="text-rf-textSoft text-xs font-normal ml-1">/ {total}</span>
-                            </p>
+                            <div
+                                className="shrink-0 rounded-lg border-2 border-rf-red/40 bg-gradient-to-br from-[#070f1c]/98 via-[#050a14] to-black/75 px-5 py-4 text-center lg:text-right shadow-lg shadow-black/55 ring-1 ring-blue-950/45 ring-offset-0"
+                                role="status"
+                                aria-live="polite"
+                            >
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300/90">
+                                    NEEDED BLUEPRINTS<span className="text-rf-red">:</span>
+                                </p>
+                                <p className="mt-1.5 text-3xl sm:text-4xl font-black tabular-nums leading-none text-rf-red tracking-tight drop-shadow-[0_0_18px_rgba(239,68,68,0.45)]">
+                                    {missingBlueprints.length}
+                                </p>
+                                <p className="mt-1.5 text-[10px] text-rf-textSoft/90 tabular-nums">
+                                    <span className="text-rf-textSoft/50">of </span>
+                                    {total}
+                                    <span className="text-rf-textSoft/50"> tracked</span>
+                                </p>
+                            </div>
                         ) : null}
                     </div>
                 </header>
@@ -343,10 +365,10 @@ export default function BlueprintsPage() {
                 {!catalogLoading && !catalogError && blueprints.length > 0 && (
                     <>
                         <div className="sticky top-16 z-40 print:hidden">
-                            <div className="rf-card rounded-lg px-3 py-2.5 sm:px-4 border border-white/[0.08] bg-rf-bg/96 backdrop-blur-md shadow-md shadow-black/40">
+                            <div className="rf-card rounded-lg px-3 py-2.5 sm:px-4 border border-blue-950/40 border-t-rf-red/25 bg-[#060a14]/96 backdrop-blur-md shadow-md shadow-black/50">
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                                     <div>
-                                        <p className="text-[9px] uppercase tracking-[0.18em] text-rf-textSoft font-semibold">
+                                        <p className="text-[9px] uppercase tracking-[0.18em] text-slate-400 font-semibold">
                                             Collection progress
                                         </p>
                                         <p className="text-base font-bold text-white tabular-nums mt-0.5">
@@ -354,6 +376,9 @@ export default function BlueprintsPage() {
                                             <span className="text-rf-textSoft font-medium"> / </span>
                                             <span>{total}</span>
                                             <span className="text-rf-textSoft text-xs font-medium ml-1.5">({pct}%)</span>
+                                        </p>
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-rf-red/95 mt-1">
+                                            Needed: {missingBlueprints.length}
                                         </p>
                                     </div>
                                     <div
@@ -372,24 +397,10 @@ export default function BlueprintsPage() {
                             </div>
                         </div>
 
-                        <div className="rf-card rounded-lg px-3 py-3 sm:px-4 border border-white/[0.06] space-y-3">
+                        <div className="rf-card rounded-lg px-3 py-3 sm:px-4 border border-blue-950/35 border-l-rf-red/30 bg-[#050810]/40 space-y-3">
                             {/* Toggles left — export buttons right; wraps cleanly on small screens */}
                             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                                    <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-rf-text">
-                                        <span className="relative flex shrink-0">
-                                            <input
-                                                type="checkbox"
-                                                checked={onlyMissing}
-                                                onChange={(e) => setOnlyMissing(e.target.checked)}
-                                                className="rf-checkbox peer"
-                                            />
-                                            <svg viewBox="0 0 10 10" fill="none" aria-hidden className="pointer-events-none absolute inset-0 w-full h-full p-[2px] opacity-0 peer-checked:opacity-100 transition-opacity duration-100">
-                                                <polyline points="1.5,5.5 4,8 8.5,2" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                                            </svg>
-                                        </span>
-                                        Show only missing
-                                    </label>
                                     <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-rf-text">
                                         <span className="relative flex shrink-0">
                                             <input
@@ -437,7 +448,66 @@ export default function BlueprintsPage() {
                                         className="w-full rounded-lg bg-rf-bg/80 border border-white/10 px-3 py-2 text-sm text-rf-text placeholder:text-rf-textSoft/60 focus:outline-none focus:ring-2 focus:ring-rf-red/35 focus:border-rf-red/35"
                                     />
                                 </div>
-                                <div className="flex flex-col sm:flex-row gap-3">
+                                <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+                                    {categoryOptions.length > 0 && (
+                                        <div className="sm:w-48">
+                                            <label
+                                                htmlFor="bp-category"
+                                                className="text-xs uppercase tracking-wider text-rf-textSoft block mb-1.5"
+                                            >
+                                                Category
+                                            </label>
+                                            <select
+                                                id="bp-category"
+                                                value={categoryFilter}
+                                                onChange={(e) => setCategoryFilter(e.target.value)}
+                                                className="w-full rounded-lg bg-rf-bg/80 border border-white/10 px-3 py-2 text-sm text-rf-text focus:outline-none focus:ring-2 focus:ring-rf-red/35"
+                                            >
+                                                <option value="__all__">All categories</option>
+                                                {categoryOptions.map((t) => (
+                                                    <option key={t} value={t}>
+                                                        {t}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+                                    <div className="sm:w-52">
+                                        <label
+                                            htmlFor="bp-only-missing"
+                                            className="block cursor-pointer select-none"
+                                        >
+                                            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-rf-red/90">
+                                                Only Missing
+                                            </span>
+                                            <span className="flex h-[2.375rem] items-center gap-2.5 rounded-lg border-2 border-rf-red/35 bg-rf-bg/90 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-black/30 transition-colors hover:border-rf-red/50 hover:bg-white/[0.04]">
+                                                <span className="relative flex h-4 w-4 shrink-0">
+                                                    <input
+                                                        id="bp-only-missing"
+                                                        type="checkbox"
+                                                        checked={onlyMissing}
+                                                        onChange={(e) => setOnlyMissing(e.target.checked)}
+                                                        className="rf-checkbox peer h-4 w-4"
+                                                    />
+                                                    <svg
+                                                        viewBox="0 0 10 10"
+                                                        fill="none"
+                                                        aria-hidden
+                                                        className="pointer-events-none absolute inset-0 m-auto h-3 w-3 opacity-0 peer-checked:opacity-100 transition-opacity duration-100"
+                                                    >
+                                                        <polyline
+                                                            points="1.5,5.5 4,8 8.5,2"
+                                                            stroke="white"
+                                                            strokeWidth="1.7"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        />
+                                                    </svg>
+                                                </span>
+                                                <span className="min-w-0 leading-tight">Hide owned blueprints</span>
+                                            </span>
+                                        </label>
+                                    </div>
                                     {foundInOptions.length > 0 && (
                                         <div className="sm:w-48">
                                             <label
@@ -500,8 +570,26 @@ export default function BlueprintsPage() {
                         </div>
 
                         {filtered.length === 0 ? (
-                            <div className="rf-card rounded-xl px-6 py-10 text-center text-rf-textSoft">
-                                No blueprints match your filters.
+                            <div className="rf-card rounded-xl px-6 py-10 text-center border border-white/[0.06]">
+                                <p className="text-rf-text font-medium">No blueprints match your filters</p>
+                                <p className="text-sm text-rf-textSoft mt-2 max-w-md mx-auto leading-relaxed">
+                                    Try clearing search, setting category and tags to &quot;All&quot;, or turning off &quot;Only
+                                    missing&quot;.
+                                </p>
+                                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                                    <button
+                                        type="button"
+                                        className={btnExport}
+                                        onClick={() => {
+                                            setQuery('')
+                                            setCategoryFilter('__all__')
+                                            setFoundInFilter('__all__')
+                                            setOnlyMissing(false)
+                                        }}
+                                    >
+                                        Reset filters
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-3.5 justify-items-stretch">
@@ -520,6 +608,13 @@ export default function BlueprintsPage() {
                 )}
 
                 <footer className="pt-6 pb-2 space-y-3 border-t border-white/[0.05] mt-6">
+                    <p className="text-center text-[11px] text-white/60 max-w-xl mx-auto leading-relaxed">
+                        Blueprint data &amp; crafting requirements sourced from{' '}
+                        <Link href={ARDB_CATALOG_ATTRIBUTION.providerUrl} className="text-rf-red/90 hover:underline">
+                            ardb.app
+                        </Link>
+                        . Sync cadence depends on server catalog refresh.
+                    </p>
                     <p className="text-center text-[11px] text-rf-textSoft max-w-xl mx-auto leading-relaxed">
                         {ARDB_CATALOG_ATTRIBUTION.providerName} item metadata —{' '}
                         <Link href={ARDB_CATALOG_ATTRIBUTION.providerUrl} className="text-rf-blue hover:underline">

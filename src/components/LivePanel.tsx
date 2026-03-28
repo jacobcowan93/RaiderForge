@@ -14,14 +14,16 @@
  */
 
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { useState, useEffect } from 'react'
 import { useEventsSchedule } from '../hooks/useEventsSchedule'
 import { getActiveConditionsForMap } from '../lib/events/conditions'
-import { getEventStyle, EVENT_ICONS } from '../lib/events/eventsConfig'
+import { getEventStyle, EVENT_ICONS, getEventDescription } from '../lib/events/eventsConfig'
 import { fmtCountdown } from '../lib/events/rotationTable'
 import { MAPS, getMapThumbnail } from '../data/maps'
 import type { GameMap } from '@/lib/game-data/types'
 import { buildRfThumbnailOverrideUrls } from '@/lib/maps/rfGameMapBridge'
+import { hubUrlForMapId } from '@/lib/maps/maps-hub-zone'
 
 // Risk level -> display style
 const RISK_STYLE: Record<string, { label: string; classes: string }> = {
@@ -36,7 +38,8 @@ function EventBadge({ name }: { name: string }) {
   const icon = EVENT_ICONS[name]
   return (
     <span
-      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none"
+      title={getEventDescription(name)}
+      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none cursor-help"
       style={{ background: style.bg, border: `1px solid ${style.border}`, color: style.text }}
     >
       {icon && (
@@ -63,40 +66,37 @@ function MapConditionCard({
   const risk = RISK_STYLE[map.risk] ?? RISK_STYLE.Medium
   const hasLiveEvent = conditions.minor || conditions.major
 
-  return (
-    <Link
-      href={`/maps/${map.id}`}
-      className="group block rounded-lg overflow-hidden border border-white/5 hover:border-white/15 transition-all"
-    >
-      {/* Thumbnail row */}
-      <div className="relative h-16 bg-rf-bgSoft overflow-hidden">
-        <img
-          src={thumb}
-          alt={map.displayName}
-          className="w-full h-full object-cover opacity-60 group-hover:opacity-75 transition-opacity"
-          loading="lazy"
-        />
-        {/* Risk badge */}
-        <span className={`absolute top-1.5 right-1.5 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider ${risk.classes}`}>
-          {risk.label}
-        </span>
-        {/* Fallback indicator — subtle, only when rotation is used */}
-        {conditions.source === 'rotation-fallback' && (
-          <span className="absolute bottom-1 left-1.5 text-[9px] text-white/25">Fallback</span>
-        )}
-      </div>
+  const hubHref = hubUrlForMapId(map.id)
 
-      {/* Info row */}
-      <div className="px-2.5 py-2">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[11px] font-semibold text-white/80 truncate">{map.displayName}</span>
-          {/* Countdown to next event or next hour */}
-          <span className="text-[10px] text-white/30 tabular-nums ml-2 shrink-0">
+  return (
+    <div className="rounded-lg overflow-hidden border border-white/5 hover:border-white/15 transition-all bg-black/20">
+      <Link href={hubHref} className="group block">
+        <div className="relative h-16 bg-rf-bgSoft overflow-hidden">
+          <img
+            src={thumb}
+            alt={map.displayName}
+            className="w-full h-full object-cover opacity-60 group-hover:opacity-75 transition-opacity"
+            loading="lazy"
+          />
+          <span className={`absolute top-1.5 right-1.5 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider ${risk.classes}`}>
+            {risk.label}
+          </span>
+          {conditions.source === 'rotation-fallback' && (
+            <span className="absolute bottom-1 left-1.5 text-[9px] text-white/25">Fallback</span>
+          )}
+        </div>
+      </Link>
+
+      <div className="px-2.5 py-2 border-t border-white/[0.04]">
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <Link href={hubHref} className="text-[11px] font-semibold text-white/85 hover:text-white truncate min-w-0">
+            {map.displayName}
+          </Link>
+          <span className="text-[10px] text-white/30 tabular-nums shrink-0" title="Time in current schedule window">
             {fmtCountdown(conditions.msLeftInHour)}
           </span>
         </div>
 
-        {/* Active events */}
         {hasLiveEvent ? (
           <div className="flex flex-wrap gap-1">
             {conditions.minor && <EventBadge name={conditions.minor} />}
@@ -105,8 +105,119 @@ function MapConditionCard({
         ) : (
           <span className="text-[10px] text-white/25">No active events</span>
         )}
+
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+          {hasLiveEvent && (
+            <Link
+              href={hubHref}
+              className="text-[9px] font-bold uppercase tracking-wide text-red-400/95 hover:text-red-300"
+            >
+              Jump to zone →
+            </Link>
+          )}
+          <Link
+            href={`/maps/${map.id}`}
+            className="text-[9px] text-white/35 hover:text-white/60"
+          >
+            Tactical map
+          </Link>
+        </div>
       </div>
-    </Link>
+    </div>
+  )
+}
+
+function LivePanelMapList({
+  loading,
+  error,
+  events,
+  now,
+  thumbByRfId,
+}: {
+  loading: boolean
+  error: string | null
+  events: import('../lib/events/conditions').MfEvent[]
+  now: Date
+  thumbByRfId: Record<string, string>
+}) {
+  return (
+    <>
+      {loading && events.length === 0 ? (
+        <>
+          <p className="text-[9px] text-center text-white/25 uppercase tracking-wider mb-1">Loading MetaForge…</p>
+          {MAPS.map((m) => (
+            <div
+              key={m.id}
+              className="rounded-lg border border-white/[0.04] overflow-hidden animate-pulse"
+            >
+              <div className="h-16 bg-gradient-to-r from-white/[0.06] to-white/[0.02]" />
+              <div className="h-10 bg-white/[0.03] px-2.5 py-2 space-y-1.5">
+                <div className="h-2 w-2/3 bg-white/[0.06] rounded" />
+                <div className="h-2 w-1/2 bg-white/[0.05] rounded" />
+              </div>
+            </div>
+          ))}
+        </>
+      ) : (
+        MAPS.map((map) => (
+          <MapConditionCard
+            key={map.id}
+            map={map}
+            now={now}
+            apiEvents={events}
+            thumbByRfId={thumbByRfId}
+          />
+        ))
+      )}
+      {error && !loading && (
+        <p className="text-[9px] text-white/20 text-center pt-1">Using fallback rotation data</p>
+      )}
+    </>
+  )
+}
+
+function LivePanelChrome({
+  children,
+  headerExtra,
+}: {
+  children: ReactNode
+  headerExtra?: ReactNode
+}) {
+  return (
+    <div className="rf-glass flex flex-col h-full border-white/5 bg-[rgba(5,6,10,0.92)] backdrop-blur-xl">
+      <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-white/5 shrink-0 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="h-1.5 w-1.5 rounded-full bg-rf-green animate-pulse shrink-0" />
+          <span className="text-[10px] uppercase tracking-widest text-white/50 font-semibold truncate">
+            Active Maps
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {headerExtra}
+          <Link
+            href="/maps"
+            className="text-[10px] text-rf-textSoft/60 hover:text-rf-text transition-colors whitespace-nowrap"
+            title="Maps hub: TroubleChute links + tactical view"
+          >
+            Command center →
+          </Link>
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-2 min-h-0">{children}</div>
+      <div className="px-3 py-2 border-t border-white/5 shrink-0">
+        <p className="text-[9px] text-white/20 leading-relaxed text-center">
+          via{' '}
+          <a
+            href="https://metaforge.app/arc-raiders"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white/40 transition-colors"
+          >
+            MetaForge
+          </a>
+        </p>
+      </div>
+    </div>
   )
 }
 
@@ -114,14 +225,13 @@ export default function LivePanel() {
   const { events, loading, error } = useEventsSchedule()
   const [now, setNow] = useState(() => new Date())
   const [thumbByRfId, setThumbByRfId] = useState<Record<string, string>>({})
+  const [mobileOpen, setMobileOpen] = useState(false)
 
-  // 1-second clock for countdown timers
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
 
-  // Thumbnails from GET /api/game/maps (normalized GameMap); fallback to static RF art.
   useEffect(() => {
     let cancelled = false
     fetch('/api/game/maps', { cache: 'no-store' })
@@ -138,74 +248,62 @@ export default function LivePanel() {
     }
   }, [])
 
+  const list = (
+    <LivePanelMapList
+      loading={loading}
+      error={error}
+      events={events}
+      now={now}
+      thumbByRfId={thumbByRfId}
+    />
+  )
+
   return (
-    // Fixed panel — desktop only. Aligned to right edge of viewport.
-    // Page content uses xl:pr-[var(--live-panel-w)] to avoid overlap.
-    <aside
-      className="hidden xl:flex flex-col fixed top-16 right-0 w-[300px] h-[calc(100vh-4rem)] z-40"
-      aria-label="Live Map Conditions"
-    >
-      <div className="rf-glass flex flex-col h-full border-l border-white/5">
-        {/* Header */}
-        <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-white/5 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-rf-green animate-pulse" />
-            <span className="text-[10px] uppercase tracking-widest text-white/50 font-semibold">
-              Active Maps
-            </span>
-          </div>
-          <Link
-            href="/maps"
-            className="text-[10px] text-rf-textSoft/60 hover:text-rf-text transition-colors"
-          >
-            View All →
-          </Link>
-        </div>
+    <>
+      <aside
+        className="hidden xl:flex flex-col fixed top-16 right-0 w-[300px] h-[calc(100vh-4rem)] z-40 border-l border-white/5"
+        aria-label="Live Map Conditions"
+      >
+        <LivePanelChrome>{list}</LivePanelChrome>
+      </aside>
 
-        {/* Map cards — scrollable */}
-        <div className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-2">
-          {loading && events.length === 0 ? (
-            // Loading skeleton
-            <>
-              {MAPS.map(m => (
-                <div key={m.id} className="rounded-lg bg-white/3 h-[88px] animate-pulse" />
-              ))}
-            </>
-          ) : (
-            MAPS.map(map => (
-              <MapConditionCard
-                key={map.id}
-                map={map}
-                now={now}
-                apiEvents={events}
-                thumbByRfId={thumbByRfId}
-              />
-            ))
-          )}
-
-          {/* API error notice — only when live data failed AND we've finished loading */}
-          {error && !loading && (
-            <p className="text-[9px] text-white/20 text-center pt-1">
-              Using fallback rotation data
-            </p>
-          )}
-        </div>
-
-        {/* Footer attribution */}
-        <div className="px-3 py-2 border-t border-white/5 shrink-0">
-          <p className="text-[9px] text-white/20 leading-relaxed text-center">
-            via{' '}
-            <a
-              href="https://metaforge.app/arc-raiders"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white/40 transition-colors"
+      {/* Mobile / tablet: collapsible dock */}
+      <div className="xl:hidden fixed bottom-0 left-0 right-0 z-40 pointer-events-none pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="pointer-events-auto">
+          {!mobileOpen ? (
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="flex w-full items-center justify-center gap-2 border-t border-white/10 bg-[rgba(5,6,10,0.96)] backdrop-blur-xl
+                         px-4 py-3 text-left shadow-[0_-8px_32px_rgba(0,0,0,0.55)]"
             >
-              MetaForge
-            </a>
-          </p>
+              <span className="h-2 w-2 rounded-full bg-rf-green animate-pulse shrink-0" />
+              <span className="text-xs font-semibold text-white/90">Active map conditions</span>
+              <span className="text-[10px] text-white/40">Tap to expand</span>
+            </button>
+          ) : (
+            <div
+              className="max-h-[min(52vh,420px)] flex flex-col border-t border-white/10 rounded-t-2xl overflow-hidden shadow-[0_-12px_40px_rgba(0,0,0,0.6)]"
+              role="dialog"
+              aria-label="Live map conditions"
+            >
+              <LivePanelChrome
+                headerExtra={
+                  <button
+                    type="button"
+                    onClick={() => setMobileOpen(false)}
+                    className="text-[10px] font-medium text-white/45 hover:text-white border border-white/12 rounded-md px-2 py-0.5"
+                  >
+                    Close
+                  </button>
+                }
+              >
+                {list}
+              </LivePanelChrome>
+            </div>
+          )}
         </div>
       </div>
-    </aside>
+    </>
   )
 }

@@ -1,6 +1,27 @@
 # Raider Forge
 
-Raider Forge is an ARC Raiders companion hub scaffolded with Next.js, TypeScript, and Tailwind CSS.
+RaiderForge is a fan-made **ARC Raiders** tactical hub (not affiliated with Embark Studios). It ships as a production Next.js app with real integrations where configured.
+
+## Stack
+
+| Layer | Technology |
+|--------|------------|
+| Framework | **Next.js** (App Router) + **TypeScript** |
+| Styling | **Tailwind CSS** + project design tokens (`rf-*` in `src/styles/globals.css`) |
+| Maps | **Leaflet** + **react-leaflet**; tactical tiles from [ardb.app](https://ardb.app) |
+| Auth & data | **NextAuth.js** + **Prisma** (optional SQLite/Postgres for sessions and profile sync) |
+| UI | Custom components (no shadcn/ui in the default tree) |
+
+## Data sources (live vs fallback)
+
+- **MetaForge** — map rotation / event schedule (`/api/events` proxy). Used by the home **Live** panel and map condition UI. Falls back to a static rotation table when the API is unavailable.
+- **ardb.app** — quest data and map tile templates (see map pages and footer attribution).
+- **Game map metadata** — `GET /api/game/maps` (Mahcks/community pipeline) for thumbnails where applicable.
+- **G2G** — optional marketplace OpenAPI when `G2G_*` env vars are set.
+
+## Product maturity labels
+
+Hub pages use **Live**, **Beta**, or **In development** badges (`PageMaturityBadge`) so visitors know what is production-ready vs evolving.
 
 Quick start
 
@@ -77,8 +98,11 @@ Static media
 
 Place static media in `public/images` and reference it in the app via `/images/<filename>` (for example, `/images/ARC_Home.mp4`).
 
-Notes & TODOs
+## Optional: development banner
 
-- All external integrations (MetaForge, ARDB, G2G) are mocked. See `src/api/*` for TODOs and interfaces.
-- Place your logo at `public/images/logo.png` and hero video at `public/images/ARC_Home.mp4`.
-- The Builds page is prepared to embed MetaForge's skill tree editor via iframe (TODO: embed URL and params).
+- `NEXT_PUBLIC_SHOW_DEV_BANNER` — `0` / `false` hides the sticky status strip everywhere; `1` / `true` forces it on. If unset, the banner appears only when `NODE_ENV=development`.
+
+## Notes
+
+- Place hero video at `public/images/ARC_Home.mp4` and header art under `public/images/header/` as in the repo.
+- The **Builds** hub is a stub until a MetaForge (or other) embed URL is wired in.

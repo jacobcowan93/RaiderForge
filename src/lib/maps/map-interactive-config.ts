@@ -6,7 +6,7 @@
  *
  * Adding a new map's difficulty list:
  *   1. Add an entry to MAP_DIFFICULTIES keyed by the RaiderForge map ID.
- *   2. Add a TCNO attribution URL to TCNO_MAP_URLS.
+ *   2. Add or adjust TroubleChute URLs in tcnoMaps.ts (not here).
  *
  * This file is imported by NativeMapExplorer (client component).
  */
@@ -116,16 +116,3 @@ export const DEFAULT_ACTIVE_CATEGORIES: ReadonlySet<PoiCategory> = new Set<PoiCa
     'area',
 ])
 
-// ── TCNO attribution URLs ──────────────────────────────────────────────────────
-
-const TCNO_URLS: Record<string, string> = {
-    'dam-battlegrounds': 'https://maps.tcno.co/arc/dam',
-    'burial-city':       'https://maps.tcno.co/arc/buried',
-    spaceport:           'https://maps.tcno.co/arc/spaceport',
-    'blue-gate':         'https://maps.tcno.co/arc/bluegate',
-    'stella-montis':     'https://maps.tcno.co/arc/stella',
-}
-
-export function getTcnoUrl(mapId: string): string {
-    return TCNO_URLS[mapId] ?? 'https://maps.tcno.co'
-}

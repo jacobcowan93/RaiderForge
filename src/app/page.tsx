@@ -132,12 +132,19 @@ export default function Home() {
                                 </span>
                             </Link>
 
-                            {/* Loadout — coming soon */}
-                            <div className="flex flex-col rounded-xl border border-dashed border-white/12 bg-black/25 p-6 opacity-[0.92]">
-                                <span className="text-[10px] uppercase tracking-widest font-semibold text-white/35 mb-3">
-                                    Loadout System
-                                </span>
-                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.04] text-white/30">
+                            {/* Loadout builder — Beta */}
+                            <Link
+                                href="/loadouts"
+                                className="group flex flex-col rounded-xl border border-white/12 bg-gradient-to-b from-[#0a0f18]/90 to-black/45 p-6
+                                           hover:border-rf-red/35 hover:shadow-[0_0_36px_-12px_rgba(239,68,68,0.22)] transition-all hover:-translate-y-0.5"
+                            >
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-rf-red/85">
+                                        Loadout System
+                                    </span>
+                                    <PageMaturityBadge level="beta" />
+                                </div>
+                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-rf-red/10 text-rf-red/90 border border-rf-red/20">
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         fill="none"
@@ -153,12 +160,15 @@ export default function Home() {
                                         />
                                     </svg>
                                 </div>
-                                <h3 className="font-semibold text-white/80 mb-2">Loadouts</h3>
-                                <p className="text-sm text-white/45 leading-relaxed flex-1">
-                                    Advanced loadout builder with MetaForge synergy — <span className="text-white/55">Coming soon</span>
+                                <h3 className="font-semibold text-white mb-2">Raid loadouts</h3>
+                                <p className="text-sm text-white/60 leading-relaxed flex-1">
+                                    Plan gear from the ARDB catalog, assign slots, and save builds in your browser. MetaForge event synergy
+                                    is planned.
                                 </p>
-                                <span className="mt-5 text-xs font-semibold text-white/30 uppercase tracking-wider">Coming soon</span>
-                            </div>
+                                <span className="mt-5 inline-flex items-center justify-center rounded-lg bg-rf-red/90 group-hover:bg-rf-red text-white text-sm font-bold py-2.5 px-4 border border-rf-red/30 transition-colors">
+                                    Open Loadout Builder
+                                </span>
+                            </Link>
 
                             {/* Blueprint tracker — Beta */}
                             <Link

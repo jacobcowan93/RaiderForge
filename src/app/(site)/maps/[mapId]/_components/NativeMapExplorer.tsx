@@ -22,12 +22,8 @@ import {
     filterPoisByCategories,
     filterPoisForFloor,
 } from '@/lib/maps/pois'
-import {
-    getDifficultiesForMap,
-    CATEGORY_GROUPS,
-    DEFAULT_ACTIVE_CATEGORIES,
-    getTcnoUrl,
-} from '@/lib/maps/map-interactive-config'
+import { getDifficultiesForMap, CATEGORY_GROUPS, DEFAULT_ACTIVE_CATEGORIES } from '@/lib/maps/map-interactive-config'
+import { getTcnoUrl } from '@/lib/maps/tcnoMaps'
 import { POI_CATEGORY_META } from '@/components/maps/MapPoiMarker'
 import { CONTAINERS_BY_MAP } from '@/data/containers'
 
@@ -209,6 +205,35 @@ export default function NativeMapExplorer({
                         maps.tcno.co
                     </a>
                 </span>
+            </div>
+
+            {/* ── Pin legend (curated POIs + layer hints) ───────────────────── */}
+            <div className="px-3 py-2 border-b border-white/[0.045] bg-white/[0.014]">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                    <span className="text-[9px] uppercase tracking-widest text-white/28 font-semibold w-full sm:w-auto sm:mr-1">
+                        Pin legend
+                    </span>
+                    {(Object.keys(POI_CATEGORY_META) as PoiCategory[]).map((cat) => {
+                        const meta = POI_CATEGORY_META[cat]
+                        return (
+                            <span
+                                key={cat}
+                                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-black/30 border border-white/[0.06]"
+                                title={`Curated pin: ${meta.label}`}
+                            >
+                                <span
+                                    className="w-2 h-2 rounded-sm shrink-0"
+                                    style={{ background: meta.color }}
+                                />
+                                <span className="text-[9px] text-white/55 font-medium">{meta.label}</span>
+                            </span>
+                        )
+                    })}
+                </div>
+                <p className="mt-1.5 text-[9px] text-white/22 leading-snug">
+                    Toggle categories in <span className="text-white/35">Filters</span>. Data layers add quest markers,
+                    container diamonds, and loot zones on the tactical grid.
+                </p>
             </div>
 
             {/* ── Primary toolbar ─────────────────────────────────────────────── */}
