@@ -31,9 +31,10 @@ import {
 } from '@/lib/blueprints/blueprintSpreadsheetMatcher'
 import { stripTrailingBlueprintSuffix } from '@/lib/blueprints/blueprintSlug'
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-// Public route: tracker uses localStorage only (`raiderforge.blueprint-track.v1`); no sign-in wall.
+// Signed-out: localStorage (`raiderforge.blueprint-track.v1`). Signed-in: GET/POST `/api/user/blueprints` when DB is configured.
 type CatalogResponse = {
     syncedAt: string | null
     count: number
@@ -54,6 +55,11 @@ const btnExport =
     'inline-flex items-center justify-center rounded-lg border border-white/15 bg-rf-bg/80 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-rf-text hover:border-rf-red/40 hover:bg-white/5 hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none'
 
 export default function BlueprintsPage() {
+    const { data: session, status: sessionStatus } = useSession()
+    const userMutatedRef = useRef(false)
+    const trackMapRef = useRef<Record<string, BlueprintTrackState>>({})
+    const persistenceRef = useRef<'local' | 'remote' | 'pending'>('local')
+
     const [catalogLoading, setCatalogLoading] = useState(true)
     const [catalogError, setCatalogError] = useState<string | null>(null)
     const [blueprints, setBlueprints] = useState<NormalizedBlueprint[]>([])
@@ -66,17 +72,119 @@ export default function BlueprintsPage() {
 
     const [trackMap, setTrackMap] = useState<Record<string, BlueprintTrackState>>({})
     const [storageReady, setStorageReady] = useState(false)
+    /** `local` = persist to localStorage; `remote` = debounced API save; `pending` = fetching cloud (do not write local). */
+    const [persistence, setPersistence] = useState<'local' | 'remote' | 'pending'>('local')
     const [jpegBusy, setJpegBusy] = useState(false)
+
+    trackMapRef.current = trackMap
+    persistenceRef.current = persistence
 
     useEffect(() => {
         setTrackMap(loadBlueprintStates())
+        setPersistence('local')
         setStorageReady(true)
     }, [])
 
     useEffect(() => {
         if (!storageReady) return
+        if (sessionStatus === 'loading') return
+
+        if (sessionStatus === 'unauthenticated') {
+            if (persistenceRef.current === 'remote') {
+                saveBlueprintStates(trackMapRef.current)
+            } else {
+                setTrackMap(loadBlueprintStates())
+            }
+            setPersistence('local')
+            userMutatedRef.current = false
+            return
+        }
+
+        const uid = session?.user?.id
+        if (!uid) {
+            if (persistenceRef.current === 'remote') {
+                saveBlueprintStates(trackMapRef.current)
+            } else {
+                setTrackMap(loadBlueprintStates())
+            }
+            setPersistence('local')
+            userMutatedRef.current = false
+            return
+        }
+
+        let cancelled = false
+        setPersistence('pending')
+
+        ;(async () => {
+            const res = await fetch('/api/user/blueprints', { credentials: 'same-origin' })
+            if (cancelled) return
+
+            if (res.status === 401 || res.status === 503 || !res.ok) {
+                setPersistence('local')
+                userMutatedRef.current = false
+                return
+            }
+
+            const data = (await res.json()) as { entries?: Record<string, BlueprintTrackState> }
+            let entries = data.entries ?? {}
+
+            if (Object.keys(entries).length === 0) {
+                const local = loadBlueprintStates()
+                if (Object.keys(local).length > 0) {
+                    const seeded = await fetch('/api/user/blueprints', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ entries: local }),
+                    })
+                    if (seeded.ok) {
+                        const r2 = await fetch('/api/user/blueprints', { credentials: 'same-origin' })
+                        if (r2.ok) {
+                            const d2 = (await r2.json()) as { entries?: Record<string, BlueprintTrackState> }
+                            entries = d2.entries ?? {}
+                        }
+                    }
+                }
+            }
+
+            if (cancelled) return
+            userMutatedRef.current = false
+            setTrackMap(entries)
+            setPersistence('remote')
+        })()
+
+        return () => {
+            cancelled = true
+        }
+    }, [storageReady, sessionStatus, session?.user?.id])
+
+    useEffect(() => {
+        if (!storageReady) return
+        if (persistence !== 'local') return
         saveBlueprintStates(trackMap)
-    }, [trackMap, storageReady])
+    }, [trackMap, storageReady, persistence])
+
+    useEffect(() => {
+        if (!storageReady) return
+        if (persistence !== 'remote') return
+        if (!userMutatedRef.current) return
+
+        const t = window.setTimeout(async () => {
+            const payload = trackMapRef.current
+            try {
+                const res = await fetch('/api/user/blueprints', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entries: payload }),
+                })
+                if (res.ok) userMutatedRef.current = false
+            } catch {
+                /* leave dirty; next change will retry */
+            }
+        }, 450)
+        return () => window.clearTimeout(t)
+    }, [trackMap, persistence, storageReady])
 
     useEffect(() => {
         let cancelled = false
@@ -134,6 +242,7 @@ export default function BlueprintsPage() {
     }, [missingBlueprints])
 
     const setOwned = useCallback((id: string, owned: boolean) => {
+        userMutatedRef.current = true
         setTrackMap((prev) => {
             if (owned) return { ...prev, [id]: 'owned' }
             const { [id]: _, ...rest } = prev
@@ -178,6 +287,16 @@ export default function BlueprintsPage() {
                                 Track which blueprints you&apos;ve collected and quickly see what&apos;s still missing.
                                 Mark items as owned to update your progress and generate a clean list of remaining blueprints to hunt.
                             </p>
+                            {persistence === 'remote' ? (
+                                <p className="mt-2 text-[11px] text-emerald-400/85 leading-relaxed">
+                                    Signed in — your collection syncs to your RaiderForge account across devices.
+                                </p>
+                            ) : persistence === 'local' && sessionStatus === 'authenticated' ? (
+                                <p className="mt-2 text-[11px] text-rf-textSoft/90 leading-relaxed">
+                                    Signed in, but cloud sync is unavailable (database not configured). Progress stays on this
+                                    browser only.
+                                </p>
+                            ) : null}
                         </div>
                         {!catalogLoading && !catalogError && blueprints.length > 0 ? (
                             <p className="shrink-0 text-sm font-semibold tabular-nums tracking-tight lg:text-right">
