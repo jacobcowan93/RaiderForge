@@ -6,7 +6,8 @@
  *
  * **Page 1** (first 50): authoritative 5×10 screen order — edit only via
  * `BLUEPRINT_IN_GAME_ORDER_PAGE_1`.
- * **Page 2** (remaining 24): order unchanged until a dedicated update.
+ * **Page 2** (entries 51–74): authoritative second-screen order — edit only via
+ * `BLUEPRINT_IN_GAME_ORDER_PAGE_2`.
  */
 
 /** Page 1 — exact in-game order, left-to-right, top-to-bottom (50 tiles). */
@@ -63,7 +64,7 @@ const BLUEPRINT_IN_GAME_ORDER_PAGE_1: readonly string[] = [
     'Shotgun Choke III',
 ]
 
-/** Page 2 — not reordered in this change; keep stable until page-2 source is applied. */
+/** Page 2 — exact in-game order for entries 51–74, left-to-right, top-to-bottom (24 tiles). */
 const BLUEPRINT_IN_GAME_ORDER_PAGE_2: readonly string[] = [
     'Shotgun Silencer',
     'Showstopper',
@@ -99,6 +100,12 @@ export const BLUEPRINT_IN_GAME_DISPLAY_ORDER: readonly string[] = [
 if (BLUEPRINT_IN_GAME_ORDER_PAGE_1.length !== 50) {
     throw new Error(
         `[blueprints] PAGE_1 must have 50 entries, got ${BLUEPRINT_IN_GAME_ORDER_PAGE_1.length}`
+    )
+}
+
+if (BLUEPRINT_IN_GAME_ORDER_PAGE_2.length !== 24) {
+    throw new Error(
+        `[blueprints] PAGE_2 must have 24 entries, got ${BLUEPRINT_IN_GAME_ORDER_PAGE_2.length}`
     )
 }
 
