@@ -9,7 +9,7 @@ import {
     emptyBuild,
     decodeBuildFromUrl,
     sanitizeBuild,
-    totalPoints,
+    totalPointsWithCap,
 } from '@/lib/skills/planner'
 import { loadSkillTreeSave, saveSkillTreeSave } from '@/lib/skill-tree/skillTreeSaveStorage'
 import { BranchTree } from './BranchTree'
@@ -104,8 +104,8 @@ export function SkillTreePlanner() {
     // Sidebar visibility state (mobile collapsible)
     const [sidebarOpen, setSidebarOpen] = useState(false)
 
-    // Live point total for the aria-live announcement
-    const total = useMemo(() => totalPoints(allocs), [allocs])
+    // Live point total + cap for the aria-live announcement
+    const { spent: total, cap: globalCap } = useMemo(() => totalPointsWithCap(allocs), [allocs])
 
     return (
         <div className="flex flex-col gap-6 overflow-x-hidden">
@@ -121,9 +121,10 @@ export function SkillTreePlanner() {
                 Skip to build summary
             </a>
 
-            {/* ── aria-live: announces total points to screen readers ─────── */}
+            {/* ── aria-live: announces total points (+ cap) to screen readers  */}
             <div aria-live="polite" aria-atomic="true" className="sr-only">
-                {total} expedition point{total !== 1 ? 's' : ''} spent
+                {total}{globalCap !== null ? ` of ${globalCap}` : ''} expedition point{total !== 1 ? 's' : ''} spent
+                {globalCap !== null && total >= globalCap ? ' — point cap reached' : ''}
             </div>
 
             {/* ── Mobile branch tabs + sidebar toggle ─────────────────────── */}

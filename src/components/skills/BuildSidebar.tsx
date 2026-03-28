@@ -7,12 +7,11 @@ import {
     type BuildAllocations,
     type BuildSummaryRow,
     buildSummary,
-    totalPoints,
+    totalPointsWithCap,
     resetAll,
     resetBranch,
     encodeBuildToUrl,
-    decodeBuildFromUrl,
-    sanitizeBuild,
+    decodeAndNormalizeBuild,
 } from '@/lib/skills/planner'
 
 interface Props {
@@ -116,37 +115,45 @@ interface ImportPanelProps {
 }
 
 function ImportPanel({ onImport }: ImportPanelProps) {
-    const [open,    setOpen]    = useState(false)
-    const [value,   setValue]   = useState('')
-    const [status,  setStatus]  = useState<'idle' | 'ok' | 'error'>('idle')
-    const [errMsg,  setErrMsg]  = useState('')
+    const [open,         setOpen]        = useState(false)
+    const [value,        setValue]       = useState('')
+    const [status,       setStatus]      = useState<'idle' | 'ok' | 'clamped' | 'error'>('idle')
+    const [errMsg,       setErrMsg]      = useState('')
+    const [clampChanges, setClampChanges] = useState<string[]>([])
 
     const handleApply = () => {
         const raw = value.trim()
         if (!raw) return
 
-        // Try extracting ?b= from a full URL first
+        // Extract ?b= from a full URL if present; otherwise treat as raw code
         let code = raw
         try {
             const url = new URL(raw)
             const b   = url.searchParams.get('b')
             if (b) code = b
         } catch {
-            // Not a valid URL — treat as raw code
+            // Not a URL — treat as raw compact code
         }
 
-        const decoded = decodeBuildFromUrl(code)
-        if (Object.keys(decoded).length === 0) {
+        const result = decodeAndNormalizeBuild(code)
+
+        if (Object.keys(result.allocs).length === 0) {
             setStatus('error')
             setErrMsg('Could not parse build code. Check the link and try again.')
             return
         }
 
-        onImport(sanitizeBuild(decoded))
-        setStatus('ok')
+        onImport(result.allocs)
         setValue('')
-        // Collapse after a short delay so user sees the success flash
-        setTimeout(() => { setOpen(false); setStatus('idle') }, 1200)
+
+        if (result.clamped) {
+            setStatus('clamped')
+            setClampChanges(result.changes)
+            // Keep open so user can read the clamp report; they close manually
+        } else {
+            setStatus('ok')
+            setTimeout(() => { setOpen(false); setStatus('idle') }, 1200)
+        }
     }
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -226,6 +233,26 @@ function ImportPanel({ onImport }: ImportPanelProps) {
                             Build imported!
                         </p>
                     )}
+                    {status === 'clamped' && (
+                        <div className="rounded-lg border border-amber-400/20 px-2.5 py-2"
+                             style={{ background: 'rgba(251,191,36,0.06)' }}>
+                            <p className="text-[10px] font-semibold text-amber-300 mb-1 leading-snug">
+                                Build imported — some ranks adjusted to fit caps:
+                            </p>
+                            <ul className="space-y-0.5">
+                                {clampChanges.slice(0, 4).map((c, i) => (
+                                    <li key={i} className="text-[9px] text-amber-400/60 leading-relaxed">
+                                        • {c}
+                                    </li>
+                                ))}
+                                {clampChanges.length > 4 && (
+                                    <li className="text-[9px] text-amber-400/40">
+                                        …and {clampChanges.length - 4} more
+                                    </li>
+                                )}
+                            </ul>
+                        </div>
+                    )}
 
                     <button
                         type="button"
@@ -249,8 +276,8 @@ function ImportPanel({ onImport }: ImportPanelProps) {
 
 export function BuildSidebar({ allocs, onChange }: Props) {
     const [copied, setCopied] = useState(false)
-    const summary = useMemo(() => buildSummary(allocs), [allocs])
-    const total   = useMemo(() => totalPoints(allocs), [allocs])
+    const summary                       = useMemo(() => buildSummary(allocs), [allocs])
+    const { spent: total, cap: globalCap } = useMemo(() => totalPointsWithCap(allocs), [allocs])
 
     const handleShare = async () => {
         const encoded = encodeBuildToUrl(allocs)
@@ -279,9 +306,24 @@ export function BuildSidebar({ allocs, onChange }: Props) {
                     Total Points Spent
                 </p>
                 <div className="flex items-end gap-2">
-                    <span className="text-4xl font-bold tabular-nums text-white">{total}</span>
+                    <span
+                        className="text-4xl font-bold tabular-nums"
+                        style={{ color: globalCap !== null && total >= globalCap ? '#f59e0b' : 'white' }}
+                    >
+                        {total}
+                    </span>
+                    {globalCap !== null && (
+                        <span className="text-xl font-semibold tabular-nums text-white/25 mb-0.5">
+                            /{globalCap}
+                        </span>
+                    )}
                     <span className="text-sm text-white/30 mb-1 font-medium">expedition pts</span>
                 </div>
+                {globalCap !== null && total >= globalCap && (
+                    <p className="text-[9px] text-amber-400/75 mt-1 font-semibold uppercase tracking-wide">
+                        Point cap reached
+                    </p>
+                )}
 
                 {/* Per-branch dots */}
                 <div className="mt-3 flex items-center gap-3">
