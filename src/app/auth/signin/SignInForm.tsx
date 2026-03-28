@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useMemo, useState } from "react"
 import { signIn } from "next-auth/react"
 
@@ -188,6 +189,26 @@ export default function SignInForm({
                 <p className="text-xs text-rf-textSoft text-center leading-relaxed">
                     Email magic link is not enabled. Add <code className="text-white/50">DATABASE_URL</code> and SMTP
                     settings from <code className="text-white/50">.env.example</code> to turn it on.
+                </p>
+            )}
+
+            {configured && (
+                <p className="text-center text-[11px] leading-relaxed text-white/45">
+                    By continuing, you agree to the{" "}
+                    <Link
+                        href="/terms"
+                        className="text-rf-textSoft/90 hover:text-rf-blue hover:underline underline-offset-2 transition-colors"
+                    >
+                        Terms of Use
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                        href="/privacy"
+                        className="text-rf-textSoft/90 hover:text-rf-blue hover:underline underline-offset-2 transition-colors"
+                    >
+                        Privacy Policy
+                    </Link>
+                    .
                 </p>
             )}
         </div>
