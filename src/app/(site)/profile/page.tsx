@@ -2,8 +2,13 @@
 
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/context/UserContext'
+import type { MapProgressSaveV1 } from '@/lib/maps/mapProgressSave'
+import {
+    summarizeCuratedPoiProgress,
+    type CuratedPoiProgressSummary,
+} from '@/lib/maps/mapCuratedPoiProgressSummary'
 
 type BlueprintSyncSummary = {
     available: boolean
@@ -21,10 +26,14 @@ type AccountSummaryResponse = {
 const linkBtn =
     'inline-flex items-center justify-center rounded-lg border border-rf-border bg-rf-bg/70 px-4 py-2.5 text-sm font-medium text-rf-text hover:text-white hover:border-rf-red/35 transition-colors'
 
+type MapProgressLoadState = 'idle' | 'loading' | 'ok' | 'unavailable' | 'error'
+
 export default function ProfilePage() {
     const { user, status } = useAuth()
     const [summary, setSummary] = useState<AccountSummaryResponse | null>(null)
     const [summaryError, setSummaryError] = useState<string | null>(null)
+    const [pinSummary, setPinSummary] = useState<CuratedPoiProgressSummary | null>(null)
+    const [mapProgressState, setMapProgressState] = useState<MapProgressLoadState>('idle')
 
     const loadSummary = useCallback(async () => {
         if (!user?.id) return
@@ -52,13 +61,47 @@ export default function ProfilePage() {
         }
     }, [user?.id])
 
+    const loadMapProgress = useCallback(async () => {
+        if (!user?.id) return
+        setMapProgressState('loading')
+        try {
+            const res = await fetch('/api/user/map-progress', { credentials: 'same-origin' })
+            if (res.status === 503) {
+                setPinSummary(null)
+                setMapProgressState('unavailable')
+                return
+            }
+            if (res.status === 401) {
+                setPinSummary(null)
+                setMapProgressState('idle')
+                return
+            }
+            if (!res.ok) {
+                setPinSummary(null)
+                setMapProgressState('error')
+                return
+            }
+            const data = (await res.json()) as { save?: MapProgressSaveV1 | null }
+            setPinSummary(summarizeCuratedPoiProgress(data.save))
+            setMapProgressState('ok')
+        } catch {
+            setPinSummary(null)
+            setMapProgressState('error')
+        }
+    }, [user?.id])
+
     useEffect(() => {
-        if (status === 'authenticated' && user?.id) void loadSummary()
+        if (status === 'authenticated' && user?.id) {
+            void loadSummary()
+            void loadMapProgress()
+        }
         if (status === 'unauthenticated') {
             setSummary(null)
             setSummaryError(null)
+            setPinSummary(null)
+            setMapProgressState('idle')
         }
-    }, [status, user?.id, loadSummary])
+    }, [status, user?.id, loadSummary, loadMapProgress])
 
     if (status === 'loading') {
         return (
@@ -74,10 +117,12 @@ export default function ProfilePage() {
             <div className="py-16 px-6 max-w-3xl mx-auto text-center">
                 <h2 className="text-2xl font-bold text-white mb-3">Account</h2>
                 <p className="text-rf-textSoft mb-2 max-w-md mx-auto leading-relaxed">
-                    Sign in to see your RaiderForge profile, linked sign-in methods, and blueprint collection progress synced
-                    across devices.
+                    Sign in to see your RaiderForge profile, linked sign-in methods, blueprint collection progress, and tactical
+                    map pin progress — all synced across devices when the server is configured for it.
                 </p>
-                <p className="text-xs text-white/35 mb-8">Guest progress stays in this browser only (e.g. blueprint tracker).</p>
+                <p className="text-xs text-white/35 mb-8">
+                    Without an account, progress stays in this browser only (blueprints, map visits, and pins).
+                </p>
                 <button
                     type="button"
                     onClick={() => signIn()}
@@ -91,13 +136,19 @@ export default function ProfilePage() {
 
     const bp = summary?.blueprintSync
 
+    const continueExploringHref = useMemo(() => {
+        if (!pinSummary?.perMap.length) return '/maps'
+        const incomplete = pinSummary.perMap.find(m => m.visitedPins < m.totalPins)
+        return incomplete?.href ?? '/maps'
+    }, [pinSummary])
+
     return (
         <div className="py-10 px-6 max-w-3xl mx-auto">
             <header className="mb-8">
                 <span className="text-xs uppercase tracking-widest text-rf-red font-semibold">Dashboard</span>
                 <h1 className="mt-2 text-3xl font-bold text-white">Your account</h1>
                 <p className="mt-1 text-sm text-rf-textSoft">
-                    Identity, sign-in methods, and blueprint tracker sync at a glance.
+                    Identity, sign-in methods, blueprint tracker, and curated map pins at a glance.
                 </p>
             </header>
 
@@ -200,6 +251,110 @@ export default function ProfilePage() {
                         </p>
                     </>
                 )}
+            </section>
+
+            {/* Curated map POI (Pins) progress — same save as tactical map */}
+            <section className="rf-card rounded-xl p-6 mb-5 border border-white/[0.06]">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                    <div>
+                        <h2 className="text-xs uppercase tracking-widest text-rf-textSoft font-semibold">Tactical map pins</h2>
+                        <p className="text-[11px] text-white/35 mt-1 leading-relaxed max-w-xl">
+                            Curated pins (extracts, keys, quests, containers) from Dam Battlegrounds &amp; Burial City. Checked pins
+                            sync with your account when map progress sync is enabled.
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 shrink-0">
+                        <Link
+                            href="/maps"
+                            className="text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors whitespace-nowrap"
+                        >
+                            All maps →
+                        </Link>
+                        <Link
+                            href={continueExploringHref}
+                            className="text-xs font-semibold text-emerald-400/90 hover:text-emerald-300 transition-colors whitespace-nowrap"
+                        >
+                            Continue exploring →
+                        </Link>
+                    </div>
+                </div>
+
+                {mapProgressState === 'loading' || mapProgressState === 'idle' ? (
+                    <div className="animate-pulse space-y-2 py-2">
+                        <div className="h-4 bg-white/10 rounded w-3/4" />
+                        <div className="h-2 bg-white/5 rounded w-full" />
+                    </div>
+                ) : mapProgressState === 'unavailable' ? (
+                    <p className="text-sm text-rf-textSoft/90 leading-relaxed">
+                        Map progress sync is not available on this server (database not configured). Pin visits stay on this
+                        device when you use the tactical maps.
+                    </p>
+                ) : mapProgressState === 'error' ? (
+                    <p className="text-sm text-rf-red/90">Could not load map progress.</p>
+                ) : pinSummary ? (
+                    <>
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm tabular-nums">
+                            <span className="text-rf-textSoft">
+                                Maps with pins{' '}
+                                <span className="text-white font-medium">{pinSummary.mapsWithCuratedPins}</span>
+                            </span>
+                            <span className="text-rf-textSoft">
+                                Pins cleared{' '}
+                                <span className="text-rf-green font-semibold text-white">{pinSummary.totalVisitedPins}</span>
+                                <span className="text-white/30"> / </span>
+                                <span className="text-white/80">{pinSummary.totalCuratedPins}</span>
+                            </span>
+                            <span className="text-rf-textSoft">
+                                Overall <span className="text-white font-medium">{pinSummary.overallPercent}%</span>
+                            </span>
+                        </div>
+                        <div
+                            className="mt-3 h-2 rounded-full bg-black/40 border border-white/5 overflow-hidden"
+                            role="progressbar"
+                            aria-valuenow={pinSummary.overallPercent}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                        >
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-sky-500/80 to-cyan-400/85 transition-[width] duration-500"
+                                style={{ width: `${pinSummary.overallPercent}%` }}
+                            />
+                        </div>
+                        <ul className="mt-5 space-y-4">
+                            {pinSummary.perMap.map(row => (
+                                <li key={row.mapId} className="border-t border-white/[0.06] pt-4 first:border-t-0 first:pt-0">
+                                    <div className="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+                                        <Link
+                                            href={row.href}
+                                            className="text-sm font-semibold text-white hover:text-sky-300 transition-colors"
+                                        >
+                                            {row.displayName}
+                                        </Link>
+                                        <span className="text-xs tabular-nums text-rf-textSoft">
+                                            <span className="text-white/90">{row.visitedPins}</span>
+                                            <span className="text-white/35"> / </span>
+                                            {row.totalPins}
+                                            <span className="text-white/35"> · </span>
+                                            {row.percent}%
+                                        </span>
+                                    </div>
+                                    <div
+                                        className="h-1.5 rounded-full bg-black/40 border border-white/5 overflow-hidden"
+                                        role="progressbar"
+                                        aria-valuenow={row.percent}
+                                        aria-valuemin={0}
+                                        aria-valuemax={100}
+                                    >
+                                        <div
+                                            className="h-full rounded-full bg-sky-500/75 transition-[width] duration-500"
+                                            style={{ width: `${row.percent}%` }}
+                                        />
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </>
+                ) : null}
             </section>
 
             {/* Quick navigation */}
