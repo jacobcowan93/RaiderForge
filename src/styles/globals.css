@@ -136,6 +136,24 @@ body {
     border-right-color: rgba(255, 255, 255, 0.1);
 }
 
+/* ── Hero text entrance — fade up ───────────────────────────────────────────── */
+/* Subtle upward drift + fade. Applied to hero text elements with staggered     */
+/* animation-delay so the accent label, title, and paragraph cascade in gently. */
+@keyframes rf-hero-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero-enter {
+    animation: rf-hero-enter 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* ── Quest detail panel — slide-in from right ──────────────────────────────── */
 @keyframes rf-slide-in-right {
     from { transform: translateX(100%); opacity: 0; }

@@ -4,8 +4,8 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import type { MapMeta } from '../data/maps'
 import type { MergedQuest } from '../types/quests'
-import type { ContainerMarker, ContainerType, MapLayerType } from '../types/mapLayers'
-import { CONTAINER_TYPE_META } from '../types/mapLayers'
+import type { ContainerMarker, ContainerType, LootAreaMarker, LootAreaTier, MapLayerType } from '../types/mapLayers'
+import { CONTAINER_TYPE_META, LOOT_AREA_TIER_META } from '../types/mapLayers'
 import { getCalibrationForMap } from '../data/mapCalibration'
 import { CONTAINERS_BY_MAP } from '../data/containers'
 import MapQuestFilter from './MapQuestFilter'
@@ -19,32 +19,45 @@ const MapTileViewer = dynamic(() => import('./MapTileViewer'), {
 interface Props {
   map: MapMeta
   mapQuests?: MergedQuest[]
+  /**
+   * Loot area markers from MetaForge /api/game-map-data (via getMetaforgeMapLootAreas).
+   * Empty when the MetaForge API is unavailable (HTTP 500 as of 2026-03).
+   * The layer toggle will show "—" when this is empty.
+   */
+  mfLootAreas?: LootAreaMarker[]
 }
 
-export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
+export default function MapImageDisplay({ map, mapQuests = [], mfLootAreas = [] }: Props) {
   const [activeFloor, setActiveFloor]         = useState(0)
   const [tileFallback, setTileFallback]       = useState(false)
   const [selectedQuest, setSelectedQuest]     = useState<MergedQuest | null>(null)
   const [selectedContainer, setSelectedContainer] = useState<ContainerMarker | null>(null)
+  const [selectedLootArea, setSelectedLootArea]   = useState<LootAreaMarker | null>(null)
   const [activeTraders, setActiveTraders]     = useState<Set<string>>(
     () => new Set(mapQuests.map(q => q.traderId)),
   )
   const [activeLayers, setActiveLayers]       = useState<Set<MapLayerType>>(
-    () => new Set<MapLayerType>(['quests', 'containers']),
+    () => new Set<MapLayerType>(['quests', 'containers', 'loot_areas']),
   )
 
   const handleTileFallback = useCallback(() => setTileFallback(true), [])
 
-  // Selecting a quest clears container selection (mutual exclusion keeps UI clean)
+  // Selecting a quest clears container + loot area selection (mutual exclusion keeps UI clean)
   const handleQuestSelect = useCallback((q: MergedQuest | null) => {
     setSelectedQuest(q)
-    if (q !== null) setSelectedContainer(null)
+    if (q !== null) { setSelectedContainer(null); setSelectedLootArea(null) }
   }, [])
 
-  // Selecting a container clears quest panel
+  // Selecting a container clears quest panel + loot area selection
   const handleContainerSelect = useCallback((c: ContainerMarker | null) => {
     setSelectedContainer(c)
-    if (c !== null) setSelectedQuest(null)
+    if (c !== null) { setSelectedQuest(null); setSelectedLootArea(null) }
+  }, [])
+
+  // Selecting a loot area clears quest + container selections
+  const handleLootAreaSelect = useCallback((a: LootAreaMarker | null) => {
+    setSelectedLootArea(a)
+    if (a !== null) { setSelectedQuest(null); setSelectedContainer(null) }
   }, [])
 
   const toggleTrader = useCallback((traderId: string) => {
@@ -79,22 +92,24 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
 
   // Layer-off → close relevant selection
   useEffect(() => {
-    if (selectedQuest && !activeLayers.has('quests'))      setSelectedQuest(null)
-    if (selectedContainer && !activeLayers.has('containers')) setSelectedContainer(null)
-  }, [activeLayers, selectedQuest, selectedContainer])
+    if (selectedQuest     && !activeLayers.has('quests'))      setSelectedQuest(null)
+    if (selectedContainer && !activeLayers.has('containers'))  setSelectedContainer(null)
+    if (selectedLootArea  && !activeLayers.has('loot_areas'))  setSelectedLootArea(null)
+  }, [activeLayers, selectedQuest, selectedContainer, selectedLootArea])
 
   // ESC closes whichever overlay is open
   useEffect(() => {
-    if (!selectedQuest && !selectedContainer) return
+    if (!selectedQuest && !selectedContainer && !selectedLootArea) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSelectedQuest(null)
         setSelectedContainer(null)
+        setSelectedLootArea(null)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selectedQuest, selectedContainer])
+  }, [selectedQuest, selectedContainer, selectedLootArea])
 
   /**
    * Quests for active traders — drives MapTileViewer quest marker re-render.
@@ -120,6 +135,22 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
     return [...seen]
   }, [visibleContainers])
 
+  /**
+   * Loot area markers gated by the 'loot_areas' layer toggle.
+   * Empty when MetaForge API is unavailable or the layer is toggled off.
+   */
+  const visibleLootAreas: LootAreaMarker[] = activeLayers.has('loot_areas')
+    ? mfLootAreas
+    : []
+
+  /** Unique tiers present in the visible loot area set — used for legend. */
+  const activeLootAreaTiers = useMemo<LootAreaTier[]>(() => {
+    if (visibleLootAreas.length === 0) return []
+    const seen = new Set<LootAreaTier>()
+    for (const a of visibleLootAreas) seen.add(a.tier)
+    return [...seen]
+  }, [visibleLootAreas])
+
   const hasTiles      = !!map.tileConfig && !tileFallback
   const isMultiFloor  = map.mapType === 'multi-floor' && Array.isArray(map.floors) && map.floors.length > 0
   const hasQuests     = mapQuests.length > 0
@@ -136,6 +167,7 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
   // Visible marker counts for the status badge
   const visibleQuestMarkerCount     = filteredQuests.filter(q => q.position !== null).length
   const visibleContainerMarkerCount = visibleContainers.length
+  const visibleLootAreaMarkerCount  = visibleLootAreas.length
 
   return (
     <div>
@@ -170,6 +202,7 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
           activeLayers={activeLayers}
           onLayerToggle={toggleLayer}
           containerCount={ALL_CONTAINERS.length}
+          lootAreaCount={mfLootAreas.length}
         />
       )}
 
@@ -188,6 +221,9 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
             containers={visibleContainers}
             selectedContainerId={selectedContainer?.id ?? null}
             onContainerSelect={handleContainerSelect}
+            lootAreas={visibleLootAreas}
+            selectedLootAreaId={selectedLootArea?.id ?? null}
+            onLootAreaSelect={handleLootAreaSelect}
           />
         ) : (
           <img
@@ -220,9 +256,21 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
           />
         )}
 
-        {/* Container type legend — bottom-left, visible when container layer is on */}
+        {/* Loot area info badge — top-center, animates in on loot area click */}
+        {selectedLootArea && (
+          <LootAreaInfoBadge
+            key={selectedLootArea.id}
+            area={selectedLootArea}
+            onClose={() => setSelectedLootArea(null)}
+          />
+        )}
+
+        {/* Combined marker legend — bottom-left, shows active container types + loot tiers */}
         {hasTiles && (
-          <ContainerLegend types={activeContainerTypes} />
+          <MapMarkerLegend
+            containerTypes={activeContainerTypes}
+            lootAreaTiers={activeLootAreaTiers}
+          />
         )}
 
         <MapStatusBadge
@@ -230,6 +278,7 @@ export default function MapImageDisplay({ map, mapQuests = [] }: Props) {
           tileFallback={tileFallback}
           questMarkerCount={visibleQuestMarkerCount}
           containerMarkerCount={visibleContainerMarkerCount}
+          lootAreaMarkerCount={visibleLootAreaMarkerCount}
         />
       </div>
     </div>
@@ -297,20 +346,104 @@ function ContainerInfoBadge({
   )
 }
 
-// ── Container type legend ─────────────────────────────────────────────────────
-// Compact bottom-left overlay listing active container types with color swatches.
-// Only renders when at least one container type is visible on the current map.
+// ── Loot area info badge ──────────────────────────────────────────────────────
+// Appears top-center when a loot area marker is clicked.
+// Shows the tier (color-coded) and zone name.
 
-function ContainerLegend({ types }: { types: ContainerType[] }) {
-  if (types.length === 0) return null
+function LootAreaInfoBadge({
+  area,
+  onClose,
+}: {
+  area: LootAreaMarker
+  onClose: () => void
+}) {
+  const meta = LOOT_AREA_TIER_META[area.tier]
+
+  return (
+    <div
+      className="rf-badge-enter absolute top-3 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-2.5 bg-black/88 backdrop-blur-sm rounded-lg border border-white/[0.08] px-3 py-2 shadow-xl shadow-black/50 pointer-events-auto whitespace-nowrap"
+      onClick={e => e.stopPropagation()}
+    >
+      {/* Hollow circle indicator matching marker shape */}
+      <span
+        className="w-3 h-3 flex-shrink-0 rounded-full border-2"
+        style={{
+          borderColor: meta.color,
+          boxShadow:   `0 0 6px ${meta.color}80`,
+        }}
+      />
+
+      <div className="flex flex-col min-w-0">
+        <span
+          className="text-[9px] uppercase tracking-widest leading-none mb-0.5 font-semibold"
+          style={{ color: meta.color }}
+        >
+          {meta.label}
+        </span>
+        <span className="text-[11px] font-medium text-white/80 leading-tight">
+          {area.name}
+        </span>
+      </div>
+
+      <button
+        onClick={onClose}
+        aria-label="Dismiss"
+        className="flex-shrink-0 text-white/25 hover:text-white/70 transition-colors ml-0.5"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2.5}
+          stroke="currentColor"
+          className="w-3 h-3"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+// ── Combined map marker legend ─────────────────────────────────────────────────
+// Compact bottom-left overlay listing active container types and loot area tiers.
+// Replaces the original ContainerLegend — handles both marker categories together
+// so their legend entries stack in one visual group without overlap.
+// Only renders when at least one marker category is visible on the current map.
+
+function MapMarkerLegend({
+  containerTypes,
+  lootAreaTiers,
+}: {
+  containerTypes: ContainerType[]
+  lootAreaTiers:  LootAreaTier[]
+}) {
+  if (containerTypes.length === 0 && lootAreaTiers.length === 0) return null
 
   return (
     <div className="absolute bottom-3 left-3 z-[500] flex flex-col gap-1 pointer-events-none">
-      {types.map(type => {
+      {/* Loot area tiers — hollow circle swatch */}
+      {lootAreaTiers.map(tier => {
+        const meta = LOOT_AREA_TIER_META[tier]
+        return (
+          <div
+            key={`loot-${tier}`}
+            className="flex items-center gap-1.5 text-[9px] font-medium text-white/50 bg-black/65 backdrop-blur-sm rounded-md px-2 py-1 border border-white/[0.06]"
+          >
+            <span
+              className="w-2 h-2 flex-shrink-0 rounded-full border"
+              style={{ borderColor: meta.color }}
+            />
+            {meta.label}
+          </div>
+        )
+      })}
+      {/* Container types — rotated-diamond swatch */}
+      {containerTypes.map(type => {
         const meta = CONTAINER_TYPE_META[type]
         return (
           <div
-            key={type}
+            key={`cont-${type}`}
             className="flex items-center gap-1.5 text-[9px] font-medium text-white/50 bg-black/65 backdrop-blur-sm rounded-md px-2 py-1 border border-white/[0.06]"
           >
             <span
@@ -345,11 +478,13 @@ function MapStatusBadge({
   tileFallback,
   questMarkerCount,
   containerMarkerCount,
+  lootAreaMarkerCount,
 }: {
   hasTiles: boolean
   tileFallback: boolean
   questMarkerCount: number
   containerMarkerCount: number
+  lootAreaMarkerCount: number
 }) {
   if (tileFallback) {
     return (
@@ -365,7 +500,7 @@ function MapStatusBadge({
   }
 
   if (hasTiles) {
-    const totalMarkers = questMarkerCount + containerMarkerCount
+    const totalMarkers = questMarkerCount + containerMarkerCount + lootAreaMarkerCount
     const label = totalMarkers > 0
       ? `${totalMarkers} marker${totalMarkers !== 1 ? 's' : ''}`
       : 'No markers'

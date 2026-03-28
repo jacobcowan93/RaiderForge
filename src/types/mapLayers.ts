@@ -21,7 +21,7 @@
 // ── Layer types ───────────────────────────────────────────────────────────────
 
 /** All supported overlay layer types on the interactive map. */
-export type MapLayerType = 'quests' | 'containers'
+export type MapLayerType = 'quests' | 'containers' | 'loot_areas'
 
 // ── Container types ───────────────────────────────────────────────────────────
 
@@ -93,6 +93,46 @@ export type ContainerMarker = {
   label?:        string
 }
 
+// ── Loot area types ───────────────────────────────────────────────────────────
+
+/**
+ * Value tier for a MetaForge-sourced loot concentration zone.
+ * Derived from MetaForge tier/quality fields in metaforgeMapData.ts.
+ */
+export type LootAreaTier = 'high' | 'medium' | 'low'
+
+export type LootAreaTierMeta = {
+  label: string
+  /** CSS hex color used for the hollow-circle marker and legend swatch. */
+  color: string
+}
+
+/** Visual and label metadata for each loot area tier. */
+export const LOOT_AREA_TIER_META: Record<LootAreaTier, LootAreaTierMeta> = {
+  high:   { label: 'High Value',   color: '#facc15' },
+  medium: { label: 'Medium Value', color: '#60a5fa' },
+  low:    { label: 'Low Value',    color: '#6b7280' },
+}
+
+/**
+ * A loot concentration zone from MetaForge /api/game-map-data.
+ *
+ * Rendered as a hollow circle marker (distinct from solid quest circles
+ * and rotated-diamond container markers). Position uses MetaForge
+ * world-space coordinates — converted via mfPositionToPixels().
+ *
+ * Represents a zone location only — not spawn probability or quantity.
+ * Populated when MetaForge /api/game-map-data returns valid data.
+ * Empty when the API is unavailable (HTTP 500 as of 2026-03).
+ */
+export type LootAreaMarker = {
+  id:       string
+  name:     string
+  tier:     LootAreaTier
+  /** MetaForge world-space coordinates. Converted by mfPositionToPixels(). */
+  position: { x: number; y: number }
+}
+
 // ── Layer definitions ─────────────────────────────────────────────────────────
 
 export type MapLayerDef = {
@@ -121,5 +161,15 @@ export const MAP_LAYER_DEFS: readonly MapLayerDef[] = [
     label: 'Containers',
     iconPath:
       'M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z',
+  },
+  {
+    type:  'loot_areas',
+    label: 'Loot Areas',
+    /**
+     * Heroicons outline: sparkles — communicates "high-value points of interest"
+     * without implying loot probability data.
+     */
+    iconPath:
+      'M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z',
   },
 ]

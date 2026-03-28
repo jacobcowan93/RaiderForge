@@ -46,6 +46,11 @@ interface Props {
    * 0 until real positional data is sourced — shows "—" badge in that state.
    */
   containerCount: number
+  /**
+   * Total loot area marker count from MetaForge /api/game-map-data.
+   * 0 when the API is unavailable (HTTP 500 as of 2026-03) — shows "—" badge.
+   */
+  lootAreaCount: number
 }
 
 export default function MapQuestFilter({
@@ -57,6 +62,7 @@ export default function MapQuestFilter({
   activeLayers,
   onLayerToggle,
   containerCount,
+  lootAreaCount,
 }: Props) {
   // Build unique trader list from quests on this map, preserving insertion order
   const traders = Array.from(
@@ -76,11 +82,13 @@ export default function MapQuestFilter({
 
   const hasFilter    = activeTraders.size < traders.length
   const visibleCount = quests.filter(q => activeTraders.has(q.traderId) && activeLayers.has('quests')).length
-    + (activeLayers.has('containers') ? containerCount : 0)
+    + (activeLayers.has('containers') ? containerCount   : 0)
+    + (activeLayers.has('loot_areas') ? lootAreaCount    : 0)
 
   const layerCountFor = (type: MapLayerType): number | null => {
     if (type === 'quests')     return quests.length
     if (type === 'containers') return containerCount
+    if (type === 'loot_areas') return lootAreaCount
     return null
   }
 

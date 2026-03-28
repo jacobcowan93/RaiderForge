@@ -128,7 +128,7 @@ export function mergeQuests(
 
       requiredItems: ardb.requiredItems.map(ri => ({
         name:   ri.item.name,
-        icon:   `${ARDB_STATIC}/${ri.item.icon.replace(/^\//, '')}`,
+        icon:   ri.item.icon ? `${ARDB_STATIC}/${ri.item.icon.replace(/^\//, '')}` : null,
         rarity: ri.item.rarity,
         amount: ri.amount,
       })),

@@ -50,8 +50,8 @@
 import { useEffect, useRef } from 'react'
 import type { MapTileConfig } from '../data/maps'
 import type { MergedQuest } from '../types/quests'
-import type { ContainerMarker } from '../types/mapLayers'
-import { CONTAINER_TYPE_META } from '../types/mapLayers'
+import type { ContainerMarker, LootAreaMarker } from '../types/mapLayers'
+import { CONTAINER_TYPE_META, LOOT_AREA_TIER_META } from '../types/mapLayers'
 import { mfPositionToPixels } from '../lib/quests/questUtils'
 import { getCalibrationForMap, type WorldBounds } from '../data/mapCalibration'
 
@@ -90,6 +90,16 @@ interface Props {
   selectedContainerId?: string | null
   /** Called when a container marker is clicked or map background deselects. */
   onContainerSelect?: (container: ContainerMarker | null) => void
+  /**
+   * Loot area markers sourced from MetaForge /api/game-map-data.
+   * Empty array = no loot area markers (API unavailable or map has no zones).
+   * Gated by parent (MapImageDisplay) based on activeLayers state.
+   */
+  lootAreas?: LootAreaMarker[]
+  /** ID of the currently selected loot area, or null. */
+  selectedLootAreaId?: string | null
+  /** Called when a loot area marker is clicked or map background deselects. */
+  onLootAreaSelect?: (area: LootAreaMarker | null) => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -106,13 +116,17 @@ export default function MapTileViewer({
   containers = [],
   selectedContainerId = null,
   onContainerSelect,
+  lootAreas = [],
+  selectedLootAreaId = null,
+  onLootAreaSelect,
 }: Props) {
-  const containerRef      = useRef<HTMLDivElement>(null)
-  const mapRef            = useRef<any>(null)
-  const layerRef          = useRef<any>(null)
-  const LRef              = useRef<any>(null)
-  const markerLayerRef    = useRef<any>(null)
-  const containerLayerRef = useRef<any>(null)
+  const containerRef       = useRef<HTMLDivElement>(null)
+  const mapRef             = useRef<any>(null)
+  const layerRef           = useRef<any>(null)
+  const LRef               = useRef<any>(null)
+  const markerLayerRef     = useRef<any>(null)
+  const containerLayerRef  = useRef<any>(null)
+  const lootAreaLayerRef   = useRef<any>(null)
 
   // Keep stable refs so marker click closures always call latest callbacks
   // without re-creating all markers on every render.
@@ -121,6 +135,9 @@ export default function MapTileViewer({
 
   const onContainerSelectRef = useRef(onContainerSelect)
   useEffect(() => { onContainerSelectRef.current = onContainerSelect })
+
+  const onLootAreaSelectRef = useRef(onLootAreaSelect)
+  useEffect(() => { onLootAreaSelectRef.current = onLootAreaSelect })
 
   const allQuestsRef = useRef(allQuests)
   useEffect(() => { allQuestsRef.current = allQuests })
@@ -171,10 +188,11 @@ export default function MapTileViewer({
         layerRef.current = tileLayer
         LRef.current    = L
 
-        // Clicking the map background closes both the quest panel and container selection
+        // Clicking the map background closes all selection panels
         map.on('click', () => {
           onQuestSelectRef.current(null)
           onContainerSelectRef.current?.(null)
+          onLootAreaSelectRef.current?.(null)
         })
 
         const { worldBounds } = getCalibrationForMap(rfMapId)
@@ -193,6 +211,13 @@ export default function MapTileViewer({
           selectedContainerId, onContainerSelectRef,
         )
 
+        // Initial loot area marker render (empty until MetaForge API is available)
+        renderLootAreaMarkers(
+          L, map, lootAreaLayerRef,
+          lootAreas, tileConfig, worldBounds,
+          selectedLootAreaId, onLootAreaSelectRef,
+        )
+
       } catch {
         if (!cancelled) onFallback()
       }
@@ -201,11 +226,12 @@ export default function MapTileViewer({
     return () => {
       cancelled = true
       if (map) { map.remove(); map = null }
-      mapRef.current          = null
-      layerRef.current        = null
-      LRef.current            = null
-      markerLayerRef.current  = null
+      mapRef.current            = null
+      layerRef.current          = null
+      LRef.current              = null
+      markerLayerRef.current    = null
       containerLayerRef.current = null
+      lootAreaLayerRef.current  = null
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -253,6 +279,17 @@ export default function MapTileViewer({
       selectedContainerId, onContainerSelectRef,
     )
   }, [containers, selectedContainerId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // --- Re-render loot area markers when data or selection changes ---
+  useEffect(() => {
+    if (!mapRef.current || !LRef.current) return
+    const { worldBounds } = getCalibrationForMap(rfMapId)
+    renderLootAreaMarkers(
+      LRef.current, mapRef.current, lootAreaLayerRef,
+      lootAreas, tileConfig, worldBounds,
+      selectedLootAreaId, onLootAreaSelectRef,
+    )
+  }, [lootAreas, selectedLootAreaId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
@@ -495,6 +532,112 @@ function renderContainerMarkers(
 
     containerLayerRef.current.addLayer(marker)
   }
+}
+
+// ── Loot area marker rendering ─────────────────────────────────────────────────
+
+/**
+ * Clear + repopulate the loot area marker LayerGroup.
+ *
+ * Markers are hollow circles, visually distinct from:
+ *   - Quest markers (solid filled circles)
+ *   - Container markers (rotated-square diamonds)
+ *
+ * Tier is communicated via color (LOOT_AREA_TIER_META).
+ * Selected loot area renders as solid fill with white ring + stronger glow.
+ * Normal loot areas render as hollow circles with hover scale.
+ * Tooltip: "Zone Name · Tier Label"
+ *
+ * Positions use MetaForge world-space coordinates converted via
+ * mfPositionToPixels(). When lootAreas[] is empty the layer renders nothing.
+ */
+function renderLootAreaMarkers(
+  L: any,
+  map: any,
+  lootAreaLayerRef: React.MutableRefObject<any>,
+  lootAreas: LootAreaMarker[],
+  tileConfig: MapTileConfig,
+  worldBounds: WorldBounds,
+  selectedLootAreaId: string | null,
+  onLootAreaSelectRef: React.MutableRefObject<((a: LootAreaMarker | null) => void) | undefined>,
+) {
+  if (!lootAreaLayerRef.current) {
+    lootAreaLayerRef.current = L.layerGroup().addTo(map)
+  } else {
+    lootAreaLayerRef.current.clearLayers()
+  }
+
+  if (lootAreas.length === 0) return
+
+  const maxNativeZoom = tileConfig.layers[0].maxNativeZoom
+
+  for (const area of lootAreas) {
+    const pixels = mfPositionToPixels(area.position, tileConfig, worldBounds)
+    if (!pixels) continue
+
+    const latlng     = map.unproject(pixels, maxNativeZoom)
+    const meta       = LOOT_AREA_TIER_META[area.tier]
+    const isSelected = area.id === selectedLootAreaId
+
+    const markerSize   = isSelected ? 18 : 12
+    const markerAnchor = markerSize / 2
+
+    const icon = L.divIcon({
+      className:     '',
+      html:          buildLootAreaMarkerHtml(meta.color, isSelected),
+      iconSize:      [markerSize, markerSize],
+      iconAnchor:    [markerAnchor, markerAnchor],
+      tooltipAnchor: [markerAnchor + 4, 0],
+    })
+
+    const marker = L.marker(latlng, { icon })
+
+    marker.bindTooltip(`${area.name} · ${meta.label}`, {
+      direction: 'right',
+      offset:    [6, 0],
+      opacity:   0.9,
+      className: 'rf-map-tooltip',
+    })
+
+    marker.on('click', (e: any) => {
+      L.DomEvent.stopPropagation(e)
+      // Toggle: clicking selected loot area deselects it
+      if (isSelected) {
+        onLootAreaSelectRef.current?.(null)
+      } else {
+        onLootAreaSelectRef.current?.(area)
+      }
+    })
+
+    lootAreaLayerRef.current.addLayer(marker)
+  }
+}
+
+function buildLootAreaMarkerHtml(color: string, selected: boolean): string {
+  if (selected) {
+    // Selected: solid fill, white ring, strong glow — mirrors quest selected state
+    return `<div style="
+      width:16px;
+      height:16px;
+      background:${color};
+      border:2.5px solid rgba(255,255,255,0.90);
+      border-radius:50%;
+      box-shadow:0 0 12px ${color}, 0 0 20px ${color}55, 0 1px 4px rgba(0,0,0,0.7);
+      cursor:pointer;
+    "></div>`
+  }
+
+  // Normal: hollow circle with color border, hover scale — distinct from solid quest dots
+  return `<div style="
+    width:12px;
+    height:12px;
+    background:${color}18;
+    border:2px solid ${color};
+    border-radius:50%;
+    box-shadow:0 0 7px ${color}70, 0 1px 3px rgba(0,0,0,0.65);
+    cursor:pointer;
+    transition:transform 0.1s;
+  " onmouseenter="this.style.transform='scale(1.5)'" onmouseleave="this.style.transform='scale(1)'"></div>`
 }
 
 function buildContainerMarkerHtml(color: string, selected: boolean): string {

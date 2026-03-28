@@ -128,20 +128,29 @@ export default function Home() {
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-rf-red/8 to-transparent pointer-events-none" />
 
           <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center pt-16">
-            {/* Accent label */}
-            <span className="text-shadow-hero inline-flex items-center gap-2 text-xs uppercase tracking-widest font-semibold mb-4">
+            {/* Accent label — enters first */}
+            <span
+              className="hero-enter text-shadow-hero inline-flex items-center gap-2 text-xs uppercase tracking-widest font-semibold mb-4"
+              style={{ animationDelay: '0.05s' }}
+            >
               <span className="h-px w-6 bg-[#f97316]" />
               <span className="tracking-widest" style={{ color: '#22c55e' }}>Tactical Hub</span>
               <span className="h-px w-6 bg-[#f97316]" />
             </span>
 
-            {/* Title */}
-            <h1 className="text-shadow-hero text-5xl font-black tracking-tight sm:text-7xl leading-none">
+            {/* Title — enters second */}
+            <h1
+              className="hero-enter text-shadow-hero text-5xl font-black tracking-tight sm:text-7xl leading-none"
+              style={{ animationDelay: '0.18s' }}
+            >
               <span className="text-white">Raider</span><span className="text-rf-redSoft">Forge</span>
             </h1>
 
-            {/* Tagline */}
-            <p className="text-shadow-hero mt-6 max-w-xl text-sm sm:text-base font-medium text-white/90 leading-relaxed">
+            {/* Tagline — enters third */}
+            <p
+              className="hero-enter text-shadow-hero mt-6 max-w-xl text-sm sm:text-base font-medium text-white/90 leading-relaxed"
+              style={{ animationDelay: '0.32s' }}
+            >
               Welcome to RaiderForge — your ultimate ARC Raiders command center.
               <br className="hidden sm:block" />
               Track blueprints in real time, sync your raider profile, explore interactive maps, dominate trials, and buy, sell, or trade with verified players in a secure, reputation-driven marketplace.
