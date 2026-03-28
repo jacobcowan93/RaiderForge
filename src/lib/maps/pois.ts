@@ -1,6 +1,6 @@
 import {
     blueGatePois,
-    burialCityPois,
+    buriedCityPois,
     damBattlegroundsPois,
     spaceportPois,
     stellaMontisPois,
@@ -12,7 +12,7 @@ export type { MapPoi, PoiCategory } from './poi-types'
 /** Single registry — add new map files here as they are authored. */
 export const ALL_MAP_POIS: MapPoi[] = [
     ...damBattlegroundsPois,
-    ...burialCityPois,
+    ...buriedCityPois,
     ...blueGatePois,
     ...spaceportPois,
     ...stellaMontisPois,

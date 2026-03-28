@@ -1,12 +1,12 @@
 import type { MapPoi } from '@/lib/maps/poi-types'
 
 /**
- * Burial City — curated pins (`mapId` matches `MapMeta.id` in `data/maps.ts`).
+ * Buried City — curated pins. `mapId` stays `burial-city` (stable RF id / routes / saved progress).
  * Percent of full tactical image, top-left origin. Refine with NEXT_PUBLIC_RF_POI_PLACEMENT=1.
  *
  * POI ids use the `bc-` prefix (stable, unique vs Dam `dam-` / `dam-*` ids).
  */
-export const burialCityPois: MapPoi[] = [
+export const buriedCityPois: MapPoi[] = [
     // ── Extracts ─────────────────────────────────────────────────────────────
     {
         id: 'bc-extract-north-boulevard',

@@ -50,7 +50,7 @@ export const MF_QUEST_COORD_MAX = 1024
 /**
  * Maps ARDB map IDs to RaiderForge route IDs.
  * ARDB uses: dam | spaceport | buried-city | blue-gate | stella-montis
- * RF uses:   dam-battlegrounds | spaceport | burial-city | blue-gate | stella-montis
+ * RF uses:   dam-battlegrounds | spaceport | burial-city (display: Buried City) | blue-gate | stella-montis
  */
 export const ARDB_MAP_ID_TO_RF: Record<string, string> = {
   'dam':           'dam-battlegrounds',

@@ -93,8 +93,10 @@ export const MAPS: MapMeta[] = [
     },
   },
   {
+    // Stable id / route `/maps/burial-city` and progress key — unchanged for compatibility.
+    // User-facing name is "Buried City" (displayName + tile label below).
     id: 'burial-city',
-    displayName: 'Burial City',
+    displayName: 'Buried City',
     subtitle: 'Urban Ruins',
     description: 'The ruins of a once-thriving city, now silent and overgrown. Dense urban environment with tight corridors, hidden caches, and unpredictable ARC activity.',
     risk: 'Medium',
@@ -107,7 +109,7 @@ export const MAPS: MapMeta[] = [
       layers: [
         {
           id: 'buried-city',
-          label: 'Burial City',
+          label: 'Buried City',
           tileUrl: 'https://ardb.app/static/map-tiles/buried-city-v2/{z}/{x}/{y}.webp',
           maxNativeZoom: 3,
         },

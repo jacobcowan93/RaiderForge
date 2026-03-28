@@ -67,7 +67,7 @@ export default async function MapsPage() {
                     <h1 className="mt-2 text-3xl font-bold text-white text-shadow-hero">Interactive tactical maps</h1>
                     <p className="mt-2.5 text-rf-textSoft text-sm max-w-xl text-shadow-hero leading-relaxed">
                         Pan and zoom ARDB map tiles, toggle quest and container layers, and track live zone conditions.
-                        Same five regions as the in-game rotation: Dam Battlegrounds, Burial City, Blue Gate, Spaceport,
+                        Same five regions as the in-game rotation: Dam Battlegrounds, Buried City, Blue Gate, Spaceport,
                         and Stella Montis.
                     </p>
                 </div>
