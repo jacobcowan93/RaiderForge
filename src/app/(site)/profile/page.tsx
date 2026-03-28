@@ -259,7 +259,7 @@ export default function ProfilePage() {
                     <div>
                         <h2 className="text-xs uppercase tracking-widest text-rf-textSoft font-semibold">Tactical map pins</h2>
                         <p className="text-[11px] text-white/35 mt-1 leading-relaxed max-w-xl">
-                            Curated pins (extracts, keys, quests, containers) from Dam Battlegrounds &amp; Burial City. Checked pins
+                            Curated pins (extracts, keys, quests, containers) on tactical maps that ship pin data. Checked pins
                             sync with your account when map progress sync is enabled.
                         </p>
                     </div>
