@@ -58,12 +58,27 @@ export async function GET(req: NextRequest) {
         ? rows.filter((r) => r.itemName.toLowerCase().includes(q))
         : rows
 
+    // Compute reserved quantities from in-progress orders
+    const listingIds = filtered.map((r) => r.id)
+    const reservedAgg = listingIds.length > 0
+        ? await prisma.marketplaceOrder.groupBy({
+            by: ['listingId'],
+            where: {
+                listingId: { in: listingIds },
+                status: { in: ['pending', 'awaiting_payment', 'paid', 'awaiting_delivery'] },
+            },
+            _sum: { quantity: true },
+        })
+        : []
+    const reservedByListingId = new Map(reservedAgg.map((r) => [r.listingId, r._sum.quantity ?? 0]))
+
     // Enrich with catalog metadata for itemType (used by client for filter chips)
     const store = await readCatalogStore().catch(() => null)
     const itemsById = store?.itemsById ?? {}
 
     const listings = filtered.map((r) => {
         const catalogItem = itemsById[r.ardbItemId] ?? null
+        const reserved = reservedByListingId.get(r.id) ?? 0
         return {
             id: r.id,
             sellerId: r.sellerId,
@@ -78,6 +93,7 @@ export async function GET(req: NextRequest) {
             price: r.price,
             currency: r.currency,
             quantity: r.quantity,
+            availableQuantity: Math.max(0, r.quantity - reserved),
             status: r.status,
             notes: r.notes ?? null,
             createdAt: r.createdAt.toISOString(),

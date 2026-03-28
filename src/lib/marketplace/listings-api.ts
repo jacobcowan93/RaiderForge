@@ -23,6 +23,8 @@ export type ListingRow = {
     price: number
     currency: string
     quantity: number
+    /** quantity minus units held by in-progress orders — computed server-side */
+    availableQuantity: number
     status: string
     notes: string | null
     createdAt: string
