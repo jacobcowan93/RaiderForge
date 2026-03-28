@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import type { MapMeta } from '../data/maps'
 import type { MergedQuest } from '../types/quests'
@@ -25,9 +25,19 @@ interface Props {
    * The layer toggle will show "—" when this is empty.
    */
   mfLootAreas?: LootAreaMarker[]
+  /** Show fullscreen control for the tactical map block (map detail pages). */
+  enableFullscreen?: boolean
 }
 
-export default function MapImageDisplay({ map, mapQuests = [], mfLootAreas = [] }: Props) {
+export default function MapImageDisplay({
+  map,
+  mapQuests = [],
+  mfLootAreas = [],
+  enableFullscreen = false,
+}: Props) {
+  const shellRef = useRef<HTMLDivElement>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
   const [activeFloor, setActiveFloor]         = useState(0)
   const [tileFallback, setTileFallback]       = useState(false)
   const [selectedQuest, setSelectedQuest]     = useState<MergedQuest | null>(null)
@@ -41,6 +51,25 @@ export default function MapImageDisplay({ map, mapQuests = [], mfLootAreas = [] 
   )
 
   const handleTileFallback = useCallback(() => setTileFallback(true), [])
+
+  useEffect(() => {
+    const onFs = () => {
+      setIsFullscreen(document.fullscreenElement === shellRef.current)
+    }
+    document.addEventListener('fullscreenchange', onFs)
+    return () => document.removeEventListener('fullscreenchange', onFs)
+  }, [])
+
+  const toggleFullscreen = useCallback(async () => {
+    const el = shellRef.current
+    if (!el) return
+    try {
+      if (!document.fullscreenElement) await el.requestFullscreen()
+      else await document.exitFullscreen()
+    } catch {
+      /* browser may block without user gesture */
+    }
+  }, [])
 
   // Selecting a quest clears container + loot area selection (mutual exclusion keeps UI clean)
   const handleQuestSelect = useCallback((q: MergedQuest | null) => {
@@ -170,10 +199,35 @@ export default function MapImageDisplay({ map, mapQuests = [], mfLootAreas = [] 
   const visibleLootAreaMarkerCount  = visibleLootAreas.length
 
   return (
-    <div>
+    <div
+      ref={shellRef}
+      className={
+        enableFullscreen && isFullscreen
+          ? 'min-h-screen flex flex-col bg-[#050508]'
+          : undefined
+      }
+    >
+      {enableFullscreen && (
+        <div className="flex justify-end px-2 py-1.5 border-b border-white/[0.06] bg-black/25 shrink-0 z-[10]">
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className="text-[10px] font-semibold uppercase tracking-wider
+                       rounded-lg border border-white/15 bg-white/5 px-3 py-1.5
+                       text-rf-text hover:border-rf-red/35 hover:bg-white/10 transition-colors"
+          >
+            {isFullscreen ? 'Exit fullscreen' : 'Fullscreen map'}
+          </button>
+        </div>
+      )}
+
       {/* Floor switcher */}
       {isMultiFloor && (
-        <div className="flex items-center gap-1 px-4 py-3 border-b border-white/5 bg-black/20">
+        <div
+          className={`flex items-center gap-1 px-4 py-3 border-b border-white/5 bg-black/20 ${
+            enableFullscreen && isFullscreen ? 'shrink-0' : ''
+          }`}
+        >
           <span className="text-[10px] text-white/20 mr-2 uppercase tracking-widest">Floor</span>
           {map.floors!.map((f, i) => (
             <button
@@ -193,21 +247,27 @@ export default function MapImageDisplay({ map, mapQuests = [], mfLootAreas = [] 
 
       {/* Filter bar — layer toggles + trader toggles */}
       {hasTiles && hasQuests && (
-        <MapQuestFilter
-          quests={mapQuests}
-          activeTraders={activeTraders}
-          onToggle={toggleTrader}
-          onClearAll={clearAllFilters}
-          calibrationStatus={calibrationStatus}
-          activeLayers={activeLayers}
-          onLayerToggle={toggleLayer}
-          containerCount={ALL_CONTAINERS.length}
-          lootAreaCount={mfLootAreas.length}
-        />
+        <div className={enableFullscreen && isFullscreen ? 'shrink-0' : undefined}>
+          <MapQuestFilter
+            quests={mapQuests}
+            activeTraders={activeTraders}
+            onToggle={toggleTrader}
+            onClearAll={clearAllFilters}
+            calibrationStatus={calibrationStatus}
+            activeLayers={activeLayers}
+            onLayerToggle={toggleLayer}
+            containerCount={ALL_CONTAINERS.length}
+            lootAreaCount={mfLootAreas.length}
+          />
+        </div>
       )}
 
       {/* Map surface */}
-      <div className="relative bg-black/40">
+      <div
+        className={`relative bg-black/40 ${
+          enableFullscreen && isFullscreen ? 'flex-1 min-h-0 flex flex-col' : ''
+        }`}
+      >
         {hasTiles ? (
           <MapTileViewer
             tileConfig={map.tileConfig!}
@@ -224,6 +284,8 @@ export default function MapImageDisplay({ map, mapQuests = [], mfLootAreas = [] 
             lootAreas={visibleLootAreas}
             selectedLootAreaId={selectedLootArea?.id ?? null}
             onLootAreaSelect={handleLootAreaSelect}
+            fillContainer={enableFullscreen && isFullscreen}
+            mapHeight="min(72vh, 720px)"
           />
         ) : (
           <img
@@ -462,7 +524,10 @@ function MapMarkerLegend({
 
 function TileLoadingState() {
   return (
-    <div className="w-full flex items-center justify-center bg-black/60" style={{ height: '520px' }}>
+    <div
+      className="w-full flex items-center justify-center bg-black/60"
+      style={{ minHeight: 'min(72vh, 720px)' }}
+    >
       <div className="flex flex-col items-center gap-3">
         <div className="h-1 w-32 bg-white/5 rounded-full overflow-hidden">
           <div className="h-full w-1/2 bg-[#22c55e]/40 rounded-full animate-pulse" />

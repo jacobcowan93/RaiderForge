@@ -149,7 +149,12 @@ export default async function MapDetailPage({ params }: Props) {
                             </div>
                             <span className="text-[10px] text-white/20">{map.displayName}</span>
                         </div>
-                        <MapImageDisplay map={map} mapQuests={mapQuests} mfLootAreas={mfLootAreas} />
+                        <MapImageDisplay
+                            map={map}
+                            mapQuests={mapQuests}
+                            mfLootAreas={mfLootAreas}
+                            enableFullscreen
+                        />
                     </div>
 
                     {/* Zone Overview */}

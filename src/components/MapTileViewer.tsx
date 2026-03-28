@@ -100,6 +100,10 @@ interface Props {
   selectedLootAreaId?: string | null
   /** Called when a loot area marker is clicked or map background deselects. */
   onLootAreaSelect?: (area: LootAreaMarker | null) => void
+  /** Fixed CSS height when not filling parent (e.g. min(72vh, 720px)). */
+  mapHeight?: string
+  /** When true, map stretches to fill a flex parent (fullscreen shell). */
+  fillContainer?: boolean
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -119,6 +123,8 @@ export default function MapTileViewer({
   lootAreas = [],
   selectedLootAreaId = null,
   onLootAreaSelect,
+  mapHeight = 'min(72vh, 720px)',
+  fillContainer = false,
 }: Props) {
   const containerRef       = useRef<HTMLDivElement>(null)
   const mapRef             = useRef<any>(null)
@@ -291,11 +297,22 @@ export default function MapTileViewer({
     )
   }, [lootAreas, selectedLootAreaId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Leaflet needs invalidateSize when the container is resized (e.g. fullscreen).
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => {
+      if (mapRef.current) mapRef.current.invalidateSize({ animate: false })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   return (
     <div
       ref={containerRef}
-      className="w-full"
-      style={{ height: '520px' }}
+      className={`w-full min-h-0 ${fillContainer ? 'flex-1 h-full' : ''}`}
+      style={fillContainer ? { height: '100%', minHeight: 'min(42vh, 420px)' } : { height: mapHeight }}
     />
   )
 }
