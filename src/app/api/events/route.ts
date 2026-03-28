@@ -2,21 +2,34 @@
  * /api/events — Server-side proxy for MetaForge /events-schedule.
  *
  * Keeps the upstream MetaForge request server-side (avoids CORS in browser).
- * Cached at the edge for 5 minutes via Cache-Control headers.
+ * Short CDN cache + SWR for fresher live conditions.
+ *
+ * Headers:
+ * - X-Events-Fetched-At: ISO time after upstream response
+ * - X-Events-Upstream-Ok: "1" | "0" (network / parse success)
  */
 
-import { fetchMfEventsSchedule } from '../../../api/metaforgeService'
+import { fetchCurrentEvents } from '@/lib/data/metaforge-events'
 
 export async function GET() {
-  try {
-    const events = await fetchMfEventsSchedule()
-    return Response.json(events, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
-      },
-    })
-  } catch (err) {
-    console.error('[/api/events] Failed:', err)
-    return Response.json([], { status: 200 }) // return empty array — clients fall back to rotation
-  }
+    try {
+        const { events, fetchedAt, upstreamOk } = await fetchCurrentEvents()
+        return Response.json(events, {
+            headers: {
+                'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+                'X-Events-Fetched-At': fetchedAt,
+                'X-Events-Upstream-Ok': upstreamOk ? '1' : '0',
+            },
+        })
+    } catch (err) {
+        console.error('[/api/events] Failed:', err)
+        const fetchedAt = new Date().toISOString()
+        return Response.json([], {
+            headers: {
+                'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+                'X-Events-Fetched-At': fetchedAt,
+                'X-Events-Upstream-Ok': '0',
+            },
+        })
+    }
 }

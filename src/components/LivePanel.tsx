@@ -3,8 +3,7 @@
 /**
  * LivePanel.tsx
  *
- * Fixed right-side panel showing live ARC Raiders map conditions.
- * Desktop only (hidden on mobile).
+ * Live ARC Raiders map conditions: desktop rail + mobile bottom dock.
  *
  * Layout reference: ARC_Raider_Syndicate home-maps-fixed sidebar (visual structure only)
  * Data source: MetaForge /events-schedule via useEventsSchedule hook
@@ -36,9 +35,11 @@ const RISK_STYLE: Record<string, { label: string; classes: string }> = {
 function EventBadge({ name }: { name: string }) {
   const style = getEventStyle(name)
   const icon = EVENT_ICONS[name]
+  const tip = getEventDescription(name)
   return (
     <span
-      title={getEventDescription(name)}
+      title={tip}
+      aria-label={tip}
       className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none cursor-help"
       style={{ background: style.bg, border: `1px solid ${style.border}`, color: style.text }}
     >
@@ -105,6 +106,16 @@ function MapConditionCard({
         ) : (
           <span className="text-[10px] text-white/25">No active events</span>
         )}
+
+        {conditions.source === 'api' && conditions.eventEndsAtMs != null ? (
+          <p className="text-[9px] text-white/35 tabular-nums mt-1.5">
+            Modifier window{' '}
+            <span className="text-amber-200/90 font-semibold">
+              {fmtCountdown(Math.max(0, conditions.eventEndsAtMs - now.getTime()))}
+            </span>{' '}
+            remaining
+          </p>
+        ) : null}
 
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
           {hasLiveEvent && (
@@ -176,21 +187,40 @@ function LivePanelMapList({
   )
 }
 
+function formatLiveFetchedAt(iso: string | null): string | null {
+  if (!iso) return null
+  try {
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return null
+    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  } catch {
+    return null
+  }
+}
+
 function LivePanelChrome({
   children,
   headerExtra,
+  fetchedAt,
+  upstreamOk,
 }: {
   children: ReactNode
   headerExtra?: ReactNode
+  fetchedAt: string | null
+  upstreamOk: boolean | null
 }) {
+  const timeLabel = formatLiveFetchedAt(fetchedAt)
   return (
     <div className="rf-glass flex flex-col h-full border-white/5 bg-[rgba(5,6,10,0.92)] backdrop-blur-xl">
       <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-white/5 shrink-0 gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className="h-1.5 w-1.5 rounded-full bg-rf-green animate-pulse shrink-0" />
           <span className="text-[10px] uppercase tracking-widest text-white/50 font-semibold truncate">
-            Active Maps
+            Live conditions
           </span>
+          {timeLabel ? (
+            <span className="text-[9px] text-white/25 tabular-nums shrink-0 hidden sm:inline">{timeLabel}</span>
+          ) : null}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {headerExtra}
@@ -204,25 +234,36 @@ function LivePanelChrome({
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-2 min-h-0">{children}</div>
-      <div className="px-3 py-2 border-t border-white/5 shrink-0">
+      <div className="px-3 py-2 border-t border-white/5 shrink-0 space-y-1">
         <p className="text-[9px] text-white/20 leading-relaxed text-center">
-          via{' '}
+          Live conditions powered by{' '}
           <a
             href="https://metaforge.app/arc-raiders"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-white/40 transition-colors"
+            className="text-rf-red/50 hover:text-rf-red/70 transition-colors"
           >
             MetaForge
           </a>
+          {timeLabel ? (
+            <>
+              {' '}
+              · Refreshed <span className="tabular-nums">{timeLabel}</span>
+            </>
+          ) : null}
         </p>
+        {upstreamOk === false ? (
+          <p className="text-[9px] text-amber-200/55 text-center leading-snug">
+            Upstream unreachable — hourly rotation fallback in use.
+          </p>
+        ) : null}
       </div>
     </div>
   )
 }
 
 export default function LivePanel() {
-  const { events, loading, error } = useEventsSchedule()
+  const { events, loading, error, fetchedAt, upstreamOk } = useEventsSchedule()
   const [now, setNow] = useState(() => new Date())
   const [thumbByRfId, setThumbByRfId] = useState<Record<string, string>>({})
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -264,7 +305,9 @@ export default function LivePanel() {
         className="hidden xl:flex flex-col fixed top-16 right-0 w-[300px] h-[calc(100vh-4rem)] z-40 border-l border-white/5"
         aria-label="Live Map Conditions"
       >
-        <LivePanelChrome>{list}</LivePanelChrome>
+        <LivePanelChrome fetchedAt={fetchedAt} upstreamOk={upstreamOk}>
+          {list}
+        </LivePanelChrome>
       </aside>
 
       {/* Mobile / tablet: collapsible dock */}
@@ -288,6 +331,8 @@ export default function LivePanel() {
               aria-label="Live map conditions"
             >
               <LivePanelChrome
+                fetchedAt={fetchedAt}
+                upstreamOk={upstreamOk}
                 headerExtra={
                   <button
                     type="button"

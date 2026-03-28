@@ -24,7 +24,7 @@ export const METAFORGE_ATTRIBUTION = 'Some ARC Raiders data provided by MetaForg
 // ── TTL constants (milliseconds) ─────────────────────────────────────────────
 const TTL_STATIC = 30 * 60 * 1000       // 30 min — items, arcs, maps
 const TTL_SEMI_STATIC = 15 * 60 * 1000  // 15 min — quests, traders
-const TTL_DYNAMIC = 5 * 60 * 1000       // 5 min  — events-schedule
+const TTL_DYNAMIC = 60 * 1000           // 60s — events-schedule (live conditions; align with CDN revalidate)
 
 // ── In-memory cache ───────────────────────────────────────────────────────────
 type CacheEntry = { data: unknown; expires: number }
@@ -105,20 +105,35 @@ export type MfMapData = {
 
 // ── Public API functions ──────────────────────────────────────────────────────
 
-/** Fetch the current ARC Raiders events schedule. TTL: 5 min. */
-export async function fetchMfEventsSchedule(): Promise<MfEvent[]> {
+export type MfEventsScheduleResult = {
+  events: MfEvent[]
+  /** False when the upstream request failed (caller should treat like empty + use fallbacks). */
+  ok: boolean
+}
+
+/**
+ * Fetch events-schedule (replaces deprecated /event-timers per MetaForge docs).
+ * TTL: 60s in-memory + Next fetch revalidate.
+ */
+export async function fetchMfEventsScheduleWithStatus(): Promise<MfEventsScheduleResult> {
   try {
     const data = await mfFetch<unknown>(`${ARC_BASE}/events-schedule`, TTL_DYNAMIC)
-    if (Array.isArray(data)) return data as MfEvent[]
-    // Some responses may wrap the array
+    if (Array.isArray(data)) return { events: data as MfEvent[], ok: true }
     if (data && typeof data === 'object' && 'events' in data) {
-      return (data as { events: MfEvent[] }).events
+      const ev = (data as { events: MfEvent[] }).events
+      return { events: Array.isArray(ev) ? ev : [], ok: true }
     }
-    return []
+    return { events: [], ok: true }
   } catch (err) {
     console.error('[MetaForge] Failed to fetch events-schedule:', err)
-    return []
+    return { events: [], ok: false }
   }
+}
+
+/** Fetch the current ARC Raiders events schedule. On network failure returns []. */
+export async function fetchMfEventsSchedule(): Promise<MfEvent[]> {
+  const r = await fetchMfEventsScheduleWithStatus()
+  return r.events
 }
 
 /**

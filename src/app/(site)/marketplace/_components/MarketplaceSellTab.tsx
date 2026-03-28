@@ -12,6 +12,7 @@ import {
 
 import { sectionHeading } from '../_lib/marketplace-constants'
 import { Divider, ErrorMsg, Spinner, Toast } from './MarketplaceShared'
+import { MarketplaceG2gPlaceholder } from './MarketplaceG2gPlaceholder'
 import { MarketplaceItemPicker } from './MarketplaceItemPicker'
 import { MarketplaceListingForm } from './MarketplaceListingForm'
 
@@ -87,6 +88,8 @@ export function MarketplaceSellTab({
     return (
         <div className="space-y-6">
             {toast && <Toast msg={toast} onDone={() => setToast(null)} />}
+
+            <MarketplaceG2gPlaceholder />
 
             <div className="space-y-1.5">
                 <label className={sectionHeading}>Item</label>

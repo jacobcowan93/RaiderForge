@@ -41,6 +41,11 @@ export type MapConditions = {
   nextEvent: { hoursAway: number; minor: string | null; major: string | null } | null
   /** 'api' = from MetaForge live data; 'rotation-fallback' = community rotation */
   source: 'api' | 'rotation-fallback'
+  /**
+   * When MetaForge supplies endTime on active rows, earliest end among matching events (epoch ms).
+   * Used for "modifier ends in" countdown in LivePanel.
+   */
+  eventEndsAtMs: number | null
 }
 
 /** Normalize various map key formats to our route IDs. */
@@ -93,6 +98,8 @@ export function getActiveConditionsForMap(
       // Extract minor/major from the event data
       let minor: string | null = null
       let major: string | null = null
+      let eventEndsAtMs: number | null = null
+      const tNow = now.getTime()
 
       for (const e of mapEvents) {
         const eventName = e.name ?? e.event ?? null
@@ -108,6 +115,12 @@ export function getActiveConditionsForMap(
             minor = eventName
           }
         }
+        if (e.endTime && typeof e.endTime === 'string') {
+          const end = new Date(e.endTime).getTime()
+          if (!Number.isNaN(end) && end > tNow) {
+            if (eventEndsAtMs === null || end < eventEndsAtMs) eventEndsAtMs = end
+          }
+        }
       }
 
       const activeConditions = [minor, major].filter((v): v is string => v !== null)
@@ -116,8 +129,9 @@ export function getActiveConditionsForMap(
         major,
         activeConditions,
         msLeftInHour,
-        nextEvent: null, // TODO: parse next event from API schedule
+        nextEvent: null, // TODO: parse next event from full schedule ahead of now
         source: 'api',
+        eventEndsAtMs,
       }
     }
   }
@@ -134,5 +148,6 @@ export function getActiveConditionsForMap(
     msLeftInHour,
     nextEvent,
     source: 'rotation-fallback',
+    eventEndsAtMs: null,
   }
 }

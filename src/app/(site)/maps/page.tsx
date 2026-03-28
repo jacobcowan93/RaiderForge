@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { headers } from 'next/headers'
 import { MAPS } from '@/data/maps'
-import { fetchMfEventsSchedule } from '@/api/metaforgeService'
+import { fetchCurrentEvents } from '@/lib/data/metaforge-events'
 import { MapsTcnoCommandCenter } from '@/components/maps/MapsTcnoCommandCenter'
 import { MapsHubSkeleton } from '@/components/maps/MapsHubSkeleton'
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
@@ -10,6 +10,7 @@ import { indexGameMapsByRfId } from '@/lib/maps/rfGameMapBridge'
 import { shouldUseTcnoIframeEmbed } from '@/lib/maps/tcno-embed'
 import { resolveMapsHubZoneParam } from '@/lib/maps/maps-hub-zone'
 import { buildTcnoZoneVMs } from '@/lib/maps/build-maps-hub-zones'
+import type { MfEvent } from '@/lib/events/conditions'
 
 export const metadata = {
     title: 'Maps (Live) — ARC Raiders Command Center | Raider Forge',
@@ -45,8 +46,12 @@ async function MapsPageContent({ searchParams }: PageProps) {
     const host = h.get('x-forwarded-host') ?? h.get('host')
     const useTcnoIframe = shouldUseTcnoIframeEmbed(host)
 
-    const [events, gameMaps] = await Promise.all([
-        fetchMfEventsSchedule().catch(() => []),
+    const [eventsPayload, gameMaps] = await Promise.all([
+        fetchCurrentEvents().catch(() => ({
+            events: [] as MfEvent[],
+            fetchedAt: new Date().toISOString(),
+            upstreamOk: false,
+        })),
         getGameDataProvider()
             .getMaps()
             .catch((err) => {
@@ -57,7 +62,7 @@ async function MapsPageContent({ searchParams }: PageProps) {
 
     const gameByRfId = indexGameMapsByRfId(gameMaps)
     const now = new Date()
-    const tcnoZones = buildTcnoZoneVMs(now, events, gameByRfId)
+    const tcnoZones = buildTcnoZoneVMs(now, eventsPayload.events, gameByRfId)
 
     return (
         <div className="py-14 px-6 max-w-7xl mx-auto">
@@ -103,26 +108,28 @@ async function MapsPageContent({ searchParams }: PageProps) {
                 zones={tcnoZones}
                 useTcnoIframe={useTcnoIframe}
                 initialZoneId={initialZoneId}
+                liveConditionsUpdatedAt={eventsPayload.fetchedAt}
+                liveConditionsUpstreamOk={eventsPayload.upstreamOk}
             />
 
             <p className="mt-10 text-[11px] text-white/30 text-shadow-hero leading-relaxed max-w-3xl">
-                Interactive maps embedded with permission from{' '}
+                Interactive maps with permission from{' '}
                 <a
                     href="https://maps.tcno.co/arc"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-white/50 transition-colors underline underline-offset-2"
                 >
-                    tcno.co (TroubleChute)
+                    maps.tcno.co (TroubleChute)
                 </a>
-                . Tile data thanks to{' '}
+                . Item / tile reference data from{' '}
                 <a href="https://ardb.app" target="_blank" rel="noopener noreferrer"
                    className="hover:text-white/50 transition-colors underline underline-offset-2">
                     ardb.app
                 </a>
-                . Live conditions via{' '}
+                . Live conditions powered by{' '}
                 <a href="https://metaforge.app/arc-raiders" target="_blank" rel="noopener noreferrer"
-                   className="hover:text-white/50 transition-colors">
+                   className="hover:text-white/50 transition-colors underline underline-offset-2">
                     MetaForge
                 </a>
                 .

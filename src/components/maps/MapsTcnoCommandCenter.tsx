@@ -23,9 +23,28 @@ type Props = {
     useTcnoIframe: boolean
     /** Resolved server-side from ?zone= */
     initialZoneId: string | null
+    /** ISO timestamp — MetaForge pull time for zone modifiers */
+    liveConditionsUpdatedAt?: string | null
+    liveConditionsUpstreamOk?: boolean
 }
 
-export function MapsTcnoCommandCenter({ zones, useTcnoIframe, initialZoneId }: Props) {
+function formatHubTimestamp(iso: string): string {
+    try {
+        const d = new Date(iso)
+        if (Number.isNaN(d.getTime())) return iso
+        return d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' })
+    } catch {
+        return iso
+    }
+}
+
+export function MapsTcnoCommandCenter({
+    zones,
+    useTcnoIframe,
+    initialZoneId,
+    liveConditionsUpdatedAt,
+    liveConditionsUpstreamOk,
+}: Props) {
     const router = useRouter()
     const pathname = usePathname()
     const validIds = useMemo(() => new Set(zones.map((z) => z.id)), [zones])
@@ -84,6 +103,22 @@ export function MapsTcnoCommandCenter({ zones, useTcnoIframe, initialZoneId }: P
 
     return (
         <div className="space-y-6">
+            {liveConditionsUpdatedAt ? (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border border-white/[0.08] bg-black/35 px-3 py-2">
+                    <p className="text-[11px] text-white/55">
+                        <span className="text-white/35 uppercase tracking-wider font-semibold mr-1.5">
+                            Live conditions
+                        </span>
+                        <span className="tabular-nums text-white/70">Last updated {formatHubTimestamp(liveConditionsUpdatedAt)}</span>
+                    </p>
+                    {liveConditionsUpstreamOk === false ? (
+                        <span className="text-[10px] text-amber-200/85 font-medium">
+                            MetaForge unreachable — zone tags may use rotation fallback
+                        </span>
+                    ) : null}
+                </div>
+            ) : null}
+
             <div className="flex flex-col lg:flex-row lg:items-end gap-4 lg:gap-6">
                 <label className="flex-1 min-w-0 max-w-xl">
                     <span className="sr-only">Search zones</span>
