@@ -16,6 +16,8 @@ export type NormalizedBlueprint = {
     foundIn: string[]
     iconUrl: string | null
     imageUrl: string | null
+    /** ARDB detail `sources` (e.g. inspect art); often the only non-generic image for blueprints. */
+    sourceImageUrls: string[]
 }
 
 export function isBlueprintCatalogItem(item: MarketplaceCatalogItem): boolean {
@@ -33,6 +35,7 @@ export function normalizeBlueprintFromCatalogItem(item: MarketplaceCatalogItem):
         foundIn: [...item.foundIn].filter((s) => typeof s === 'string' && s.trim() !== '').sort((a, b) => a.localeCompare(b)),
         iconUrl: item.iconUrl,
         imageUrl: item.imageUrl,
+        sourceImageUrls: Array.isArray(item.sourceImageUrls) ? [...item.sourceImageUrls] : [],
     }
 }
 

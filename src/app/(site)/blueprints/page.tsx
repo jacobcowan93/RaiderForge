@@ -15,6 +15,7 @@ import {
     type NormalizedBlueprint,
 } from '@/lib/blueprints/normalizeBlueprints'
 import { groupBlueprintsByRarityTier } from '@/lib/blueprints/rarityGroups'
+import { resolveBlueprintImage } from '@/lib/blueprints/resolveBlueprintImage'
 import { formatRarityLabel, type RarityVisualTier } from '@/lib/blueprints/rarityCardStyles'
 import { applyBlueprintSort, type SortMode } from '@/lib/blueprints/sortBlueprints'
 import Link from 'next/link'
@@ -414,7 +415,7 @@ export default function BlueprintsPage() {
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {group.items.map((b) => {
-                                    const img = b.imageUrl ?? b.iconUrl
+                                    const img = resolveBlueprintImage(b)
                                     const desc = b.description?.trim()
                                     return (
                                         <div

@@ -2,11 +2,39 @@ import { NextResponse } from 'next/server'
 
 import type { MarketplaceCatalogItem } from '@/lib/marketplace/catalog-types'
 import { ARDB_CATALOG_ATTRIBUTION } from '@/lib/marketplace/catalog-types'
-import { fetchAllItems } from '@/lib/marketplace/ardb/client'
+import { fetchAllItems, fetchItemById } from '@/lib/marketplace/ardb/client'
 import { normalizeArdbItemToCatalog } from '@/lib/marketplace/ardb/normalize'
 import { readCatalogStore } from '@/lib/marketplace/ardb/catalog-store'
+import type { ArdbItemListEntry } from '@/lib/marketplace/ardb/types'
 
 export const dynamic = 'force-dynamic'
+
+const BLUEPRINT_TYPE = 'blueprint'
+const HYDRATE_BLUEPRINT_CONCURRENCY = 10
+
+async function hydrateBlueprintItemsFromList(
+    list: ArdbItemListEntry[],
+    items: MarketplaceCatalogItem[],
+    syncedAt: string
+): Promise<void> {
+    const blueprintEntries = list.filter((e) => String(e.type).toLowerCase().trim() === BLUEPRINT_TYPE)
+    for (let i = 0; i < blueprintEntries.length; i += HYDRATE_BLUEPRINT_CONCURRENCY) {
+        const batch = blueprintEntries.slice(i, i + HYDRATE_BLUEPRINT_CONCURRENCY)
+        await Promise.all(
+            batch.map(async (entry) => {
+                try {
+                    const detail = await fetchItemById(entry.id)
+                    const row = normalizeArdbItemToCatalog(entry, detail, syncedAt)
+                    const idx = items.findIndex((it) => it.ardbId === entry.id)
+                    if (idx >= 0) items[idx] = row
+                } catch (e) {
+                    const msg = e instanceof Error ? e.message : String(e)
+                    console.warn(`[marketplace/catalog] Blueprint detail hydrate failed (${entry.id}):`, msg)
+                }
+            })
+        )
+    }
+}
 
 export type CatalogGetPayload = {
     syncedAt: string | null
@@ -31,9 +59,10 @@ export async function GET() {
             items = list.map((entry) => normalizeArdbItemToCatalog(entry, undefined, now))
             syncedAt = now
             catalogSource = 'live'
+            await hydrateBlueprintItemsFromList(list, items, now)
             const bp = items.filter((i) => i.itemType?.trim().toLowerCase() === 'blueprint').length
             console.warn(
-                `[marketplace/catalog] Live fallback OK: ${items.length} items total, ${bp} blueprint rows (itemType blueprint)`
+                `[marketplace/catalog] Live fallback OK: ${items.length} items total, ${bp} blueprint rows (itemType blueprint), blueprint rows detail-hydrated for images`
             )
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e)

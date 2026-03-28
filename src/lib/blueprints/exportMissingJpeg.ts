@@ -1,4 +1,5 @@
 import type { NormalizedBlueprint } from '@/lib/blueprints/normalizeBlueprints'
+import { resolveBlueprintImage } from '@/lib/blueprints/resolveBlueprintImage'
 import { applyBlueprintSort, type SortMode } from '@/lib/blueprints/sortBlueprints'
 
 const BG = '#05060a'
@@ -72,7 +73,7 @@ export async function exportMissingBlueprintsAsJpeg(
     const maxTextW = W - textXBase - PAD
 
     for (const b of sorted) {
-        const imgUrl = b.imageUrl ?? b.iconUrl
+        const imgUrl = resolveBlueprintImage(b)
         let drawnImg = false
         if (imgUrl) {
             try {

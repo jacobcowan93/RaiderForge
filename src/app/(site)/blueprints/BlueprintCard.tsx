@@ -2,6 +2,7 @@
 
 import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react'
 import type { NormalizedBlueprint } from '@/lib/blueprints/normalizeBlueprints'
+import { resolveBlueprintImage } from '@/lib/blueprints/resolveBlueprintImage'
 import {
     formatRarityLabel,
     getRarityVisualTier,
@@ -25,7 +26,7 @@ export type BlueprintCardProps = {
 
 export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleMode }: BlueprintCardProps) {
     const tier = getRarityVisualTier(b.rarity)
-    const img = b.imageUrl ?? b.iconUrl
+    const img = resolveBlueprintImage(b)
     const desc = b.description?.trim()
 
     function handleCardClick(e: MouseEvent) {
