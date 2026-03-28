@@ -177,8 +177,9 @@ export default function BlueprintsPage() {
                             <h1 className="mt-1.5 text-2xl sm:text-3xl font-bold tracking-tight text-white">Blueprint tracker</h1>
                             <p className="mt-2 text-xs text-rf-textSoft max-w-2xl leading-relaxed">
                                 List and type labels follow the ARC Raiders Blueprints spreadsheet (exported into this app).
-                                Each row is matched to ARDB catalog blueprints for images, descriptions, and locations — no
-                                fabricated entries. Saved locally on this device; no sign-in.
+                                Card artwork uses item tiles sliced from the reference tracker image (same grid embedded in
+                                the xlsx); ARDB URLs fill in only when no tile exists (e.g. Compensator III). Descriptions
+                                and locations come from ARDB. Saved locally on this device; no sign-in.
                             </p>
                             {allowlistStats && allowlistStats.unmatchedSheetNames.length > 0 ? (
                                 <p className="mt-2 text-[10px] text-rf-orange/90 leading-relaxed max-w-2xl">

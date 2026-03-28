@@ -97,7 +97,7 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                 </label>
 
                 <div
-                    className="relative w-full aspect-[4/3] rounded-xl border border-sky-500/20 bg-[#050810] flex items-center justify-center overflow-hidden"
+                    className="relative w-full aspect-[4/3] rounded-xl border border-sky-500/20 bg-[#050810] flex items-center justify-center overflow-hidden p-1.5"
                     style={blueprintGridStyle}
                 >
                     <div className={`${rarityImageBackdropClass(tier)} rounded-xl`} aria-hidden />
@@ -106,7 +106,7 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                         <img
                             src={img}
                             alt=""
-                            className={`relative z-[1] max-h-[88%] max-w-[92%] object-contain drop-shadow-[0_8px_28px_rgba(0,0,0,0.65)] transition-opacity duration-200 ${
+                            className={`relative z-[1] h-full w-full max-h-full max-w-full object-contain object-center drop-shadow-[0_8px_28px_rgba(0,0,0,0.65)] transition-opacity duration-200 ${
                                 owned ? 'opacity-45' : 'opacity-100'
                             }`}
                         />

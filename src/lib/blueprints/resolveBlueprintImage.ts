@@ -1,4 +1,8 @@
 import type { NormalizedBlueprint } from '@/lib/blueprints/normalizeBlueprints'
+import { blueprintLookupKey } from '@/lib/blueprints/blueprintSlug'
+import { resolveReferenceBlueprintArt } from '@/lib/blueprints/blueprintReferenceArt'
+
+export { blueprintLookupKey } from '@/lib/blueprints/blueprintSlug'
 
 /** ARDB blueprint rows often use this for both `image` and `icon`. */
 const GENERIC_RECIPE_RE = /\/recipe\.webp$/i
@@ -7,17 +11,11 @@ function isGenericRecipeUrl(url: string | null | undefined): boolean {
     return !url || GENERIC_RECIPE_RE.test(url)
 }
 
-/** Normalize for optional local filename lookups (future / manual overrides). */
-export function blueprintLookupKey(name: string): string {
-    return name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-}
-
 const LOCAL_BY_ARDB_ID: Record<string, string> = {}
 
 const LOCAL_BY_NAME_KEY: Record<string, string> = {}
+
+const warnedMissingImageIds = new Set<string>()
 
 function firstNonGenericSource(urls: string[]): string | null {
     for (const u of urls) {
@@ -28,19 +26,32 @@ function firstNonGenericSource(urls: string[]): string | null {
 
 type ImageFields = Pick<
     NormalizedBlueprint,
-    'id' | 'name' | 'imageUrl' | 'iconUrl' | 'sourceImageUrls' | 'craftedItemIconUrl'
+    | 'id'
+    | 'name'
+    | 'imageUrl'
+    | 'iconUrl'
+    | 'sourceImageUrls'
+    | 'craftedItemIconUrl'
+    | 'trackerDisplayName'
 >
 
+function displayLabelForReferenceArt(b: ImageFields): string {
+    if (b.trackerDisplayName?.trim()) return b.trackerDisplayName.trim()
+    return b.name.replace(/\s+blueprint\s*$/i, '').trim()
+}
+
 /**
- * Priority (per product spec + ARDB shape):
- * 1. Item-specific `imageUrl` (skip generic recipe sheet)
- * 2. Item-specific `iconUrl`
- * 3. Local overrides (`public/` assets)
- * 4. ARDB `sourceImageUrls` (inspect renders)
- * 5. `craftedItemIconUrl` from blueprintFor (crafted item icon)
- * 6. Generic `imageUrl` / `iconUrl` last resort
+ * Priority:
+ * 1. Local tiles sliced from the reference tracker grid (`public/assets/blueprints/registry`), keyed by spreadsheet label
+ * 2. Item-specific ARDB `imageUrl` / `iconUrl` (skip generic recipe sheet)
+ * 3. Manual `LOCAL_BY_ARDB_ID` / `LOCAL_BY_NAME_KEY` overrides
+ * 4. ARDB `sourceImageUrls`, then `craftedItemIconUrl`
+ * 5. Generic `imageUrl` / `iconUrl` last resort
  */
 export function resolveBlueprintImage(b: ImageFields): string | null {
+    const refArt = resolveReferenceBlueprintArt(displayLabelForReferenceArt(b))
+    if (refArt) return refArt
+
     if (b.imageUrl && !isGenericRecipeUrl(b.imageUrl)) return b.imageUrl
     if (b.iconUrl && !isGenericRecipeUrl(b.iconUrl)) return b.iconUrl
 
@@ -57,5 +68,10 @@ export function resolveBlueprintImage(b: ImageFields): string | null {
 
     if (b.imageUrl) return b.imageUrl
     if (b.iconUrl) return b.iconUrl
+
+    if (process.env.NODE_ENV === 'development' && !warnedMissingImageIds.has(b.id)) {
+        warnedMissingImageIds.add(b.id)
+        console.warn('[blueprints] No image resolved for', displayLabelForReferenceArt(b), `(id ${b.id})`)
+    }
     return null
 }
