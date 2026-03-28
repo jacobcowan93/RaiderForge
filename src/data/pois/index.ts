@@ -1,2 +1,4 @@
 export { damBattlegroundsPois } from './dam-battlegrounds'
 export { burialCityPois } from './burial-city'
+export { blueGatePois } from './blue-gate'
+export { spaceportPois } from './spaceport'

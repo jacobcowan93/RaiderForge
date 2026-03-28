@@ -1,10 +1,15 @@
-import { burialCityPois, damBattlegroundsPois } from '@/data/pois'
+import { blueGatePois, burialCityPois, damBattlegroundsPois, spaceportPois } from '@/data/pois'
 import type { MapPoi, PoiCategory } from './poi-types'
 
 export type { MapPoi, PoiCategory } from './poi-types'
 
 /** Single registry — add new map files here as they are authored. */
-export const ALL_MAP_POIS: MapPoi[] = [...damBattlegroundsPois, ...burialCityPois]
+export const ALL_MAP_POIS: MapPoi[] = [
+    ...damBattlegroundsPois,
+    ...burialCityPois,
+    ...blueGatePois,
+    ...spaceportPois,
+]
 
 export const POI_MVP_CATEGORIES: readonly PoiCategory[] = ['quest', 'container', 'key', 'extract']
 
