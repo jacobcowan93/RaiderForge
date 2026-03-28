@@ -17,7 +17,7 @@ export function getRarityVisualTier(rarity: string | null): RarityVisualTier {
 
 type CardDensity = 'default' | 'compact'
 
-/** Card shell: border, shadow/glow, hover lift — `compact` = denser grid (Speranza-style tracker). */
+/** Card shell: border, shadow/glow, hover lift — `compact` reserved for alternate density layouts. */
 export function rarityCardContainerClasses(tier: RarityVisualTier, density: CardDensity = 'default'): string {
     const base =
         density === 'compact'

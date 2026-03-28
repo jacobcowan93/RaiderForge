@@ -150,17 +150,15 @@ export default function BlueprintsPage() {
     }, [missingBlueprints])
 
     return (
-        <div className="max-w-[90rem] mx-auto py-8 md:py-10 px-4 sm:px-5">
-            <div className="print:hidden space-y-4 md:space-y-5">
+        <div className="max-w-7xl mx-auto py-8 md:py-10 px-4 sm:px-5">
+            <div className="print:hidden space-y-6 md:space-y-7">
                 <header className="rf-card rounded-xl px-4 py-4 sm:px-5 border border-white/[0.06]">
                     <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 lg:gap-6">
                         <div className="min-w-0">
                             <span className="text-[10px] uppercase tracking-[0.22em] text-rf-textSoft font-semibold">
                                 Loadout
                             </span>
-                            <h1 className="mt-1.5 text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                                Blueprint <span className="text-rf-yellow">tracker</span>
-                            </h1>
+                            <h1 className="mt-1.5 text-2xl sm:text-3xl font-bold tracking-tight text-white">Blueprint tracker</h1>
                             <p className="mt-2 text-xs text-rf-textSoft max-w-2xl leading-relaxed">
                                 Collection view — ARDB catalog rows where{' '}
                                 <code className="text-rf-text/90 bg-white/5 px-1 rounded text-[10px]">{`itemType.trim().toLowerCase() === "blueprint"`}</code>
@@ -175,7 +173,7 @@ export default function BlueprintsPage() {
                         </div>
                         {!catalogLoading && !catalogError && blueprints.length > 0 ? (
                             <p className="shrink-0 text-sm font-semibold tabular-nums tracking-tight lg:text-right">
-                                <span className="text-rf-yellow/90 uppercase text-[10px] tracking-widest block sm:inline sm:mr-2">
+                                <span className="text-rf-textSoft uppercase text-[10px] tracking-widest block sm:inline sm:mr-2">
                                     Missing
                                 </span>
                                 <span className="text-white text-lg">{missingBlueprints.length}</span>
@@ -190,7 +188,7 @@ export default function BlueprintsPage() {
                         <div className="animate-pulse space-y-3">
                             <div className="h-6 bg-white/10 rounded w-40" />
                             <div className="h-3 bg-white/[0.06] rounded w-full max-w-sm" />
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pt-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pt-3">
                                 {Array.from({ length: 12 }).map((_, i) => (
                                     <div key={i} className="rf-card rounded-lg aspect-[5/6] border border-white/5" />
                                 ))}
@@ -389,7 +387,7 @@ export default function BlueprintsPage() {
                                 No blueprints match your filters.
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-3 justify-items-stretch">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 justify-items-stretch">
                                 {filtered.map((b) => (
                                     <BlueprintCard
                                         key={b.id}
