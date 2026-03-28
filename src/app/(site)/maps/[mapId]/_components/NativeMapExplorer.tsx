@@ -3,28 +3,25 @@
 /**
  * NativeMapExplorer — RaiderForge-native interactive map shell.
  *
- * Replaces MapImageDisplay on the map detail pages. Wraps MapTileViewer
- * with TCNO-inspired controls (difficulty, search, category panel) while
- * maintaining full RaiderForge styling.
+ * Wraps MapTileViewer with TCNO-inspired controls: difficulty selector,
+ * grouped category panel, inline search, and floor tabs. All styling is
+ * RaiderForge-native — no TCNO chrome.
  *
- * Architecture:
- *   - Difficulty selector: filters POIs by `difficulties[]` tag; no tile change
- *   - Category panel: grouped toggle for all 10 POI categories
- *   - Search: narrows visible pins by name / description match
- *   - Floor selector: visible only for multi-floor maps (Stella Montis)
- *   - Quest / container / loot layers: separate from POI pins, toggled independently
- *   - Attribution: visible TCNO credit row with permission link
- *
- * Reusable for all five maps — just pass the correct `map` prop.
+ * Adding a new map: supply the correct `map` prop. No per-map rewrites needed.
+ * Difficulty options and category groups are data-driven via map-interactive-config.ts.
  */
 
-import { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef, Fragment } from 'react'
 import dynamic from 'next/dynamic'
 import type { MapMeta } from '@/data/maps'
 import type { MergedQuest } from '@/types/quests'
 import type { LootAreaMarker } from '@/types/mapLayers'
 import type { MapPoi, PoiCategory, Difficulty } from '@/lib/maps/poi-types'
-import { getPoisForMap, filterPoisByCategories, filterPoisForFloor } from '@/lib/maps/pois'
+import {
+    getPoisForMap,
+    filterPoisByCategories,
+    filterPoisForFloor,
+} from '@/lib/maps/pois'
 import {
     getDifficultiesForMap,
     CATEGORY_GROUPS,
@@ -39,22 +36,22 @@ const MapTileViewer = dynamic(() => import('@/components/MapTileViewer'), {
     loading: () => (
         <div className="w-full h-full bg-rf-bg flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
-                <div className="w-6 h-6 border-2 border-rf-orange/40 border-t-rf-orange rounded-full animate-spin" />
-                <span className="text-[11px] text-white/25 uppercase tracking-widest">Loading map</span>
+                <div className="w-5 h-5 border-2 border-rf-orange/30 border-t-rf-orange rounded-full animate-spin" />
+                <span className="text-[10px] text-white/20 uppercase tracking-widest font-medium">
+                    Loading map…
+                </span>
             </div>
         </div>
     ),
 })
 
-// ── Props ──────────────────────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 interface Props {
     map: MapMeta
     mapQuests?: MergedQuest[]
     mfLootAreas?: LootAreaMarker[]
 }
-
-// ── Data layer state type ──────────────────────────────────────────────────────
 
 type DataLayers = {
     quests: boolean
@@ -70,13 +67,13 @@ export default function NativeMapExplorer({
     mfLootAreas = [],
 }: Props) {
     // ── State ──────────────────────────────────────────────────────────────────
-    const [difficulty, setDifficulty]     = useState<Difficulty>('Normal')
-    const [search, setSearch]             = useState('')
-    const [activeFloor, setActiveFloor]   = useState(0)
-    const [showPanel, setShowPanel]       = useState(false)
-    const [selectedPoi, setSelectedPoi]   = useState<MapPoi | null>(null)
+    const [difficulty, setDifficulty]         = useState<Difficulty>('Normal')
+    const [search, setSearch]                 = useState('')
+    const [activeFloor, setActiveFloor]       = useState(0)
+    const [showPanel, setShowPanel]           = useState(false)
+    const [selectedPoi, setSelectedPoi]       = useState<MapPoi | null>(null)
     const [selectedQuestName, setSelectedQuestName] = useState<string | null>(null)
-    const [tileFallback, setTileFallback] = useState(false)
+    const [tileFallback, setTileFallback]     = useState(false)
 
     const [activeCategories, setActiveCategories] = useState<Set<PoiCategory>>(
         () => new Set(DEFAULT_ACTIVE_CATEGORIES),
@@ -90,50 +87,46 @@ export default function NativeMapExplorer({
     const searchRef = useRef<HTMLInputElement>(null)
 
     // ── Derived data ───────────────────────────────────────────────────────────
-    const allPois = useMemo(() => getPoisForMap(map.id), [map.id])
+    const allPois      = useMemo(() => getPoisForMap(map.id), [map.id])
+    const difficulties = useMemo(() => getDifficultiesForMap(map.id), [map.id])
+    const tcnoUrl      = getTcnoUrl(map.id)
+    const isMultiFloor = map.mapType === 'multi-floor' && (map.floors?.length ?? 0) > 1
 
-    const filteredPois = useMemo((): MapPoi[] => {
-        let pois = filterPoisByCategories(allPois, activeCategories)
-        pois = filterPoisForFloor(pois, activeFloor)
-
-        // Difficulty: hide POIs locked to other difficulties
+    // Pins that pass difficulty + search + floor — used for counts (ignores active category filter)
+    const eligiblePois = useMemo(() => {
+        let pois = filterPoisForFloor(allPois, activeFloor)
         if (difficulty !== 'Normal') {
-            pois = pois.filter(p =>
-                !p.difficulties || p.difficulties.includes(difficulty),
-            )
+            pois = pois.filter(p => !p.difficulties || p.difficulties.includes(difficulty))
         }
-
-        // Search: narrow by name or description
         const q = search.trim().toLowerCase()
         if (q) {
             pois = pois.filter(
-                p =>
-                    p.name.toLowerCase().includes(q) ||
-                    p.description?.toLowerCase().includes(q),
+                p => p.name.toLowerCase().includes(q) ||
+                     p.description?.toLowerCase().includes(q),
             )
         }
-
         return pois
-    }, [allPois, activeCategories, activeFloor, difficulty, search])
+    }, [allPois, activeFloor, difficulty, search])
 
-    const difficulties  = useMemo(() => getDifficultiesForMap(map.id), [map.id])
-    const tcnoUrl       = getTcnoUrl(map.id)
-    const isMultiFloor  = map.mapType === 'multi-floor' && (map.floors?.length ?? 0) > 1
-    const containers    = useMemo(
+    // Visible pins on the map (adds active-category filter)
+    const filteredPois = useMemo(
+        () => filterPoisByCategories(eligiblePois, activeCategories),
+        [eligiblePois, activeCategories],
+    )
+
+    // Count per category from eligiblePois (shows what you'd get if you enable it)
+    const countByCategory = useMemo(() => {
+        const c: Partial<Record<PoiCategory, number>> = {}
+        for (const p of eligiblePois) c[p.category] = (c[p.category] ?? 0) + 1
+        return c
+    }, [eligiblePois])
+
+    const containers   = useMemo(
         () => (dataLayers.containers ? (CONTAINERS_BY_MAP[map.id] ?? []) : []),
         [dataLayers.containers, map.id],
     )
-    const lootAreas     = dataLayers.lootAreas ? mfLootAreas : []
-    const activeQuests  = dataLayers.quests ? mapQuests : []
-
-    // Category counts — shown per-category in the panel
-    const poiCountByCategory = useMemo(() => {
-        const counts: Partial<Record<PoiCategory, number>> = {}
-        for (const p of filteredPois) {
-            counts[p.category] = (counts[p.category] ?? 0) + 1
-        }
-        return counts
-    }, [filteredPois])
+    const lootAreas    = dataLayers.lootAreas ? mfLootAreas : []
+    const activeQuests = dataLayers.quests    ? mapQuests   : []
 
     // ── Callbacks ──────────────────────────────────────────────────────────────
     const toggleCategory = useCallback((cat: PoiCategory) => {
@@ -145,7 +138,7 @@ export default function NativeMapExplorer({
         })
     }, [])
 
-    const toggleAllInGroup = useCallback((cats: PoiCategory[]) => {
+    const toggleGroup = useCallback((cats: PoiCategory[]) => {
         setActiveCategories(prev => {
             const allOn = cats.every(c => prev.has(c))
             const next  = new Set(prev)
@@ -155,315 +148,436 @@ export default function NativeMapExplorer({
         })
     }, [])
 
+    const resetCategories = useCallback(() => {
+        setActiveCategories(new Set(DEFAULT_ACTIVE_CATEGORIES))
+    }, [])
+
     const toggleDataLayer = useCallback((layer: keyof DataLayers) => {
         setDataLayers(prev => ({ ...prev, [layer]: !prev[layer] }))
     }, [])
 
-    const handlePoiSelect = useCallback((poi: MapPoi | null) => {
-        setSelectedPoi(poi)
-    }, [])
+    const handlePoiSelect    = useCallback((poi: MapPoi | null) => setSelectedPoi(poi), [])
+    const handleQuestSelect  = useCallback((q: MergedQuest | null) => setSelectedQuestName(q?.name ?? null), [])
+    const handleFallback     = useCallback(() => setTileFallback(true), [])
 
-    const handleQuestSelect = useCallback((q: MergedQuest | null) => {
-        setSelectedQuestName(q?.name ?? null)
-    }, [])
-
-    const handleFallback = useCallback(() => setTileFallback(true), [])
-
-    // ── Guards ─────────────────────────────────────────────────────────────────
+    // ── Guard ──────────────────────────────────────────────────────────────────
     if (!map.tileConfig) {
         return (
-            <div className="rf-card rounded-2xl flex items-center justify-center h-64 text-white/25 text-sm">
+            <div className="rf-card rounded-2xl h-64 flex items-center justify-center
+                            text-white/20 text-sm tracking-wide">
                 No tile data for {map.displayName}.
             </div>
         )
     }
 
+    const isDefaultState = (() => {
+        const def = new Set(DEFAULT_ACTIVE_CATEGORIES)
+        return (
+            difficulty === 'Normal' &&
+            !search.trim() &&
+            activeCategories.size === def.size &&
+            [...def].every(c => activeCategories.has(c))
+        )
+    })()
+
     // ── Render ─────────────────────────────────────────────────────────────────
     return (
         <div className="rf-card rounded-2xl overflow-hidden flex flex-col">
 
-            {/* ── Attribution header ──────────────────────────────────────────── */}
-            <div className="flex items-center justify-between px-4 py-2
-                            border-b border-white/5 bg-white/[0.015]">
+            {/* ── Attribution strip ───────────────────────────────────────────── */}
+            <div className="flex items-center justify-between px-4 py-[7px]
+                            border-b border-white/[0.045] bg-white/[0.012]">
                 <div className="flex items-center gap-2">
-                    {/* Map icon */}
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                         strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 text-white/25 shrink-0">
+                         strokeWidth={1.5} stroke="currentColor"
+                         className="w-3 h-3 text-white/20 shrink-0">
                         <path strokeLinecap="round" strokeLinejoin="round"
-                              d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+                              d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c-.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
                     </svg>
-                    <span className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">
+                    <span className="text-[10px] uppercase tracking-widest text-white/25 font-semibold">
                         Interactive Map
                     </span>
                 </div>
-                <span className="text-[10px] text-white/20">
+                <span className="text-[10px] text-white/18">
                     Adapted with permission from{' '}
                     <a
                         href={tcnoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-white/35 hover:text-rf-blue/70 transition-colors underline underline-offset-2"
+                        className="text-white/32 hover:text-rf-blue/65 transition-colors underline underline-offset-2"
                     >
                         maps.tcno.co
                     </a>
                 </span>
             </div>
 
-            {/* ── Toolbar ─────────────────────────────────────────────────────── */}
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5
-                            bg-white/[0.02] flex-wrap min-h-[46px]">
+            {/* ── Primary toolbar ─────────────────────────────────────────────── */}
+            <div className="flex items-center gap-3 px-3 py-2
+                            border-b border-white/[0.045] bg-white/[0.018]">
 
-                {/* Difficulty chips */}
-                <div className="flex items-center gap-1 flex-wrap">
-                    {difficulties.map(d => {
-                        const active = d.id === difficulty
+                {/* Difficulty row — scrollable, no wrap */}
+                <div className="flex items-center gap-1 overflow-x-auto scrollbar-none min-w-0 shrink">
+                    {difficulties.map((d, i) => {
+                        const isActive = d.id === difficulty
+                        // Thin separator before the first non-Normal mode
+                        const showSep = i === 1 && difficulties.length > 1
                         return (
-                            <button
-                                key={d.id}
-                                type="button"
-                                onClick={() => setDifficulty(d.id)}
-                                className={`text-[10px] font-semibold uppercase tracking-wider
-                                            rounded-full px-2.5 py-1 border transition-all whitespace-nowrap ${
-                                    active
-                                        ? 'border-current'
-                                        : 'border-white/10 text-white/30 hover:text-white/55 hover:border-white/20'
-                                }`}
-                                style={active && d.color
-                                    ? { color: d.color, borderColor: d.color + '50', backgroundColor: d.color + '18' }
-                                    : active
-                                    ? { color: '#f9fafb', borderColor: 'rgba(249,250,251,0.35)', backgroundColor: 'rgba(249,250,251,0.08)' }
-                                    : {}}
-                            >
-                                {d.label}
-                            </button>
+                            <Fragment key={d.id}>
+                                {showSep && (
+                                    <span
+                                        className="h-3.5 w-px shrink-0 bg-white/12 mx-0.5"
+                                        aria-hidden
+                                    />
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setDifficulty(d.id)}
+                                    className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider
+                                                rounded-full px-2.5 py-[3px] border transition-all whitespace-nowrap ${
+                                        isActive
+                                            ? 'border-current'
+                                            : 'border-white/10 text-white/28 hover:text-white/52 hover:border-white/18'
+                                    }`}
+                                    style={
+                                        isActive
+                                            ? d.color
+                                                ? {
+                                                    color:           d.color,
+                                                    borderColor:     d.color + '4a',
+                                                    backgroundColor: d.color + '16',
+                                                }
+                                                : {
+                                                    color:           'rgba(249,250,251,0.88)',
+                                                    borderColor:     'rgba(249,250,251,0.28)',
+                                                    backgroundColor: 'rgba(249,250,251,0.07)',
+                                                }
+                                            : {}
+                                    }
+                                >
+                                    {d.label}
+                                </button>
+                            </Fragment>
                         )
                     })}
                 </div>
 
-                {/* Floor selector — multi-floor maps only */}
-                {isMultiFloor && map.floors && (
-                    <div className="flex items-center gap-1 pl-2 border-l border-white/10 flex-wrap">
-                        {map.floors.map((floor, i) => (
+                {/* Push search + layers to the right */}
+                <div className="ml-auto flex items-center gap-2 shrink-0">
+
+                    {/* Search */}
+                    <div className="relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                             strokeWidth={2} stroke="currentColor"
+                             className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3
+                                        text-white/22 pointer-events-none">
+                            <path strokeLinecap="round" strokeLinejoin="round"
+                                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                        <input
+                            ref={searchRef}
+                            type="search"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder="Search pins…"
+                            className="w-36 pl-7 pr-7 py-[5px] text-[11px]
+                                       bg-white/[0.04] border border-white/8 rounded-full
+                                       text-white/85 placeholder-white/20
+                                       focus:outline-none focus:border-white/18 focus:bg-white/[0.06]
+                                       transition-all [&::-webkit-search-cancel-button]:hidden"
+                        />
+                        {search && (
                             <button
-                                key={floor.id}
                                 type="button"
-                                onClick={() => setActiveFloor(i)}
-                                className={`text-[10px] font-medium rounded-full px-2 py-0.5 border transition-all ${
-                                    activeFloor === i
-                                        ? 'border-rf-orange/40 bg-rf-orange/12 text-rf-orange'
-                                        : 'border-white/10 text-white/30 hover:text-white/55'
-                                }`}
+                                onClick={() => { setSearch(''); searchRef.current?.focus() }}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2
+                                           text-white/25 hover:text-white/55 transition-colors"
+                                aria-label="Clear search"
                             >
-                                {floor.label}
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     strokeWidth={2.5} stroke="currentColor" className="w-2.5 h-2.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round"
+                                          d="M6 18 18 6M6 6l12 12" />
+                                </svg>
                             </button>
-                        ))}
+                        )}
                     </div>
-                )}
 
-                {/* Search */}
-                <div className="flex-1 min-w-[120px] relative">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                         strokeWidth={2} stroke="currentColor"
-                         className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/25 pointer-events-none">
-                        <path strokeLinecap="round" strokeLinejoin="round"
-                              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                    </svg>
-                    <input
-                        ref={searchRef}
-                        type="search"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder="Search markers…"
-                        className="w-full pl-6 pr-3 py-1 text-[11px] bg-white/[0.04] border border-white/8
-                                   rounded-full text-white placeholder-white/20
-                                   focus:outline-none focus:border-white/20 focus:bg-white/[0.06]
-                                   transition-all"
-                    />
+                    {/* Layers / filters button */}
+                    <button
+                        type="button"
+                        onClick={() => setShowPanel(v => !v)}
+                        aria-label={showPanel ? 'Close layer panel' : 'Open layer panel'}
+                        className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase
+                                    tracking-wider rounded-full px-2.5 py-[5px] border
+                                    transition-all whitespace-nowrap ${
+                            showPanel
+                                ? 'border-rf-orange/40 bg-rf-orange/12 text-rf-orange'
+                                : 'border-white/10 text-white/32 hover:text-white/55 hover:border-white/18'
+                        }`}
+                    >
+                        {/* Heroicons adjustments-horizontal */}
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                             strokeWidth={2} stroke="currentColor" className="w-3 h-3 shrink-0">
+                            <path strokeLinecap="round" strokeLinejoin="round"
+                                  d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                        </svg>
+                        Filters
+                        <span className={`inline-flex items-center justify-center
+                                          min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold
+                                          transition-colors ${
+                            showPanel
+                                ? 'bg-rf-orange/20 text-rf-orange'
+                                : 'bg-white/10 text-white/45'
+                        }`}>
+                            {activeCategories.size}
+                        </span>
+                    </button>
                 </div>
-
-                {/* Layers panel toggle */}
-                <button
-                    type="button"
-                    onClick={() => setShowPanel(v => !v)}
-                    aria-label={showPanel ? 'Close layer panel' : 'Open layer panel'}
-                    className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase
-                                tracking-wider rounded-full px-2.5 py-1 border transition-all shrink-0 ${
-                        showPanel
-                            ? 'border-rf-orange/40 bg-rf-orange/12 text-rf-orange'
-                            : 'border-white/10 text-white/30 hover:text-white/55 hover:border-white/20'
-                    }`}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                         strokeWidth={2} stroke="currentColor" className="w-3 h-3">
-                        <path strokeLinecap="round" strokeLinejoin="round"
-                              d="M12 3v1.5M12 19.5V21M4.219 4.219l1.061 1.061M17.72 17.72l1.06 1.06M3 12H4.5M19.5 12H21M4.219 19.781l1.061-1.06M17.72 6.28l1.06-1.061" />
-                    </svg>
-                    Layers
-                    {/* Active category count badge */}
-                    <span className="ml-0.5 bg-current/20 rounded-full px-1 py-px text-[9px]">
-                        {activeCategories.size}
-                    </span>
-                </button>
             </div>
+
+            {/* ── Floor selector (multi-floor only) ───────────────────────────── */}
+            {isMultiFloor && map.floors && (
+                <div className="flex items-center gap-1 px-3 py-1.5
+                                border-b border-white/[0.045] bg-white/[0.012]">
+                    <span className="text-[9px] uppercase tracking-widest text-white/20 font-medium mr-1.5">
+                        Floor
+                    </span>
+                    {map.floors.map((floor, i) => (
+                        <button
+                            key={floor.id}
+                            type="button"
+                            onClick={() => setActiveFloor(i)}
+                            className={`text-[10px] font-medium rounded-md px-2 py-0.5 border transition-all ${
+                                activeFloor === i
+                                    ? 'border-rf-orange/40 bg-rf-orange/12 text-rf-orange'
+                                    : 'border-white/8 text-white/28 hover:text-white/55 hover:border-white/18'
+                            }`}
+                        >
+                            {floor.label}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* ── Map area ────────────────────────────────────────────────────── */}
             <div className="relative flex-1" style={{ height: 'min(70vh, 740px)' }}>
 
-                {/* ── Category / layer panel ──────────────────────── */}
+                {/* ── Layer / category panel ──────────────────────── */}
                 {showPanel && (
                     <div
-                        className="absolute top-0 right-0 bottom-0 z-[650] flex flex-col
-                                   w-56 bg-rf-bg/96 backdrop-blur-xl border-l border-white/8
-                                   overflow-y-auto overscroll-contain shadow-2xl"
-                        style={{ animation: 'rf-slide-in-right 0.18s ease' }}
+                        className="rf-panel-enter absolute top-0 right-0 bottom-0 z-[650]
+                                   flex flex-col w-60
+                                   bg-[rgba(5,6,10,0.97)] backdrop-blur-xl
+                                   border-l border-white/[0.07] shadow-2xl
+                                   overflow-y-auto overscroll-contain"
                     >
                         {/* Panel header */}
-                        <div className="flex items-center justify-between px-4 pt-3 pb-2
-                                        border-b border-white/5 sticky top-0 bg-rf-bg/98 backdrop-blur-xl z-10">
-                            <span className="text-[10px] uppercase tracking-widest text-white/40 font-semibold">
+                        <div className="flex items-center justify-between px-4 pt-3 pb-2.5
+                                        border-b border-white/[0.06]
+                                        sticky top-0 z-10
+                                        bg-[rgba(5,6,10,0.99)] backdrop-blur-xl">
+                            <span className="text-[10px] uppercase tracking-widest
+                                             text-white/40 font-semibold">
                                 Map Layers
                             </span>
                             <button
                                 type="button"
                                 onClick={() => setShowPanel(false)}
-                                className="text-white/30 hover:text-white/60 transition-colors p-0.5"
+                                className="text-white/25 hover:text-white/65 transition-colors p-0.5 -mr-0.5"
+                                aria-label="Close panel"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                     strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                     viewBox="0 0 24 24" strokeWidth={2.5}
+                                     stroke="currentColor" className="w-3.5 h-3.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round"
+                                          d="M6 18 18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
 
-                        {/* POI category groups */}
-                        {CATEGORY_GROUPS.map(group => {
-                            const allOn = group.categories.every(c => activeCategories.has(c))
-                            return (
-                                <div key={group.id} className="px-2 pt-3 pb-1">
-                                    {/* Group header with "all on" toggle */}
-                                    <button
-                                        type="button"
-                                        onClick={() => toggleAllInGroup(group.categories)}
-                                        className="w-full flex items-center justify-between px-2 py-1
-                                                   rounded-lg hover:bg-white/5 transition-colors group"
-                                    >
-                                        <span className="text-[9px] uppercase tracking-widest text-white/35 font-semibold">
-                                            {group.label}
-                                        </span>
-                                        <span className={`text-[8px] font-bold uppercase tracking-wider
-                                                          rounded-full px-1.5 py-0.5 transition-all ${
-                                            allOn
-                                                ? 'bg-white/10 text-white/45'
-                                                : 'bg-white/5 text-white/20 group-hover:text-white/35'
-                                        }`}>
-                                            {allOn ? 'All' : 'Off'}
-                                        </span>
-                                    </button>
+                        {/* POI pin groups */}
+                        <div className="px-3 pt-2.5 pb-1 flex-1">
+                            {CATEGORY_GROUPS.map(group => {
+                                const activeInGroup = group.categories.filter(c =>
+                                    activeCategories.has(c),
+                                ).length
+                                const allOn  = activeInGroup === group.categories.length
+                                const noneOn = activeInGroup === 0
 
-                                    {/* Category rows */}
-                                    {group.categories.map(cat => {
-                                        const meta   = POI_CATEGORY_META[cat]
-                                        const active = activeCategories.has(cat)
-                                        const count  = poiCountByCategory[cat] ?? 0
-                                        return (
-                                            <button
-                                                key={cat}
-                                                type="button"
-                                                onClick={() => toggleCategory(cat)}
-                                                className={`w-full flex items-center gap-2.5 px-2 py-1.5
-                                                             rounded-lg transition-all text-left ${
-                                                    active
-                                                        ? 'hover:bg-white/5'
-                                                        : 'opacity-45 hover:opacity-70 hover:bg-white/3'
-                                                }`}
-                                            >
-                                                {/* Color swatch */}
-                                                <span
-                                                    className="w-2.5 h-2.5 rounded-sm shrink-0 border border-black/20"
-                                                    style={{ background: active ? meta.color : '#4b5563' }}
-                                                />
-                                                <span className={`text-[11px] font-medium flex-1 leading-none ${
-                                                    active ? 'text-white/80' : 'text-white/35'
-                                                }`}>
-                                                    {meta.label}
-                                                </span>
-                                                {count > 0 && (
-                                                    <span className="text-[9px] text-white/25 tabular-nums">
-                                                        {count}
+                                return (
+                                    <div key={group.id} className="mb-4">
+                                        {/* Group header */}
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleGroup(group.categories)}
+                                            className="group w-full flex items-center gap-2 mb-1
+                                                       py-0.5 rounded transition-colors hover:bg-white/4"
+                                        >
+                                            {/* State indicator: mini swatches */}
+                                            <div className="flex items-center gap-0.5 shrink-0">
+                                                {group.categories.slice(0, 4).map(c => (
+                                                    <span
+                                                        key={c}
+                                                        className="w-1.5 h-1.5 rounded-full transition-all"
+                                                        style={{
+                                                            background: activeCategories.has(c)
+                                                                ? POI_CATEGORY_META[c].color
+                                                                : 'rgba(255,255,255,0.08)',
+                                                        }}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <span className={`text-[9px] uppercase tracking-widest
+                                                              font-semibold transition-colors ${
+                                                allOn
+                                                    ? 'text-white/55'
+                                                    : noneOn
+                                                    ? 'text-white/22'
+                                                    : 'text-white/38'
+                                            }`}>
+                                                {group.label}
+                                            </span>
+                                            <span className={`ml-auto text-[8px] font-bold uppercase
+                                                              tracking-wider rounded px-1 py-px
+                                                              transition-all shrink-0 ${
+                                                allOn
+                                                    ? 'text-white/45 bg-white/8'
+                                                    : noneOn
+                                                    ? 'text-white/18 bg-white/4 group-hover:text-white/32'
+                                                    : 'text-white/35 bg-white/6'
+                                            }`}>
+                                                {allOn ? 'all' : noneOn ? 'off' : `${activeInGroup}/${group.categories.length}`}
+                                            </span>
+                                        </button>
+
+                                        {/* Category rows */}
+                                        {group.categories.map(cat => {
+                                            const meta   = POI_CATEGORY_META[cat]
+                                            const active = activeCategories.has(cat)
+                                            const count  = countByCategory[cat] ?? 0
+                                            return (
+                                                <button
+                                                    key={cat}
+                                                    type="button"
+                                                    onClick={() => toggleCategory(cat)}
+                                                    className={`w-full flex items-center gap-2 py-[5px] pl-2 pr-2
+                                                                 rounded transition-all text-left
+                                                                 border-l-2 ${
+                                                        active
+                                                            ? 'hover:bg-white/[0.04]'
+                                                            : 'opacity-50 hover:opacity-75 hover:bg-white/[0.025]'
+                                                    }`}
+                                                    style={
+                                                        active
+                                                            ? { borderLeftColor: meta.color }
+                                                            : { borderLeftColor: 'rgba(255,255,255,0.06)' }
+                                                    }
+                                                >
+                                                    <span
+                                                        className="w-2 h-2 rounded-sm shrink-0"
+                                                        style={{
+                                                            background: active ? meta.color : 'rgba(255,255,255,0.12)',
+                                                        }}
+                                                    />
+                                                    <span className={`text-[11px] font-medium flex-1
+                                                                       leading-none min-w-0 truncate ${
+                                                        active ? 'text-white/82' : 'text-white/32'
+                                                    }`}>
+                                                        {meta.label}
                                                     </span>
-                                                )}
-                                                {/* Active indicator */}
-                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${
-                                                    active ? 'bg-white/30' : 'bg-white/8'
-                                                }`} />
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-                            )
-                        })}
+                                                    <span className={`text-[10px] tabular-nums shrink-0 ${
+                                                        count > 0
+                                                            ? active ? 'text-white/35' : 'text-white/18'
+                                                            : 'text-white/12'
+                                                    }`}>
+                                                        {count || '–'}
+                                                    </span>
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                )
+                            })}
 
-                        {/* Divider */}
-                        <div className="mx-4 my-2 border-t border-white/5" />
+                            {/* ── Data layers ── */}
+                            <div className="border-t border-white/[0.06] pt-3 pb-1">
+                                <span className="text-[9px] uppercase tracking-widest
+                                                 text-white/25 font-semibold block mb-2 px-2">
+                                    Data Layers
+                                </span>
 
-                        {/* Data layers */}
-                        <div className="px-2 pb-3">
-                            <span className="text-[9px] uppercase tracking-widest text-white/35 font-semibold px-2 block mb-1">
-                                Data Layers
-                            </span>
-
-                            {/* Quests */}
-                            <DataLayerRow
-                                label="Quest Markers"
-                                sublabel="MetaForge"
-                                color="#8b95fa"
-                                active={dataLayers.quests}
-                                count={dataLayers.quests ? mapQuests.length : 0}
-                                onToggle={() => toggleDataLayer('quests')}
-                                iconPath="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z"
-                            />
-
-                            {/* Container markers */}
-                            <DataLayerRow
-                                label="Container Markers"
-                                sublabel="Curated"
-                                color="#fb923c"
-                                active={dataLayers.containers}
-                                count={dataLayers.containers ? (CONTAINERS_BY_MAP[map.id]?.length ?? 0) : 0}
-                                onToggle={() => toggleDataLayer('containers')}
-                                iconPath="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"
-                            />
-
-                            {/* Loot areas */}
-                            <DataLayerRow
-                                label="Loot Zones"
-                                sublabel="MetaForge"
-                                color="#facc15"
-                                active={dataLayers.lootAreas}
-                                count={dataLayers.lootAreas ? mfLootAreas.length : 0}
-                                onToggle={() => toggleDataLayer('lootAreas')}
-                                disabled={mfLootAreas.length === 0}
-                                iconPath="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
-                            />
+                                <DataLayerRow
+                                    label="Quest Markers"
+                                    sublabel="MetaForge"
+                                    color="#8b95fa"
+                                    active={dataLayers.quests}
+                                    count={dataLayers.quests ? mapQuests.length : 0}
+                                    onToggle={() => toggleDataLayer('quests')}
+                                    iconPath="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c-.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z"
+                                />
+                                <DataLayerRow
+                                    label="Container Markers"
+                                    sublabel="Curated"
+                                    color="#fb923c"
+                                    active={dataLayers.containers}
+                                    count={dataLayers.containers ? (CONTAINERS_BY_MAP[map.id]?.length ?? 0) : 0}
+                                    onToggle={() => toggleDataLayer('containers')}
+                                    iconPath="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"
+                                />
+                                <DataLayerRow
+                                    label="Loot Zones"
+                                    sublabel="MetaForge"
+                                    color="#facc15"
+                                    active={dataLayers.lootAreas}
+                                    count={dataLayers.lootAreas ? mfLootAreas.length : 0}
+                                    onToggle={() => toggleDataLayer('lootAreas')}
+                                    disabled={mfLootAreas.length === 0}
+                                    iconPath="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
+                                />
+                            </div>
                         </div>
+
+                        {/* ── Panel footer ── */}
+                        {!isDefaultState && (
+                            <div className="sticky bottom-0 px-3 pb-3 pt-2
+                                            bg-[rgba(5,6,10,0.97)] border-t border-white/[0.06]">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        resetCategories()
+                                        setDifficulty('Normal')
+                                        setSearch('')
+                                    }}
+                                    className="w-full text-[10px] font-medium text-white/30
+                                               hover:text-white/60 border border-white/8
+                                               hover:border-white/18 rounded-lg py-1.5
+                                               transition-all text-center"
+                                >
+                                    Reset to defaults
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {/* ── No-results search overlay ───────────────────── */}
+                {/* ── No-results overlay ──────────────────────────── */}
                 {search.trim() && filteredPois.length === 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center z-[600] pointer-events-none">
-                        <div className="bg-black/75 backdrop-blur-sm rounded-2xl px-6 py-4 text-center">
-                            <p className="text-sm text-white/55">
-                                No pins match <span className="text-white/80 font-medium">"{search}"</span>
+                    <div className="absolute inset-0 flex items-center justify-center
+                                    z-[600] pointer-events-none">
+                        <div className="bg-black/78 backdrop-blur-sm rounded-2xl
+                                        px-7 py-5 text-center max-w-xs">
+                            <p className="text-sm font-medium text-white/60">
+                                No pins match{' '}
+                                <span className="text-white/85">"{search}"</span>
                             </p>
-                            <p className="text-[11px] text-white/25 mt-1">
-                                Try broadening your search or enabling more categories
+                            <p className="text-[11px] text-white/25 mt-1.5 leading-relaxed">
+                                Enable more categories or broaden your search
                             </p>
                         </div>
                     </div>
                 )}
 
-                {/* ── Tile fallback ───────────────────────────────── */}
+                {/* ── Tile viewer / fallback ──────────────────────── */}
                 {tileFallback ? (
                     <MapStaticFallback map={map} />
                 ) : (
@@ -487,80 +601,123 @@ export default function NativeMapExplorer({
                     />
                 )}
 
-                {/* ── Selected POI detail panel ───────────────────── */}
+                {/* ── Selected POI detail ─────────────────────────── */}
                 {selectedPoi && (
-                    <div
-                        className="absolute bottom-0 left-0 right-0 z-[640]
-                                   bg-rf-bg/94 backdrop-blur-xl border-t border-white/10
-                                   px-4 py-3 flex items-start gap-3"
-                        style={{ animation: 'none' }}
-                    >
-                        {/* Category swatch */}
-                        <span
-                            className="mt-0.5 w-3 h-3 rounded-sm shrink-0"
-                            style={{ background: POI_CATEGORY_META[selectedPoi.category].color }}
-                        />
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-baseline gap-2 flex-wrap">
-                                <span className="text-sm font-semibold text-white leading-tight">
-                                    {selectedPoi.name}
-                                </span>
-                                <span className="text-[10px] font-medium uppercase tracking-wider"
-                                      style={{ color: POI_CATEGORY_META[selectedPoi.category].color }}>
-                                    {POI_CATEGORY_META[selectedPoi.category].label}
-                                </span>
-                            </div>
-                            {selectedPoi.description && (
-                                <p className="text-[11px] text-white/45 mt-1 leading-relaxed line-clamp-2">
-                                    {selectedPoi.description}
-                                </p>
-                            )}
-                            {selectedPoi.difficulties && (
-                                <div className="flex gap-1 mt-1.5 flex-wrap">
-                                    {selectedPoi.difficulties.map(d => (
-                                        <span key={d}
-                                              className="text-[9px] border border-white/10 text-white/30
-                                                         rounded-full px-1.5 py-px">
-                                            {d}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setSelectedPoi(null)}
-                            className="text-white/25 hover:text-white/60 transition-colors shrink-0 mt-0.5"
-                            aria-label="Dismiss"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                 strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
+                    <PoiDetailPanel
+                        poi={selectedPoi}
+                        onDismiss={() => setSelectedPoi(null)}
+                    />
                 )}
             </div>
 
             {/* ── Status bar ──────────────────────────────────────────────────── */}
-            <div className="flex items-center justify-between gap-3 px-4 py-1.5
-                            border-t border-white/5 bg-white/[0.01] flex-wrap">
-                <span className="text-[10px] text-white/20">
-                    {filteredPois.length} pin{filteredPois.length !== 1 ? 's' : ''} visible
-                    {search.trim() && <> matching <em className="not-italic text-white/35">"{search}"</em></>}
-                </span>
-                <span className="text-[10px] text-white/15">
-                    {difficulty !== 'Normal' && (
-                        <span className="mr-2 text-white/25">{difficulty} mode</span>
+            <div className="flex items-center justify-between gap-2 px-4 py-[5px]
+                            border-t border-white/[0.04] bg-white/[0.009] flex-wrap">
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-white/22">
+                        {filteredPois.length
+                            ? <>{filteredPois.length} pin{filteredPois.length !== 1 ? 's' : ''} visible</>
+                            : <span className="text-white/16">No pins visible</span>}
+                    </span>
+                    {search.trim() && (
+                        <span className="text-[10px] text-white/18">
+                            matching <em className="not-italic text-white/32">"{search}"</em>
+                        </span>
                     )}
-                    Interactive map tiles © ardb.app
-                </span>
+                </div>
+                <div className="flex items-center gap-2">
+                    {difficulty !== 'Normal' && (
+                        <span className="text-[9px] font-semibold uppercase tracking-wider
+                                         border border-white/10 rounded-full px-2 py-px text-white/30">
+                            {difficulty}
+                        </span>
+                    )}
+                    <span className="text-[10px] text-white/14">
+                        Tiles © ardb.app
+                    </span>
+                </div>
             </div>
         </div>
     )
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
+
+function PoiDetailPanel({
+    poi,
+    onDismiss,
+}: {
+    poi: MapPoi
+    onDismiss: () => void
+}) {
+    const meta = POI_CATEGORY_META[poi.category]
+    return (
+        <div
+            className="rf-badge-enter absolute bottom-0 left-0 right-0 z-[640]
+                       flex items-stretch
+                       bg-[rgba(5,6,10,0.95)] backdrop-blur-xl
+                       border-t border-white/[0.08]"
+        >
+            {/* Left accent bar */}
+            <div
+                className="w-[3px] shrink-0 rounded-tr-sm rounded-br-sm"
+                style={{ background: meta.color }}
+            />
+
+            <div className="flex-1 min-w-0 px-4 py-3">
+                <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                        {/* Category label */}
+                        <span
+                            className="text-[9px] font-bold uppercase tracking-widest mb-1 block"
+                            style={{ color: meta.color }}
+                        >
+                            {meta.label}
+                        </span>
+                        {/* Name */}
+                        <p className="text-sm font-semibold text-white leading-snug">
+                            {poi.name}
+                        </p>
+                        {/* Description */}
+                        {poi.description && (
+                            <p className="text-[11px] text-white/42 mt-1.5 leading-relaxed">
+                                {poi.description}
+                            </p>
+                        )}
+                        {/* Difficulty tags */}
+                        {poi.difficulties && poi.difficulties.length > 0 && (
+                            <div className="flex gap-1 mt-2 flex-wrap">
+                                {poi.difficulties.map(d => (
+                                    <span
+                                        key={d}
+                                        className="text-[9px] border border-white/10
+                                                   text-white/28 rounded-full px-1.5 py-px"
+                                    >
+                                        {d}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    {/* Dismiss */}
+                    <button
+                        type="button"
+                        onClick={onDismiss}
+                        className="text-white/22 hover:text-white/58 transition-colors
+                                   shrink-0 mt-0.5 p-0.5"
+                        aria-label="Dismiss"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                             strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                            <path strokeLinecap="round" strokeLinejoin="round"
+                                  d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
 
 function DataLayerRow({
     label,
@@ -586,37 +743,35 @@ function DataLayerRow({
             type="button"
             onClick={disabled ? undefined : onToggle}
             disabled={disabled}
-            className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-all ${
+            className={`w-full flex items-center gap-2 pl-2 pr-2 py-[5px] rounded
+                        text-left transition-all border-l-2 ${
                 disabled
-                    ? 'opacity-25 cursor-not-allowed'
+                    ? 'opacity-20 cursor-not-allowed border-white/5'
                     : active
-                    ? 'hover:bg-white/5'
-                    : 'opacity-45 hover:opacity-65 hover:bg-white/3'
+                    ? 'hover:bg-white/[0.04]'
+                    : 'opacity-45 hover:opacity-68 hover:bg-white/[0.025] border-white/6'
             }`}
+            style={!disabled && active ? { borderLeftColor: color } : undefined}
         >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                  strokeWidth={1.5} stroke="currentColor"
                  className="w-3 h-3 shrink-0"
-                 style={{ color: active ? color : '#6b7280' }}>
+                 style={{ color: active && !disabled ? color : 'rgba(156,163,175,0.4)' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" d={iconPath} />
             </svg>
             <div className="flex-1 min-w-0">
-                <div className={`text-[11px] font-medium leading-none ${
-                    active ? 'text-white/80' : 'text-white/35'
+                <div className={`text-[11px] font-medium leading-none truncate ${
+                    active && !disabled ? 'text-white/80' : 'text-white/32'
                 }`}>
                     {label}
                 </div>
-                <div className="text-[9px] text-white/20 mt-0.5">{sublabel}</div>
+                <div className="text-[9px] text-white/18 mt-0.5">{sublabel}</div>
             </div>
-            {count > 0 && (
-                <span className="text-[9px] text-white/25 tabular-nums">{count}</span>
-            )}
-            {disabled && (
-                <span className="text-[9px] text-white/20 italic">—</span>
-            )}
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${
-                active && !disabled ? 'bg-white/30' : 'bg-white/8'
-            }`} />
+            <span className={`text-[10px] tabular-nums shrink-0 ${
+                disabled ? 'text-white/15 italic' : count > 0 ? 'text-white/28' : 'text-white/12'
+            }`}>
+                {disabled ? '—' : count || '–'}
+            </span>
         </button>
     )
 }
@@ -624,14 +779,18 @@ function DataLayerRow({
 function MapStaticFallback({ map }: { map: MapMeta }) {
     const img = map.image ?? map.floors?.[0]?.image
     return (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-rf-bg gap-3">
+        <div className="w-full h-full flex items-center justify-center bg-rf-bg">
             {img ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={img} alt={map.displayName} className="max-h-full max-w-full object-contain opacity-40" />
+                <img
+                    src={img}
+                    alt={map.displayName}
+                    className="max-h-full max-w-full object-contain opacity-35"
+                />
             ) : (
-                <div className="text-white/20 text-sm">Map tiles unavailable</div>
+                <span className="text-white/18 text-sm">Map tiles unavailable</span>
             )}
-            <p className="text-[11px] text-white/25 absolute bottom-4">
+            <p className="text-[11px] text-white/22 absolute bottom-4 left-0 right-0 text-center">
                 Tile stream unavailable — showing static reference
             </p>
         </div>
