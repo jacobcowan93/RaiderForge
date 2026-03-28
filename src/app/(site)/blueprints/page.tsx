@@ -16,7 +16,7 @@ import {
 } from '@/lib/blueprints/normalizeBlueprints'
 import { groupBlueprintsByRarityTier } from '@/lib/blueprints/rarityGroups'
 import { resolveBlueprintImage } from '@/lib/blueprints/resolveBlueprintImage'
-import { formatRarityLabel, type RarityVisualTier } from '@/lib/blueprints/rarityCardStyles'
+import { formatRarityLabel } from '@/lib/blueprints/rarityCardStyles'
 import {
     applyBlueprintSort,
     blueprintDisplayName,
@@ -28,7 +28,6 @@ import {
     getBlueprintAllowlistEntries,
     logSpreadsheetMatchStats,
     matchBlueprintsToAllowlist,
-    type SpreadsheetMatchStats,
 } from '@/lib/blueprints/blueprintSpreadsheetMatcher'
 import { stripTrailingBlueprintSuffix } from '@/lib/blueprints/blueprintSlug'
 import Link from 'next/link'
@@ -54,22 +53,10 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
 const btnExport =
     'inline-flex items-center justify-center rounded-lg border border-white/15 bg-rf-bg/80 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-rf-text hover:border-rf-red/40 hover:bg-white/5 hover:text-white transition-colors disabled:opacity-40 disabled:pointer-events-none'
 
-const tierChipClass: Record<RarityVisualTier, string> = {
-    legendary: 'text-rf-orange border-rf-orange/30 bg-rf-orange/10',
-    epic: 'text-purple-200 border-purple-400/30 bg-purple-500/10',
-    rare: 'text-sky-200 border-sky-400/30 bg-sky-500/10',
-    uncommon: 'text-rf-green border-rf-green/30 bg-rf-green/10',
-    common: 'text-rf-textSoft border-white/15 bg-white/5',
-    unknown: 'text-rf-textSoft border-white/12 bg-white/[0.04]',
-    none: 'text-rf-textSoft border-white/10 bg-white/[0.04]',
-}
-
 export default function BlueprintsPage() {
     const [catalogLoading, setCatalogLoading] = useState(true)
     const [catalogError, setCatalogError] = useState<string | null>(null)
-    const [syncedAt, setSyncedAt] = useState<string | null>(null)
     const [blueprints, setBlueprints] = useState<NormalizedBlueprint[]>([])
-    const [allowlistStats, setAllowlistStats] = useState<SpreadsheetMatchStats | null>(null)
 
     const [query, setQuery] = useState('')
     const [foundInFilter, setFoundInFilter] = useState<string>('__all__')
@@ -96,19 +83,18 @@ export default function BlueprintsPage() {
         ;(async () => {
             setCatalogLoading(true)
             setCatalogError(null)
-            setAllowlistStats(null)
             try {
                 const res = await fetch('/api/marketplace/catalog', { cache: 'no-store' })
                 if (!res.ok) throw new Error(`Catalog request failed (${res.status})`)
                 const data = (await res.json()) as CatalogResponse
                 if (!cancelled && Array.isArray(data.items)) {
-                    setSyncedAt(data.syncedAt ?? null)
                     const raw = blueprintsFromCatalogItems(data.items)
                     const { blueprints: matched, stats } = matchBlueprintsToAllowlist(raw)
+                    // Dev-only: logs unmatched allowlist rows and excluded catalog entries to the console
                     logSpreadsheetMatchStats(stats)
                     const allowlistEntries = getBlueprintAllowlistEntries()
+                    // Dev-only: warns if allowlist names drift from blueprintInGameOrder.ts
                     warnIfAllowlistDriftFromGameOrder(allowlistEntries.map((e) => e.name))
-                    setAllowlistStats(stats)
                     setBlueprints(mergeAllowlistMatchedBlueprints(matched, allowlistEntries))
                 }
             } catch (e) {
@@ -139,8 +125,6 @@ export default function BlueprintsPage() {
         () => blueprints.filter((b) => trackMap[b.id] !== 'owned'),
         [blueprints, trackMap]
     )
-
-    const missingByTier = useMemo(() => groupBlueprintsByRarityTier(missingBlueprints), [missingBlueprints])
 
     const printGroups = useMemo(() => {
         return groupBlueprintsByRarityTier(missingBlueprints).map((g) => ({
@@ -173,35 +157,27 @@ export default function BlueprintsPage() {
     }, [missingBlueprints, sortMode])
 
     return (
-        <div className="max-w-7xl mx-auto py-8 md:py-10 px-4 sm:px-5">
+        <div className="relative max-w-7xl mx-auto py-8 md:py-10 px-4 sm:px-5">
+            {/* Subtle ambient radial so the flat rf-bg body feels intentional */}
+            <div
+                className="pointer-events-none absolute inset-x-0 -top-24 h-[28rem] -z-10"
+                aria-hidden
+                style={{
+                    background:
+                        'radial-gradient(ellipse 70% 40% at 50% 0%, rgba(56,189,248,0.055) 0%, transparent 70%)',
+                }}
+            />
             <div className="print:hidden space-y-4 md:space-y-5">
                 <header className="rf-card rounded-xl px-4 py-4 sm:px-5 border border-white/[0.06]">
                     <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 lg:gap-6">
                         <div className="min-w-0">
-                            <span className="text-[10px] uppercase tracking-[0.22em] text-rf-textSoft font-semibold">
-                                Loadout
-                            </span>
-                            <h1 className="mt-1.5 text-2xl sm:text-3xl font-bold tracking-tight text-white">Blueprint tracker</h1>
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                Blueprint <span className="text-sky-500">Tracker</span>
+                            </h1>
                             <p className="mt-2 text-xs text-rf-textSoft max-w-2xl leading-relaxed">
-                                List and type labels follow the ARC Raiders Blueprints spreadsheet (exported into this app).
-                                Tiles use the reference tracker grid where available; ARDB URLs fill gaps. Hover or focus a
-                                tile for description and found-in tags from ARDB. Saved locally on this device; no sign-in.
+                                Track which blueprints you&apos;ve collected and quickly see what&apos;s still missing.
+                                Mark items as owned to update your progress and generate a clean list of remaining blueprints to hunt.
                             </p>
-                            {allowlistStats && allowlistStats.unmatchedSheetNames.length > 0 ? (
-                                <p className="mt-2 text-[10px] text-rf-orange/90 leading-relaxed max-w-2xl">
-                                    {allowlistStats.unmatchedSheetNames.length} spreadsheet row
-                                    {allowlistStats.unmatchedSheetNames.length === 1 ? ' has' : 's have'} no safe ARDB
-                                    catalog match. Those entries still count toward the full collection and appear as tiles
-                                    (title, checkbox, reference art when available). Hover notes when catalog metadata is
-                                    missing. Names are logged in the browser dev console.
-                                </p>
-                            ) : null}
-                            {syncedAt && (
-                                <p className="mt-1.5 text-[10px] text-rf-textSoft/80">
-                                    Catalog synced{' '}
-                                    <time dateTime={syncedAt}>{new Date(syncedAt).toLocaleString()}</time>
-                                </p>
-                            )}
                         </div>
                         {!catalogLoading && !catalogError && blueprints.length > 0 ? (
                             <p className="shrink-0 text-sm font-semibold tabular-nums tracking-tight lg:text-right">
@@ -238,11 +214,9 @@ export default function BlueprintsPage() {
 
                 {!catalogLoading && !catalogError && blueprints.length === 0 && (
                     <div className="rf-card rounded-xl px-6 py-10 text-center">
-                        <p className="text-rf-text font-medium">No blueprint rows to show</p>
+                        <p className="text-rf-text font-medium">No blueprints to show</p>
                         <p className="text-sm text-rf-textSoft mt-2 max-w-md mx-auto">
-                            Run an ARDB catalog sync so{' '}
-                            <code className="bg-white/5 px-1 rounded">/api/marketplace/catalog</code> includes blueprint
-                            items that match the spreadsheet allowlist.
+                            Blueprint data could not be loaded. Try refreshing the page.
                         </p>
                     </div>
                 )}
@@ -279,27 +253,39 @@ export default function BlueprintsPage() {
                             </div>
                         </div>
 
-                        {missingByTier.length > 0 && (
-                            <div className="rf-card rounded-lg px-3 py-2.5 sm:px-4 border border-white/[0.06]">
-                                <p className="text-[9px] uppercase tracking-[0.18em] text-rf-textSoft font-semibold mb-1.5">
-                                    Missing by rarity
-                                </p>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {missingByTier.map(({ tier, label, items }) => (
-                                        <span
-                                            key={tier}
-                                            className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-medium ${tierChipClass[tier]}`}
-                                        >
-                                            <span>{label}</span>
-                                            <span className="tabular-nums opacity-90">{items.length}</span>
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         <div className="rf-card rounded-lg px-3 py-3 sm:px-4 border border-white/[0.06] space-y-3">
-                            <div className="flex flex-col xl:flex-row xl:items-end gap-4 xl:justify-between">
+                            {/* Toggles left — export buttons right; wraps cleanly on small screens */}
+                            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                    <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-rf-text">
+                                        <span className="relative flex shrink-0">
+                                            <input
+                                                type="checkbox"
+                                                checked={onlyMissing}
+                                                onChange={(e) => setOnlyMissing(e.target.checked)}
+                                                className="rf-checkbox peer"
+                                            />
+                                            <svg viewBox="0 0 10 10" fill="none" aria-hidden className="pointer-events-none absolute inset-0 w-full h-full p-[2px] opacity-0 peer-checked:opacity-100 transition-opacity duration-100">
+                                                <polyline points="1.5,5.5 4,8 8.5,2" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        </span>
+                                        Show only missing
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-rf-text">
+                                        <span className="relative flex shrink-0">
+                                            <input
+                                                type="checkbox"
+                                                checked={quickToggleMode}
+                                                onChange={(e) => setQuickToggleMode(e.target.checked)}
+                                                className="rf-checkbox peer"
+                                            />
+                                            <svg viewBox="0 0 10 10" fill="none" aria-hidden className="pointer-events-none absolute inset-0 w-full h-full p-[2px] opacity-0 peer-checked:opacity-100 transition-opacity duration-100">
+                                                <polyline points="1.5,5.5 4,8 8.5,2" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        </span>
+                                        Quick tap: tap card to toggle owned
+                                    </label>
+                                </div>
                                 <div className="flex flex-wrap gap-2">
                                     <button type="button" className={btnExport} onClick={() => window.print()}>
                                         Print Missing to PDF
@@ -313,27 +299,6 @@ export default function BlueprintsPage() {
                                         {jpegBusy ? 'Exporting…' : 'Export Missing as JPEG'}
                                     </button>
                                 </div>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/[0.05] pt-3">
-                                <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-rf-text">
-                                    <input
-                                        type="checkbox"
-                                        checked={onlyMissing}
-                                        onChange={(e) => setOnlyMissing(e.target.checked)}
-                                        className="h-4 w-4 rounded border-white/25 bg-rf-bg/80 accent-rf-orange focus:ring-2 focus:ring-rf-red/35"
-                                    />
-                                    Show only missing
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-rf-text">
-                                    <input
-                                        type="checkbox"
-                                        checked={quickToggleMode}
-                                        onChange={(e) => setQuickToggleMode(e.target.checked)}
-                                        className="h-4 w-4 rounded border-white/25 bg-rf-bg/80 accent-rf-blue focus:ring-2 focus:ring-rf-red/35"
-                                    />
-                                    Quick tap: tap card to toggle owned
-                                </label>
                             </div>
 
                             <div className="flex flex-col lg:flex-row lg:items-end gap-3 lg:justify-between border-t border-white/[0.05] pt-3">

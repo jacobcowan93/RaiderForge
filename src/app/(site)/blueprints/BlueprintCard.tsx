@@ -1,6 +1,6 @@
 'use client'
 
-import type { CSSProperties, KeyboardEvent, MouseEvent, RefObject } from 'react'
+import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { isAllowlistPlaceholderBlueprint } from '@/lib/blueprints/blueprintAllowlistMerge'
@@ -13,6 +13,7 @@ import {
     rarityCardContainerClasses,
     rarityImageBackdropClass,
 } from '@/lib/blueprints/rarityCardStyles'
+import { getWikiBlueprintLocation } from '@/lib/blueprints/blueprintWikiLocations'
 
 const blueprintGridStyle: CSSProperties = {
     backgroundImage: `linear-gradient(rgba(56, 189, 248, 0.07) 1px, transparent 1px),
@@ -46,6 +47,14 @@ type InspectPanelProps = {
     onPanelLeave: (e: MouseEvent) => void
 }
 
+function Chip({ children }: { children: ReactNode }) {
+    return (
+        <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-rf-textSoft">
+            {children}
+        </span>
+    )
+}
+
 function BlueprintInspectPanel({
     open,
     anchorRef,
@@ -55,6 +64,7 @@ function BlueprintInspectPanel({
     onPanelEnter,
     onPanelLeave,
 }: InspectPanelProps) {
+    const wiki = getWikiBlueprintLocation(b.trackerDisplayName ?? b.name)
     const [box, setBox] = useState<CSSProperties>(() => ({
         position: 'fixed',
         left: 0,
@@ -191,17 +201,55 @@ function BlueprintInspectPanel({
                 </p>
             ) : null}
             {desc ? <p className="mt-2 text-xs text-rf-textSoft leading-relaxed">{desc}</p> : null}
-            {b.foundIn.length > 0 ? (
+
+            {wiki ? (
+                <div className="mt-2 pt-2 border-t border-white/[0.06] space-y-1.5">
+                    {wiki.questReward ? (
+                        <div>
+                            <p className="text-[9px] font-semibold uppercase tracking-widest text-rf-green/90 mb-1">Quest reward</p>
+                            <div className="flex flex-wrap gap-1">
+                                <Chip>{wiki.questReward}</Chip>
+                            </div>
+                        </div>
+                    ) : null}
+
+                    {wiki.maps.length > 0 ? (
+                        <div>
+                            <p className="text-[9px] font-semibold uppercase tracking-widest text-rf-red/85 mb-1">Maps</p>
+                            <div className="flex flex-wrap gap-1">
+                                {wiki.maps.map((m) => <Chip key={m}>{m}</Chip>)}
+                            </div>
+                        </div>
+                    ) : null}
+
+                    {wiki.containers.length > 0 ? (
+                        <div>
+                            <p className="text-[9px] font-semibold uppercase tracking-widest text-rf-red/85 mb-1">Containers</p>
+                            <div className="flex flex-wrap gap-1">
+                                {wiki.containers.map((c) => <Chip key={c}>{c}</Chip>)}
+                            </div>
+                        </div>
+                    ) : null}
+
+                    {wiki.conditions.length > 0 ? (
+                        <div>
+                            <p className="text-[9px] font-semibold uppercase tracking-widest text-rf-orange/85 mb-1">Conditions</p>
+                            <div className="flex flex-wrap gap-1">
+                                {wiki.conditions.map((c) => <Chip key={c}>{c}</Chip>)}
+                            </div>
+                        </div>
+                    ) : null}
+
+                    {wiki.trialsReward ? (
+                        <p className="text-[9px] text-rf-textSoft/70 pt-0.5">Also available as a Trials reward.</p>
+                    ) : null}
+                </div>
+            ) : b.foundIn.length > 0 ? (
                 <div className="mt-2 pt-2 border-t border-white/[0.06]">
                     <p className="text-[9px] font-semibold uppercase tracking-widest text-rf-red/85 mb-1.5">Found in</p>
                     <div className="flex flex-wrap gap-1">
                         {b.foundIn.map((t) => (
-                            <span
-                                key={t}
-                                className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/10 text-rf-textSoft"
-                            >
-                                {t}
-                            </span>
+                            <Chip key={t}>{t}</Chip>
                         ))}
                     </div>
                 </div>
@@ -298,18 +346,28 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                 aria-pressed={quickToggleMode ? owned : undefined}
             >
                 <label
-                    className="absolute top-1.5 right-1.5 z-[2] flex cursor-pointer touch-manipulation rounded-md bg-black/35 p-1 backdrop-blur-[2px] border border-white/10 shadow-sm"
+                    className="absolute top-1.5 right-1.5 z-[2] flex cursor-pointer touch-manipulation rounded-md bg-black/35 p-1 backdrop-blur-[2px] border border-white/[0.08] shadow-sm"
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                 >
                     <span className="sr-only">Owned</span>
-                    <input
-                        type="checkbox"
-                        checked={owned}
-                        onChange={(e) => onOwnedChange(e.target.checked)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="h-3.5 w-3.5 rounded border-white/30 bg-rf-bg/90 accent-rf-green focus:ring-2 focus:ring-rf-red/35 focus:ring-offset-0 shrink-0"
-                    />
+                    <span className="relative flex shrink-0">
+                        <input
+                            type="checkbox"
+                            checked={owned}
+                            onChange={(e) => onOwnedChange(e.target.checked)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="rf-checkbox peer"
+                        />
+                        <svg
+                            viewBox="0 0 10 10"
+                            fill="none"
+                            aria-hidden
+                            className="pointer-events-none absolute inset-0 w-full h-full p-[2px] opacity-0 peer-checked:opacity-100 transition-opacity duration-100"
+                        >
+                            <polyline points="1.5,5.5 4,8 8.5,2" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </span>
                 </label>
 
                 <div className="flex flex-col flex-1 min-h-0 min-w-0 px-2 pt-2 pb-1.5 gap-1">
@@ -322,7 +380,7 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                     </h2>
 
                     <div
-                        className="relative w-full aspect-[5/4] max-h-[4.75rem] sm:max-h-[5.25rem] rounded-md border border-sky-500/15 bg-[#050810] flex items-center justify-center overflow-hidden p-1"
+                        className="relative w-full aspect-[5/4] max-h-[6.5rem] sm:max-h-[7.5rem] rounded-md border border-sky-500/15 bg-[#050810] flex items-center justify-center overflow-hidden p-0.5"
                         style={blueprintGridStyle}
                     >
                         <div className={`${rarityImageBackdropClass(tier)} rounded-md`} aria-hidden />
@@ -342,6 +400,12 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                                 No image
                             </span>
                         )}
+                        {/* Gradient mask to conceal the name label baked into the reference art tiles */}
+                        <div
+                            className="absolute inset-x-0 bottom-0 h-[50%] z-[2] pointer-events-none rounded-b-md"
+                            aria-hidden
+                            style={{ background: 'linear-gradient(to bottom, transparent 0%, #050810 48%)' }}
+                        />
                     </div>
                 </div>
             </article>
