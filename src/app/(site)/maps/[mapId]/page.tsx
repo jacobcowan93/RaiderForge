@@ -87,9 +87,9 @@ export default async function MapDetailPage({ params }: Props) {
             <div className="relative h-48 sm:h-60 rounded-2xl overflow-hidden mb-8 bg-rf-bgSoft">
                 <img src={thumb} alt={map.displayName} className="w-full h-full object-cover" />
 
-                {/* Cinematic overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+                {/* Readability overlays — kept soft so hero thumbs do not blow out on light art */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/22 to-black/15" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/28 via-transparent to-transparent" />
 
                 {/* Risk badge — top right */}
                 <span className={`absolute top-4 right-4 flex items-center gap-1.5
@@ -130,7 +130,7 @@ export default async function MapDetailPage({ params }: Props) {
 
                 {/* Map title — bottom left */}
                 <div className="absolute bottom-0 left-0 right-0 px-6 pb-5 pt-12
-                                bg-gradient-to-t from-black/80 to-transparent">
+                                bg-gradient-to-t from-black/65 to-transparent">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-1">
                         {map.subtitle}
                     </p>

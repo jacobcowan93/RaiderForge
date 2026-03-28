@@ -83,7 +83,7 @@ export default async function MapsPage() {
                 </div>
             </div>
 
-            <div className="rf-card rounded-xl px-4 py-3.5 mb-8 border border-white/[0.06] bg-white/[0.02]">
+            <div className="rf-card rounded-xl px-4 py-3.5 mb-8 border border-white/[0.08] bg-black/35 backdrop-blur-sm">
                 <p className="text-[11px] text-white/85 leading-relaxed">
                     Community-run reference maps with extra POIs and keys are available at{' '}
                     <a

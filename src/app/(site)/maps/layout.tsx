@@ -1,31 +1,27 @@
-import arcBg from '@/assets/images/ARC_Blueprint_Background.jpg'
-
 /**
- * Maps section layout — full-bleed background plus a light uniform tint (~20% black)
- * so copy and cards stay readable without hiding the image.
+ * Maps section layout — full-viewport background from /public plus a 30% black tint.
  *
- * Stacking context notes:
- *   - Site layout watermark: fixed, z-0 in root stacking context
- *   - Site layout content wrapper: relative z-10 (creates stacking context)
- *   - Background image + tint: fixed z-[5] inside the z-10 context → above watermark,
- *     below all page content (z-[6])
- *   - NavBar (fixed z-50 in root) is unaffected — always above everything here
+ * Stack (low → high):
+ *   - Fixed `z-0`: hero image (cover, center) — url('/images/ARC_Black_White_Logo.jpg')
+ *   - Fixed `z-[1]`: `bg-black/30` tint for readability
+ *   - `relative z-10`: page content above both layers
+ *
+ * Parent `(site)` layout uses `relative z-10` for all section children; this subtree
+ * stays above the site watermark because the entire maps branch lives inside that layer.
  */
 export default function MapsLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="relative">
+        <div className="relative min-h-screen overflow-x-hidden">
             <div
-                className="pointer-events-none fixed inset-0 z-[5] bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: `url(${arcBg.src})` }}
+                className="pointer-events-none fixed inset-0 z-0 bg-rf-bg bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: "url('/images/ARC_Black_White_Logo.jpg')" }}
                 aria-hidden="true"
             />
             <div
-                className="pointer-events-none fixed inset-0 z-[5] bg-black/20"
+                className="pointer-events-none fixed inset-0 z-[1] bg-black/30"
                 aria-hidden="true"
             />
-            <div className="relative z-[6]">
-                {children}
-            </div>
+            <div className="relative z-10">{children}</div>
         </div>
     )
 }

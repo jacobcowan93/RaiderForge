@@ -79,8 +79,8 @@ export function MapsTacticalZonesClient({ zones }: Props) {
                                     className="w-full h-full object-cover
                                                group-hover:scale-[1.05] transition-transform duration-700 ease-out"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                                <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/60 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/12 to-transparent" />
+                                <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-black/35 to-transparent" />
 
                                 <div
                                     className={`absolute top-3 right-3 flex items-center gap-1.5
@@ -103,7 +103,7 @@ export function MapsTacticalZonesClient({ zones }: Props) {
                                     </div>
                                 )}
 
-                                <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-10 bg-gradient-to-t from-black/80 via-black/35 to-transparent">
+                                <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-10 bg-gradient-to-t from-black/65 via-black/22 to-transparent">
                                     <div className="border-l-2 border-rf-red pl-2.5">
                                         <h2 className="font-bold text-white text-[17px] leading-tight tracking-tight drop-shadow-md">
                                             {map.displayName}
