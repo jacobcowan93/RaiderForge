@@ -70,7 +70,10 @@ export const MAPS: MapMeta[] = [
     id: 'dam-battlegrounds',
     displayName: 'Dam Battlegrounds',
     subtitle: 'Industrial Warzone',
-    description: 'A massive hydroelectric dam complex turned contested battleground. High-value loot concentrated around the dam structure and surrounding industrial facilities.',
+    description:
+      'Dam Battlegrounds drops you into the shadow of the Alcantara Power Plant, a massive hydroelectric dam looming over a toxic, flooded landscape. ' +
+      'The broken spillways and drowned lowlands are slowly being reclaimed by tough plant life and hardy wildlife, creating a strange mix of heavy industry and wild overgrowth. ' +
+      "It feels like a monument to the old world's power, now reduced to a quiet husk where raiders pick through forgotten infrastructure for one more haul.",
     risk: 'High',
     image: '/images/ARC Raiders Maps/dam-battleground.png',
     mapType: 'standard',
@@ -98,7 +101,9 @@ export const MAPS: MapMeta[] = [
     id: 'burial-city',
     displayName: 'Buried City',
     subtitle: 'Urban Ruins',
-    description: 'The ruins of a once-thriving city, now silent and overgrown. Dense urban environment with tight corridors, hidden caches, and unpredictable ARC activity.',
+    description:
+      'Buried City sits half-swallowed by dunes in a harsh, wind-scoured desert. Here, rusted cars, faded billboards, and crumbling storefronts hint at a warmer, more human past that predates the cold steel of the Exodus age. ' +
+      'Tight streets and lonely plazas tell the story of a town that once thrived, now reduced to a sand-choked relic where every alley and rooftop hides both danger and opportunity.',
     risk: 'Medium',
     image: '/images/ARC Raiders Maps/buried_city.png',
     mapType: 'standard',
@@ -124,7 +129,10 @@ export const MAPS: MapMeta[] = [
     id: 'spaceport',
     displayName: 'Spaceport',
     subtitle: 'Launch Complex',
-    description: 'An abandoned space launch facility bristling with high-tech salvage and ARC presence. High-risk, high-reward with launch tower loot events.',
+    description:
+      'Spaceport centers on Acerra Spaceport, a once-grand launch facility built to send shuttles skyward and ferry people off a failing Earth. ' +
+      'Towering gantries, grounded vessels, and sprawling terminals speak to an era of desperate ambition, when every launch meant another gamble on survival. ' +
+      "Today it's a graveyard of stalled dreams, packed with cargo, checkpoints, and launch towers that raiders comb for valuables while ARC forces guard the remnants of humanity's escape plan.",
     risk: 'Extreme',
     image: '/images/ARC Raiders Maps/spaceport.png',
     mapType: 'standard',
@@ -150,7 +158,10 @@ export const MAPS: MapMeta[] = [
     id: 'blue-gate',
     displayName: 'Blue Gate',
     subtitle: 'Frontier Outpost',
-    description: 'A remote frontier outpost at the edge of contested territory. Moderate difficulty with a mix of open terrain and fortified positions.',
+    description:
+      'The Blue Gate takes you high into the mountains, where a strange gateway complex dominates the skyline. ' +
+      'The region blends open plateaus, scattered villages, twisting tunnels, and buried facilities into one large interconnected battleground. ' +
+      'Wide sightlines and sudden drops into enclosed compounds keep you constantly shifting between long-range engagements in the open air and frantic close-quarters skirmishes beneath the rock.',
     risk: 'Medium',
     image: '/images/ARC Raiders Maps/blue_gate.png',
     mapType: 'standard',
@@ -176,7 +187,10 @@ export const MAPS: MapMeta[] = [
     id: 'stella-montis',
     displayName: 'Stella Montis',
     subtitle: 'Mountain Facility',
-    description: 'A multi-level mountain research facility with distinct upper and lower sections. Complex navigation with rewarding loot and frequent Night Raid events.',
+    description:
+      'Stella Montis is a remote research outpost tucked into snow-covered peaks, far from the relative safety of the lowlands. ' +
+      "The complex once served as a final safeguard for humanity's long-term survival, with labs and infrastructure dedicated to preserving what little remained. " +
+      'Now, icy walkways, buried structures, and frozen ravines form a chilly maze where raiders risk frostbite and ARC patrols alike in search of the secrets and supplies left behind.',
     risk: 'High',
     image: null,
     mapType: 'multi-floor',
@@ -215,6 +229,17 @@ export const MAPS: MapMeta[] = [
     },
   },
 ]
+
+/**
+ * Narrative overview for Practice Range. Not part of `MAPS` — there is no tactical tile route for it on RaiderForge.
+ */
+export const PRACTICE_RANGE_OVERVIEW = {
+  displayName: 'Practice Range',
+  description:
+    "Practice Range is a secluded firing ground hidden in a quiet mountain bowl, safely removed from the worst of ARC's attention. " +
+    'Constant gunfire and explosions echo off the surrounding cliffs, scrambling ARC sensors and creating a rare pocket of open-air security for raiders. ' +
+    "It's the perfect place to test weapons, refine your aim, and unwind under a clear sky, with stargazing and target practice sharing the same horizon.",
+} as const
 
 export function getMapById(id: string): MapMeta | undefined {
   return MAPS.find(m => m.id === id)

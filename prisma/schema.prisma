@@ -44,8 +44,11 @@ model User {
   accounts      Account[]
   sessions      Session[]
   blueprintOwnerships UserBlueprintOwnership[]
-  skillTreeSave UserSkillTreeSave?
-  mapProgressSave UserMapProgressSave?
+  skillTreeSave       UserSkillTreeSave?
+  mapProgressSave     UserMapProgressSave?
+  listings            MarketplaceListing[]
+  buyerOrders         MarketplaceOrder[]     @relation("BuyerOrders")
+  sellerOrders        MarketplaceOrder[]     @relation("SellerOrders")
 }
 
 /// Versioned JSON: per-map POI visit flags (quests / containers / loot areas).
@@ -84,4 +87,88 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// RaiderForge-native marketplace listing backed by an ARDB item reference.
+/// item metadata (name, icon) is denormalised at creation time for fast rendering.
+model MarketplaceListing {
+  id          String   @id @default(cuid())
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  /// ARDB item id used to look up metadata in the catalog store.
+  ardbItemId  String
+  /// Denormalized at creation – avoids catalog round-trips on every browse render.
+  itemName    String
+  itemIconUrl String?
+  price       Float
+  currency    String   @default("USD")
+  quantity    Int      @default(1)
+  /// active | sold | cancelled
+  status      String   @default("active")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders      MarketplaceOrder[]
+
+  @@index([sellerId])
+  @@index([status])
+  @@index([ardbItemId])
+}
+
+/// Full order record: price snapshot, status lifecycle, audit trail.
+model MarketplaceOrder {
+  id          String   @id @default(cuid())
+
+  listingId   String
+  listing     MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+
+  buyerId     String
+  buyer       User     @relation("BuyerOrders",  fields: [buyerId],  references: [id], onDelete: Restrict)
+  sellerId    String
+  seller      User     @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: Restrict)
+
+  /// Snapshot of the item at order-creation time — never changed afterwards.
+  ardbItemId  String
+  itemName    String
+  itemIconUrl String?
+
+  /// Price locked from the listing at creation time (server-side, never from client).
+  unitPrice   Float
+  currency    String
+  quantity    Int
+  totalAmount Float    // unitPrice * quantity, computed server-side
+
+  /// pending | awaiting_payment | paid | awaiting_delivery | delivered | completed | cancelled | disputed
+  status      String   @default("pending")
+
+  buyerNote   String?
+  sellerNote  String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  events      MarketplaceOrderEvent[]
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([listingId])
+  @@index([status])
+}
+
+/// Append-only audit log for every order status transition.
+model MarketplaceOrderEvent {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      MarketplaceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  /// User who triggered the transition; null = system.
+  actorId    String?
+  fromStatus String?
+  toStatus   String
+  note       String?
+
+  createdAt  DateTime @default(now())
+
+  @@index([orderId])
 }
