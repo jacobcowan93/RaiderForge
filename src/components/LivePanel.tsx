@@ -27,6 +27,7 @@ import { fmtCountdown } from '../lib/events/rotationTable'
 import { MAPS, getMapThumbnail } from '../data/maps'
 import type { GameMap } from '@/lib/game-data/types'
 import { buildRfThumbnailOverrideUrls } from '@/lib/maps/rfGameMapBridge'
+import { MapCoverImage } from '@/components/maps/MapCoverImage'
 import { hubUrlForMapId } from '@/lib/maps/maps-hub-zone'
 
 // Risk level -> display style
@@ -80,11 +81,12 @@ function MapConditionCard({
     <div className="rounded-lg overflow-hidden border border-white/5 hover:border-white/15 transition-all bg-black/20">
       <Link href={hubHref} className="group block">
         <div className="relative h-16 bg-rf-bgSoft overflow-hidden">
-          <img
+          <MapCoverImage
             src={thumb}
-            alt={map.displayName}
-            className="w-full h-full object-cover opacity-60 group-hover:opacity-75 transition-opacity"
-            loading="lazy"
+            alt={`${map.displayName} — zone preview`}
+            fill
+            sizes="280px"
+            className="object-cover opacity-60 group-hover:opacity-75 transition-opacity"
           />
           <span className={`absolute top-1.5 right-1.5 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider ${risk.classes}`}>
             {risk.label}

@@ -8,6 +8,8 @@ const SLUG_TO_MAP_ID: Record<string, string> = {
     'dam-battlegrounds': 'dam-battlegrounds',
     buried: 'burial-city',
     'burial-city': 'burial-city',
+    /** ARDB-style id; same zone as `burial-city` */
+    'buried-city': 'burial-city',
     bluegate: 'blue-gate',
     'blue-gate': 'blue-gate',
     spaceport: 'spaceport',

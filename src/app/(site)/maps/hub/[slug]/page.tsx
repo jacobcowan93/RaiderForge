@@ -16,6 +16,7 @@ import {
     canonicalHubSlugForMapId,
     hubUrlForMapId,
 } from '@/lib/maps/maps-hub-zone'
+import { MapCoverImage } from '@/components/maps/MapCoverImage'
 import { buildTcnoZoneVMs } from '@/lib/maps/build-maps-hub-zones'
 import { getEventDescription, EVENT_ICONS } from '@/lib/events/eventsConfig'
 
@@ -94,8 +95,13 @@ export default async function MapsHubZonePage({ params }: Props) {
             </div>
 
             <div className="relative rounded-2xl overflow-hidden border border-red-500/15 bg-black/60 mb-8 min-h-[220px] sm:min-h-[280px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={zone.thumb} alt="" className="absolute inset-0 w-full h-full object-cover opacity-45" />
+                <MapCoverImage
+                    src={zone.thumb}
+                    alt={`${map.displayName} — zone preview`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, min(896px, 90vw)"
+                    className="object-cover opacity-45"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
                 <div className="relative z-10 p-6 sm:p-8 flex flex-col justify-end min-h-[220px] sm:min-h-[280px]">
                     {zone.conditionBadges.length > 0 && (

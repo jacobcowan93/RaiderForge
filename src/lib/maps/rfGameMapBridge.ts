@@ -48,10 +48,15 @@ export function buildRfThumbnailOverrideUrls(gameMaps: readonly GameMap[]): Reco
     return record
 }
 
-/** Hero/card thumbnail: upstream image when mapped + URL present, else existing RF static fallback. */
+/** Card/listing thumbnail: upstream image when mapped + URL present, else RF static (cover → image → floors). */
 export function resolveMapThumbWithGameData(map: MapMeta, gameByRfId: Map<string, GameMap>): string {
     const g = gameByRfId.get(map.id)
     const u = g?.imageUrl?.trim()
     if (u) return u
     return getMapThumbnail(map)
+}
+
+/** Tactical map detail hero: canonical zone cover first, then CDN / static chain. */
+export function resolveMapHeroThumb(map: MapMeta, gameByRfId: Map<string, GameMap>): string {
+    return map.coverImage ?? resolveMapThumbWithGameData(map, gameByRfId)
 }

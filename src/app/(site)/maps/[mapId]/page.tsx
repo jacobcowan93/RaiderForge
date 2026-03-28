@@ -13,7 +13,8 @@ import { getMapGuide } from '@/lib/maps/mapGuideContent'
 import { getMetaforgeMapLootAreas } from '@/lib/maps/metaforgeMapData'
 import MapFieldGuide from '@/components/MapFieldGuide'
 import { getGameDataProvider } from '@/lib/game-data/provider'
-import { indexGameMapsByRfId, resolveMapThumbWithGameData } from '@/lib/maps/rfGameMapBridge'
+import { indexGameMapsByRfId, resolveMapHeroThumb } from '@/lib/maps/rfGameMapBridge'
+import { MapCoverImage } from '@/components/maps/MapCoverImage'
 import NativeMapExplorer from './_components/NativeMapExplorer'
 import { getTcnoUrl } from '@/lib/maps/tcnoMaps'
 
@@ -56,7 +57,7 @@ export default async function MapDetailPage({ params }: Props) {
 
     const now        = new Date()
     const conditions = getLiveMapConditions(map.id, now, eventsPayload.events, eventsPayload.upstreamOk)
-    const thumb      = resolveMapThumbWithGameData(map, gameByRfId)
+    const thumb      = resolveMapHeroThumb(map, gameByRfId)
     const risk       = riskStyle[map.risk]
     const hasEvents  = conditions.activeConditions.length > 0
 
@@ -107,7 +108,14 @@ export default async function MapDetailPage({ params }: Props) {
 
             {/* ── Compact hero ─────────────────────────────────────────────────── */}
             <div className="relative h-48 sm:h-60 rounded-2xl overflow-hidden mb-8 bg-rf-bgSoft">
-                <img src={thumb} alt={map.displayName} className="w-full h-full object-cover" />
+                <MapCoverImage
+                    src={thumb}
+                    alt={`${map.displayName} — zone cover preview`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, min(896px, 100vw)"
+                    className="object-cover"
+                    priority
+                />
 
                 {/* Cinematic overlays */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10" />

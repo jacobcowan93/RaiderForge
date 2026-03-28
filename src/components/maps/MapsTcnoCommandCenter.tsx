@@ -7,6 +7,7 @@ import { getEventDescription, EVENT_ICONS } from '@/lib/events/eventsConfig'
 import { LiveDataFeedStrip } from '@/components/live-data/LiveDataFeedStrip'
 import { LIVE_DATA_MAP_ROTATION_HINT } from '@/lib/live-data/messages'
 import { MapsHubLegend } from '@/components/maps/MapsHubLegend'
+import { MapCoverImage } from '@/components/maps/MapCoverImage'
 import { canonicalHubSlugForMapId, resolveMapsHubZoneParam } from '@/lib/maps/maps-hub-zone'
 
 export type TcnoZoneVM = {
@@ -154,11 +155,12 @@ export function MapsTcnoCommandCenter({
                                     }`}
                             >
                                 <div className="relative aspect-[16/10] bg-rf-bgSoft">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
+                                    <MapCoverImage
                                         src={z.thumb}
-                                        alt=""
-                                        className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                        alt={`${z.displayName} — zone preview`}
+                                        fill
+                                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                                        className="object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                                     {active && (
@@ -284,11 +286,12 @@ export function MapsTcnoCommandCenter({
                     </div>
                     {!useTcnoIframe && (
                         <div className="lg:w-[min(42%,420px)] shrink-0 relative min-h-[200px] lg:min-h-[220px] bg-black/70">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                            <MapCoverImage
                                 src={selected.thumb}
-                                alt=""
-                                className="absolute inset-0 w-full h-full object-cover opacity-40"
+                                alt={`${selected.displayName} — zone preview`}
+                                fill
+                                sizes="(max-width: 1024px) 100vw, 420px"
+                                className="object-cover opacity-40"
                             />
                             <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/50 to-black/90 hidden lg:block" />
                             <div className="absolute inset-0 flex flex-col justify-center p-5 text-center lg:text-left">
@@ -336,11 +339,12 @@ export function MapsTcnoCommandCenter({
                         </>
                     ) : (
                         <div className="relative flex-1 min-h-[320px] sm:min-h-[400px]">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                            <MapCoverImage
                                 src={selected.thumb}
-                                alt=""
-                                className="absolute inset-0 w-full h-full object-cover opacity-25"
+                                alt={`${selected.displayName} — zone preview`}
+                                fill
+                                sizes="100vw"
+                                className="object-cover opacity-25"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-[#020308] via-[#020308]/95 to-[#020308]/55" />
                             <div className="relative z-10 h-full flex flex-col items-center justify-center p-8 text-center max-w-lg mx-auto">

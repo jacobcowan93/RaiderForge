@@ -802,14 +802,14 @@ function DataLayerRow({
 }
 
 function MapStaticFallback({ map }: { map: MapMeta }) {
-    const img = map.image ?? map.floors?.[0]?.image
+    const img = map.coverImage ?? map.image ?? map.floors?.[0]?.image
     return (
         <div className="w-full h-full flex items-center justify-center bg-rf-bg">
             {img ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                     src={img}
-                    alt={map.displayName}
+                    alt={`${map.displayName} — static map reference while tiles are unavailable`}
                     className="max-h-full max-w-full object-contain opacity-35"
                 />
             ) : (
