@@ -1,54 +1,5 @@
 import Link from 'next/link'
-import { Suspense } from 'react'
 import LivePanel from '../components/LivePanel'
-import { fetchMfEventsSchedule } from '../api/metaforgeService'
-import { getActiveConditionsForMap } from '../lib/events/conditions'
-import { MAPS } from '../data/maps'
-// ── Event Status Line (Server Component) ─────────────────────────────────────
-// Fetches live events from MetaForge and shows all active events across maps.
-// Renders nothing if no events are active or if the fetch fails.
-
-async function EventStatusLine() {
-  let events: Awaited<ReturnType<typeof fetchMfEventsSchedule>> = []
-  try {
-    events = await fetchMfEventsSchedule()
-  } catch {
-    return null // Fail silently — hero still renders without it
-  }
-
-  const now = new Date()
-
-  // Collect all active events across every map
-  const activeRows: { event: string; mapName: string }[] = []
-  for (const map of MAPS) {
-    const cond = getActiveConditionsForMap(map.id, now, events)
-    for (const event of cond.activeConditions) {
-      activeRows.push({ event, mapName: map.displayName })
-    }
-  }
-
-  if (activeRows.length === 0) return null
-
-  return (
-    <div className="mt-6 rounded-xl border border-[rgba(255,215,0,0.25)] bg-[rgba(255,215,0,0.08)] backdrop-blur-md px-4 py-3 text-left" style={{ boxShadow: '0 0 20px rgba(255,215,0,0.15)' }}>
-      <div className="flex items-center gap-2 mb-2">
-        <span className="h-1.5 w-1.5 rounded-full bg-rf-red animate-pulse" />
-        <span className="text-[10px] uppercase tracking-widest font-semibold text-rf-red">
-          Current Events
-        </span>
-      </div>
-      <div className="space-y-1">
-        {activeRows.map(({ event, mapName }) => (
-          <p key={`${event}-${mapName}`} className="text-xs text-white/60">
-            <span className="text-white/85 font-medium">{event}</span>
-            <span className="text-white/30 mx-1.5">—</span>
-            {mapName}
-          </p>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 // ── Feature Grid ──────────────────────────────────────────────────────────────
 
@@ -178,7 +129,7 @@ export default function Home() {
 
           <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center pt-16">
             {/* Accent label */}
-            <span className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-semibold mb-4">
+            <span className="text-shadow-hero inline-flex items-center gap-2 text-xs uppercase tracking-widest font-semibold mb-4">
               <span className="h-px w-6 bg-[#f97316]" />
               <span className="tracking-widest" style={{ color: '#22c55e' }}>Tactical Hub</span>
               <span className="h-px w-6 bg-[#f97316]" />
@@ -190,16 +141,11 @@ export default function Home() {
             </h1>
 
             {/* Tagline */}
-            <p className="text-shadow-hero mt-6 max-w-xl text-sm sm:text-base text-white/75 leading-relaxed">
+            <p className="text-shadow-hero mt-6 max-w-xl text-sm sm:text-base font-medium text-white/90 leading-relaxed">
               Welcome to RaiderForge — your ultimate ARC Raiders command center.
               <br className="hidden sm:block" />
               Track blueprints in real time, sync your raider profile, explore interactive maps, dominate trials, and buy, sell, or trade with verified players in a secure, reputation-driven marketplace.
             </p>
-
-            {/* Live event status — server-fetched from MetaForge, renders nothing if no events */}
-            <Suspense fallback={null}>
-              <EventStatusLine />
-            </Suspense>
           </div>
 
           {/* Scroll indicator */}
