@@ -7,6 +7,8 @@ export type MapZoneHubDTO = {
     id: string
     displayName: string
     subtitle: string
+    description: string
+    features: string[]
     thumb: string
     risk: 'Low' | 'Medium' | 'High' | 'Extreme'
     hasEvents: boolean
@@ -16,11 +18,24 @@ export type MapZoneHubDTO = {
     featuresLine: string
 }
 
+/** Curated cover art under /public/images/ARC Raiders Maps/ */
+const MAP_COVERS: Record<string, string> = {
+    'dam-battlegrounds': '/images/ARC%20Raiders%20Maps/dam-battleground_cover.png',
+    'burial-city': '/images/ARC%20Raiders%20Maps/Buried_City_Cover.png',
+    'blue-gate': '/images/ARC%20Raiders%20Maps/BlueGate_Cover.png',
+    spaceport: '/images/ARC%20Raiders%20Maps/Spaceport_Cover.png',
+    'stella-montis': '/images/ARC%20Raiders%20Maps/Stella_Cover.png',
+}
+
+function coverForZone(id: string, thumbFallback: string): string {
+    return MAP_COVERS[id] ?? thumbFallback
+}
+
 const riskStyle: Record<MapZoneHubDTO['risk'], { badge: string; dot: string }> = {
-    Low: { badge: 'bg-rf-green/15 text-rf-green border-rf-green/25', dot: 'bg-rf-green' },
-    Medium: { badge: 'bg-rf-yellow/15 text-rf-yellow border-rf-yellow/25', dot: 'bg-rf-yellow' },
-    High: { badge: 'bg-rf-orange/15 text-rf-orange border-rf-orange/25', dot: 'bg-rf-orange' },
-    Extreme: { badge: 'bg-rf-red/15 text-rf-red border-rf-red/25', dot: 'bg-rf-red' },
+    Low: { badge: 'bg-emerald-500/10 text-emerald-400/90 border-emerald-500/25', dot: 'bg-emerald-400' },
+    Medium: { badge: 'bg-amber-500/10 text-amber-400/90 border-amber-500/25', dot: 'bg-amber-400' },
+    High: { badge: 'bg-orange-500/10 text-orange-400/90 border-orange-500/25', dot: 'bg-orange-400' },
+    Extreme: { badge: 'bg-red-500/12 text-red-400/95 border-red-500/30', dot: 'bg-red-400' },
 }
 
 type Props = {
@@ -37,7 +52,9 @@ export function MapsTacticalZonesClient({ zones }: Props) {
             (z) =>
                 z.displayName.toLowerCase().includes(q) ||
                 z.subtitle.toLowerCase().includes(q) ||
-                z.id.replace(/-/g, ' ').includes(q)
+                z.description.toLowerCase().includes(q) ||
+                z.features.some((f) => f.toLowerCase().includes(q)) ||
+                z.id.replace(/-/g, ' ').includes(q),
         )
     }, [zones, query])
 
@@ -51,80 +68,102 @@ export function MapsTacticalZonesClient({ zones }: Props) {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search zones (e.g. Dam, Buried, Spaceport)…"
-                        className="w-full rounded-xl bg-rf-bg/80 border border-white/10 px-4 py-2.5 text-sm text-rf-text
-                                   placeholder:text-rf-textSoft/50 focus:outline-none focus:ring-2 focus:ring-rf-red/35"
+                        className="w-full rounded-xl border border-white/[0.12] bg-[#0f141b] px-4 py-2.5 text-sm text-white
+                                   placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500/30"
                     />
                 </label>
-                <p className="text-[11px] text-white/35 shrink-0 tabular-nums">
+                <p className="text-[11px] text-white/40 shrink-0 tabular-nums">
                     {filtered.length} / {zones.length} zones
                 </p>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-6">
+            <ul className="flex flex-col gap-4 list-none p-0 m-0">
                 {filtered.map((map) => {
                     const risk = riskStyle[map.risk]
+                    const coverSrc = coverForZone(map.id, map.thumb)
                     return (
-                        <Link
-                            key={map.id}
-                            href={`/maps/${map.id}`}
-                            className="group flex flex-col rf-card rounded-2xl overflow-hidden
-                                       hover:border-white/20 hover:shadow-2xl hover:shadow-black/60
-                                       transition-all duration-300 hover:-translate-y-1
-                                       w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]"
-                        >
-                            <div className="relative h-52 overflow-hidden bg-rf-bgSoft shrink-0">
-                                <img
-                                    src={map.thumb}
-                                    alt={map.displayName}
-                                    className="w-full h-full object-cover
-                                               group-hover:scale-[1.05] transition-transform duration-700 ease-out"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/12 to-transparent" />
-                                <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-black/35 to-transparent" />
-
+                        <li key={map.id}>
+                            <Link
+                                href={`/maps/${map.id}`}
+                                className="group flex flex-col sm:flex-row overflow-hidden rounded-xl border border-white/[0.08] bg-[#0f141b]
+                                           transition-all duration-300 ease-out
+                                           hover:border-red-500/35 hover:shadow-[0_0_32px_-10px_rgba(239,68,68,0.5)]
+                                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0d12]"
+                            >
+                                {/* Cover — full width on mobile, fixed width on sm+ */}
                                 <div
-                                    className={`absolute top-3 right-3 flex items-center gap-1.5
-                                                text-[10px] font-bold uppercase tracking-wider
-                                                border rounded-full px-2.5 py-1 backdrop-blur-md ${risk.badge}`}
+                                    className="relative w-full sm:w-64 md:w-72 shrink-0 h-48 sm:h-auto sm:min-h-[220px] overflow-hidden
+                                               sm:rounded-l-xl sm:rounded-r-none rounded-t-xl sm:rounded-t-none"
                                 >
-                                    <span className={`h-1.5 w-1.5 rounded-full ${risk.dot}`} />
-                                    {map.risk}
+                                    <img
+                                        src={coverSrc}
+                                        alt=""
+                                        className="absolute inset-0 w-full h-full object-cover
+                                                   transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                                    />
+                                    {/* Left → right: black into transparent (readability into content column) */}
+                                    <div
+                                        className="absolute inset-0 bg-gradient-to-r from-black from-[8%] via-black/55 via-45% to-transparent pointer-events-none"
+                                        aria-hidden
+                                    />
+
+                                    <div
+                                        className={`absolute top-3 right-3 flex items-center gap-1.5
+                                                    text-[10px] font-bold uppercase tracking-wider
+                                                    rounded-full px-2.5 py-1 border backdrop-blur-sm ${risk.badge}`}
+                                    >
+                                        <span className={`h-1.5 w-1.5 rounded-full ${risk.dot}`} />
+                                        {map.risk}
+                                    </div>
+
+                                    {map.hasEvents && (
+                                        <div
+                                            className="absolute top-3 left-3 flex items-center gap-1
+                                                        text-[10px] font-semibold text-white
+                                                        bg-black/60 backdrop-blur-sm rounded-full px-2.5 py-1
+                                                        border border-white/12"
+                                        >
+                                            <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                                            Live
+                                        </div>
+                                    )}
                                 </div>
 
-                                {map.hasEvents && (
-                                    <div
-                                        className="absolute top-3 left-3 flex items-center gap-1
-                                                    text-[10px] font-semibold text-white/85
-                                                    bg-black/55 backdrop-blur-sm rounded-full px-2.5 py-1
-                                                    border border-white/10"
-                                    >
-                                        <span className="h-1.5 w-1.5 rounded-full bg-rf-red animate-pulse" />
-                                        Live
-                                    </div>
-                                )}
-
-                                <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-10 bg-gradient-to-t from-black/65 via-black/22 to-transparent">
-                                    <div className="border-l-2 border-rf-red pl-2.5">
-                                        <h2 className="font-bold text-white text-[17px] leading-tight tracking-tight drop-shadow-md">
-                                            {map.displayName}
-                                        </h2>
-                                        <p className="text-[11px] text-white font-medium mt-1 tracking-wide leading-snug">
+                                {/* Body */}
+                                <div className="flex flex-col flex-1 min-w-0 p-5 sm:pl-6 gap-3 sm:rounded-r-xl">
+                                    <div>
+                                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/45 font-semibold mb-1">
                                             {map.subtitle}
                                         </p>
+                                        <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight group-hover:text-red-100 transition-colors">
+                                            {map.displayName}
+                                        </h2>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div className="flex flex-col flex-1 px-4 pt-4 pb-3.5">
-                                <div className="min-h-[2.25rem] mb-2.5">
-                                    {map.conditionBadges.length > 0 ? (
+                                    <p className="text-sm text-white/65 leading-relaxed line-clamp-3 sm:line-clamp-4">
+                                        {map.description}
+                                    </p>
+
+                                    {map.features.length > 0 && (
                                         <div className="flex flex-wrap gap-1.5">
-                                            {map.conditionBadges.map((c) => (
+                                            {map.features.map((f) => (
+                                                <span
+                                                    key={f}
+                                                    className="text-[10px] font-medium uppercase tracking-wide
+                                                               text-white/55 border border-white/[0.1] rounded-md px-2 py-0.5 bg-black/25"
+                                                >
+                                                    {f}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <div className="min-h-[2rem] flex flex-wrap items-center gap-2">
+                                        {map.conditionBadges.length > 0 ? (
+                                            map.conditionBadges.map((c) => (
                                                 <span
                                                     key={c.name}
-                                                    className="inline-flex items-center gap-1.5
-                                                               text-[11px] font-semibold
-                                                               rounded-full px-2.5 py-1 border"
+                                                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold rounded-full px-2.5 py-1 border"
                                                     style={{
                                                         backgroundColor: c.bg,
                                                         borderColor: c.border,
@@ -132,110 +171,69 @@ export function MapsTacticalZonesClient({ zones }: Props) {
                                                     }}
                                                 >
                                                     <span
-                                                        className="h-1.5 w-1.5 rounded-full flex-shrink-0 animate-pulse"
+                                                        className="h-1.5 w-1.5 rounded-full shrink-0 animate-pulse"
                                                         style={{ backgroundColor: c.text }}
                                                     />
                                                     {c.name}
                                                 </span>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-rf-green/55 shrink-0" />
-                                            <span className="text-[11px] text-rf-green/55 font-medium tracking-wide">
-                                                Nominal
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {(map.questCount > 0 || map.containerCount > 0) && (
-                                    <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                                        {map.questCount > 0 && (
-                                            <span
-                                                className="inline-flex items-center gap-1
-                                                             text-[10px] font-semibold
-                                                             text-rf-blue/65 border border-rf-blue/18
-                                                             bg-rf-blue/[0.07] rounded-full px-2 py-0.5"
-                                            >
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    strokeWidth={2}
-                                                    stroke="currentColor"
-                                                    className="w-2.5 h-2.5 shrink-0"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z"
-                                                    />
-                                                </svg>
-                                                {map.questCount} quests
-                                            </span>
-                                        )}
-                                        {map.containerCount > 0 && (
-                                            <span
-                                                className="inline-flex items-center gap-1
-                                                             text-[10px] font-semibold
-                                                             text-rf-yellow/65 border border-rf-yellow/18
-                                                             bg-rf-yellow/[0.07] rounded-full px-2 py-0.5"
-                                            >
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    strokeWidth={2}
-                                                    stroke="currentColor"
-                                                    className="w-2.5 h-2.5 shrink-0"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"
-                                                    />
-                                                </svg>
-                                                {map.containerCount} containers
+                                            ))
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1.5 text-[11px] text-white/40">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/50 shrink-0" />
+                                                Conditions nominal
                                             </span>
                                         )}
                                     </div>
-                                )}
 
-                                <div className="mt-auto flex items-center justify-between pt-3 border-t border-white/[0.06]">
-                                    <span className="text-[10px] text-white/55 truncate pr-3 leading-snug">
-                                        {map.featuresLine}
-                                    </span>
-                                    <span
-                                        className="text-xs font-medium text-rf-red
-                                                     inline-flex items-center gap-1
-                                                     group-hover:gap-2 transition-all shrink-0"
-                                    >
-                                        Open map
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth={2.5}
-                                            stroke="currentColor"
-                                            className="w-3 h-3"
+                                    {(map.questCount > 0 || map.containerCount > 0) && (
+                                        <div className="flex flex-wrap gap-2 text-[10px] font-semibold text-white/50">
+                                            {map.questCount > 0 && (
+                                                <span className="border border-sky-500/20 bg-sky-500/5 text-sky-300/80 rounded-md px-2 py-0.5">
+                                                    {map.questCount} quests
+                                                </span>
+                                            )}
+                                            {map.containerCount > 0 && (
+                                                <span className="border border-amber-500/20 bg-amber-500/5 text-amber-300/80 rounded-md px-2 py-0.5">
+                                                    {map.containerCount} containers
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="mt-auto pt-2 flex flex-wrap items-center justify-end gap-3 border-t border-white/[0.06]">
+                                        <span
+                                            className="inline-flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10
+                                                       px-4 py-2 text-xs font-semibold text-red-400
+                                                       transition-all duration-200
+                                                       group-hover:border-red-500/70 group-hover:bg-red-500/20 group-hover:text-red-300
+                                                       group-hover:shadow-[0_0_16px_-4px_rgba(239,68,68,0.55)]"
                                         >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
-                                            />
-                                        </svg>
-                                    </span>
+                                            Open tactical map
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                strokeWidth={2.5}
+                                                stroke="currentColor"
+                                                className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                                                />
+                                            </svg>
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        </Link>
+                            </Link>
+                        </li>
                     )
                 })}
-            </div>
+            </ul>
 
             {filtered.length === 0 ? (
-                <p className="text-center text-sm text-rf-textSoft py-8">No zones match that search.</p>
+                <p className="text-center text-sm text-white/45 py-10">No zones match that search.</p>
             ) : null}
         </div>
     )

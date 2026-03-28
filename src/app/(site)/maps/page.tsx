@@ -52,6 +52,8 @@ export default async function MapsPage() {
             id: map.id,
             displayName: map.displayName,
             subtitle: map.subtitle,
+            description: map.description,
+            features: map.features,
             thumb: resolveMapThumbWithGameData(map, gameByRfId),
             risk: map.risk,
             hasEvents: conditions.activeConditions.length > 0,
