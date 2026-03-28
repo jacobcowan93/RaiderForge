@@ -255,7 +255,7 @@ export const stellaMontisPois: MapPoi[] = [
         name: 'Central Access Shaft',
         category: 'quest',
         x: 50,
-        y: 54,
+        y: 60,
         description: 'The vertical spine connecting both facility levels. Cross-floor survey and courier quests route through here.',
         tags: ['quest', 'facility', 'both'],
     },
@@ -773,9 +773,8 @@ export const stellaMontisPois: MapPoi[] = [
         floorIndex: 0,
         x: 82,
         y: 50,
-        description: 'Deep snow drifts piled against the east terrace walls — slow movement but muffled footsteps. Lush Blooms thaws the snowline dramatically.',
+        description: 'Deep snow drifts piled against the east terrace walls — slow movement but muffled footsteps.',
         tags: ['nature', 'upper', 'snow'],
-        difficulties: ['Lush Blooms'],
     },
     {
         id: 'sm-nature-roof-bird-nests',
@@ -785,9 +784,8 @@ export const stellaMontisPois: MapPoi[] = [
         floorIndex: 0,
         x: 60,
         y: 24,
-        description: 'Large bird nesting colony along the roof antenna masts — startling them creates a loud audio burst. Especially active during Bird City.',
+        description: 'Large bird nesting colony along the roof antenna masts — startling them creates a loud audio burst.',
         tags: ['nature', 'upper', 'birds'],
-        difficulties: ['Bird City'],
     },
 
     // ── Lower (floor 1) ───────────────────────────────────────────────────

@@ -578,9 +578,8 @@ export const spaceportPois: MapPoi[] = [
         category: 'nature',
         x: 48,
         y: 50,
-        description: 'Colonies of birds nesting in the pad superstructure — disturbing them creates sudden audio bursts. Especially active in Bird City.',
+        description: 'Colonies of birds nesting in the pad superstructure — disturbing them creates sudden audio bursts.',
         tags: ['nature', 'birds'],
-        difficulties: ['Bird City'],
     },
     {
         id: 'sp-nature-moss-apron',

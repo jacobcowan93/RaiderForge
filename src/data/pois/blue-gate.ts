@@ -23,7 +23,7 @@ export const blueGatePois: MapPoi[] = [
     {
         id: 'bg-extract-northeast-outpost',
         mapId: 'blue-gate',
-        name: 'Northeast Outpost Road',
+        name: 'Northeast Outpost Road Extract',
         category: 'extract',
         x: 85,
         y: 24,
@@ -598,8 +598,7 @@ export const blueGatePois: MapPoi[] = [
         category: 'nature',
         x: 48,
         y: 18,
-        description: 'Large bird roosting colony along the cliff face — disturbing them creates a loud audio burst. Especially dense in Bird City.',
+        description: 'Large bird roosting colony along the cliff face — disturbing them creates a loud audio burst.',
         tags: ['nature', 'birds'],
-        difficulties: ['Bird City'],
     },
 ]

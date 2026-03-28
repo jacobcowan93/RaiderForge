@@ -58,6 +58,8 @@ export type MapMeta = {
   description: string
   risk: 'Low' | 'Medium' | 'High' | 'Extreme'
   image: string | null          // null for multi-floor maps (use floors[0].image)
+  /** Dedicated cover/hero image shown on map cards, detail headers, and OG images. */
+  coverImage?: string
   mapType: 'standard' | 'multi-floor'
   floors?: MapFloor[]
   features: string[]
@@ -76,6 +78,7 @@ export const MAPS: MapMeta[] = [
       "It feels like a monument to the old world's power, now reduced to a quiet husk where raiders pick through forgotten infrastructure for one more haul.",
     risk: 'High',
     image: '/images/ARC Raiders Maps/dam-battleground.png',
+    coverImage: '/images/ARC Raiders Maps/dam-battleground_cover.png',
     mapType: 'standard',
     features: ['Harvester Spawns', 'Contested POIs', 'Industrial Loot'],
     tileConfig: {
@@ -106,6 +109,7 @@ export const MAPS: MapMeta[] = [
       'Tight streets and lonely plazas tell the story of a town that once thrived, now reduced to a sand-choked relic where every alley and rooftop hides both danger and opportunity.',
     risk: 'Medium',
     image: '/images/ARC Raiders Maps/buried_city.png',
+    coverImage: '/images/ARC Raiders Maps/Buried_City_Cover.png',
     mapType: 'standard',
     features: ['Urban Cover', 'Cache Spawns', 'ARC Nests'],
     tileConfig: {
@@ -135,6 +139,7 @@ export const MAPS: MapMeta[] = [
       "Today it's a graveyard of stalled dreams, packed with cargo, checkpoints, and launch towers that raiders comb for valuables while ARC forces guard the remnants of humanity's escape plan.",
     risk: 'Extreme',
     image: '/images/ARC Raiders Maps/spaceport.png',
+    coverImage: '/images/ARC Raiders Maps/Spaceport_Cover.png',
     mapType: 'standard',
     features: ['Launch Tower Loot', 'High-Tech Salvage', 'ARC Patrols'],
     tileConfig: {
@@ -164,6 +169,7 @@ export const MAPS: MapMeta[] = [
       'Wide sightlines and sudden drops into enclosed compounds keep you constantly shifting between long-range engagements in the open air and frantic close-quarters skirmishes beneath the rock.',
     risk: 'Medium',
     image: '/images/ARC Raiders Maps/blue_gate.png',
+    coverImage: '/images/ARC Raiders Maps/BlueGate_Cover.png',
     mapType: 'standard',
     features: ['Open Terrain', 'Fortified Positions', 'Resource Nodes'],
     tileConfig: {
@@ -193,6 +199,7 @@ export const MAPS: MapMeta[] = [
       'Now, icy walkways, buried structures, and frozen ravines form a chilly maze where raiders risk frostbite and ARC patrols alike in search of the secrets and supplies left behind.',
     risk: 'High',
     image: null,
+    coverImage: '/images/ARC Raiders Maps/Stella_Cover.png',
     mapType: 'multi-floor',
     floors: [
       { id: 'upper', label: 'Upper Level', image: '/images/ARC Raiders Maps/stella_montis_map_upper_level.png.webp' },

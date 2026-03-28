@@ -362,7 +362,7 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-arc-turbine-patrol',
         mapId: 'dam-battlegrounds',
-        name: 'ARC Patrol — Turbine Hall',
+        name: 'ARC Turbine Hall Patrol',
         category: 'arc',
         x: 50,
         y: 44,
@@ -372,7 +372,7 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-arc-substation-guard',
         mapId: 'dam-battlegrounds',
-        name: 'ARC Guard — Substation',
+        name: 'ARC Substation Guard',
         category: 'arc',
         x: 68,
         y: 50,
@@ -382,7 +382,7 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-arc-ridge-sniper',
         mapId: 'dam-battlegrounds',
-        name: 'ARC Sentinel — Ridge',
+        name: 'ARC Ridge Sentinel',
         category: 'arc',
         x: 74,
         y: 22,
@@ -392,7 +392,7 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-arc-river-patrol',
         mapId: 'dam-battlegrounds',
-        name: 'ARC Patrol — River Path',
+        name: 'ARC River Path Patrol',
         category: 'arc',
         x: 26,
         y: 72,
@@ -415,7 +415,7 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-interact-zipline-dam-face',
         mapId: 'dam-battlegrounds',
-        name: 'Zipline — Dam Face',
+        name: 'Dam Face Zipline',
         category: 'interaction',
         x: 50,
         y: 30,
@@ -425,7 +425,7 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-interact-zipline-ridge',
         mapId: 'dam-battlegrounds',
-        name: 'Zipline — Ridge',
+        name: 'Ridge Descent Zipline',
         category: 'interaction',
         x: 78,
         y: 32,
@@ -477,7 +477,7 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-noise-metal-detector-entrance',
         mapId: 'dam-battlegrounds',
-        name: 'Metal Detector — Main Entrance',
+        name: 'Main Entrance Metal Detector',
         category: 'noise',
         x: 46,
         y: 56,
@@ -487,7 +487,7 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-noise-camera-admin',
         mapId: 'dam-battlegrounds',
-        name: 'Security Camera — Admin Block',
+        name: 'Admin Block Security Camera',
         category: 'noise',
         x: 36,
         y: 50,
@@ -497,7 +497,7 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-noise-camera-substation',
         mapId: 'dam-battlegrounds',
-        name: 'Security Camera — Substation',
+        name: 'Substation Security Camera',
         category: 'noise',
         x: 64,
         y: 44,
@@ -509,7 +509,7 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-nature-agave-ridge',
         mapId: 'dam-battlegrounds',
-        name: 'Agave Cluster — Ridge',
+        name: 'Ridge Agave Cluster',
         category: 'nature',
         x: 16,
         y: 35,
@@ -519,18 +519,18 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-nature-mushroom-riverbank',
         mapId: 'dam-battlegrounds',
-        name: 'Mushrooms — Riverbank',
+        name: 'Riverbank Mushroom Patch',
         category: 'nature',
         x: 22,
         y: 64,
         description: 'Mushroom patches along the shaded riverbank. Appear in Lush Blooms.',
         tags: ['nature', 'mushroom', 'food'],
-        difficulties: ['Normal', 'Lush Blooms'],
+        difficulties: ['Lush Blooms'],
     },
     {
         id: 'dam-nature-moss-dam-base',
         mapId: 'dam-battlegrounds',
-        name: 'Moss & Fertilizer — Dam Base',
+        name: 'Dam Base Moss & Fertilizer',
         category: 'nature',
         x: 40,
         y: 76,
@@ -540,7 +540,7 @@ export const damBattlegroundsPois: MapPoi[] = [
     {
         id: 'dam-nature-olive-grove',
         mapId: 'dam-battlegrounds',
-        name: 'Olive Trees — South Plateau',
+        name: 'South Plateau Olive Grove',
         category: 'nature',
         x: 30,
         y: 82,
