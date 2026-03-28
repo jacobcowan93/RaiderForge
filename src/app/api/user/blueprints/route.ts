@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     }
 
     const parsed = parseBlueprintOwnershipEntries(body)
-    if (!parsed.ok) {
+    if (parsed.ok === false) {
         return jsonError(400, "validation_error", parsed.error)
     }
 
