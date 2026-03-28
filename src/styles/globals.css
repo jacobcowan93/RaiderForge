@@ -149,3 +149,14 @@ body {
 .rf-badge-enter {
     animation: rf-badge-enter 0.15s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* Blueprints — print “Missing Blueprints” sheet (save as PDF from browser dialog) */
+@media print {
+    @page {
+        margin: 14mm;
+    }
+    .blueprints-print-sheet {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+}
