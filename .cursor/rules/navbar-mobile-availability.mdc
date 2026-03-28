@@ -1,0 +1,27 @@
+---
+description: Non-negotiable mobile navigation — hamburger must stay available below md when desktop links are hidden
+globs: src/components/NavBar.tsx,src/app/layout.tsx
+alwaysApply: false
+---
+
+# NavBar — mobile menu availability (regression check)
+
+When editing `NavBar.tsx`, the root `layout.tsx` that renders it, or any change that affects small-screen navigation:
+
+## Required invariant
+
+- **Below the `md` breakpoint**, the horizontal desktop link row is hidden (`hidden md:flex` or equivalent).
+- **On those same viewports, a menu control (hamburger) must always remain visible and operable** so users can reach the same destinations as desktop (`navLinks`). Do not introduce breakpoints or layouts where both the center links and the hamburger path are missing.
+
+## Implementation expectations (preserve unless deliberately redesigning with a replacement)
+
+- `flex-nowrap` (or equivalent) on the main bar and actions cluster so wrapping cannot push the menu control off-screen.
+- Hamburger wrapper: `shrink-0` and `md:hidden` only — never hide the small-screen menu affordance without adding another visible path to the same routes.
+- Tap target: at least **44×44px** for the menu button.
+- Logo / left cluster may use `max-w` on narrow widths so hamburger + auth keep room.
+
+## Do not regress
+
+- Backdrop closes menu; Escape closes; route change closes; body scroll lock while open; opening profile closes mobile menu first.
+
+If you remove the hamburger, you **must** replace it with another always-visible small-screen entry to the full `navLinks` set and document it in the PR/commit message.

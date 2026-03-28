@@ -4,14 +4,15 @@ import type { MfEvent } from '@/lib/events/conditions'
 import { getEventStyle } from '@/lib/events/eventsConfig'
 import { buildLiveScheduleBatch, scheduleSliceByMapId } from '@/lib/live-data/schedule'
 import type { GameMap } from '@/lib/game-data/types'
-import { resolveMapThumbWithGameData } from '@/lib/maps/rfGameMapBridge'
+import { getZoneThumbnailUrlOrFallback } from '@/lib/maps/mapCovers'
 import { getTcnoUrl } from '@/lib/maps/tcnoMaps'
 import type { TcnoZoneVM } from '@/components/maps/MapsTcnoCommandCenter'
 
 export function buildTcnoZoneVMs(
     now: Date,
     events: MfEvent[],
-    gameByRfId: Map<string, GameMap>,
+    /** Reserved for future thumb overrides; zone cards use shipped `getZoneThumbnailUrlOrFallback`. */
+    _gameByRfId: Map<string, GameMap>,
     upstreamOk: boolean | null = null,
 ): TcnoZoneVM[] {
     const batch = buildLiveScheduleBatch(now, events, upstreamOk)
@@ -28,7 +29,8 @@ export function buildTcnoZoneVMs(
             displayName: map.displayName,
             subtitle: map.subtitle,
             description: map.description,
-            thumb: map.coverImage ?? resolveMapThumbWithGameData(map, gameByRfId),
+            /** Prefer shipped encoded covers so zone cards never depend on upstream CDN thumbnails. */
+            thumb: getZoneThumbnailUrlOrFallback(map.id),
             tcnoUrl: getTcnoUrl(map.id),
             hasEvents: conditions.activeConditions.length > 0,
             conditionBadges,

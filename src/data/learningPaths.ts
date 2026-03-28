@@ -1,10 +1,13 @@
 /**
  * Recommended learning tracks (guides + trials). Used by hubs and weekly summary.
+ *
+ * Warmup path: `getWeeklyWarmupPath()` uses `getFeaturedTrialWeek()` so recommended steps match
+ * the same rotation as /trials “This week’s” block (no progression schema change).
  */
 
 import type { LearningDifficulty } from '@/data/learningShared'
 import { getGuideBySlug } from '@/data/guides'
-import { getTrialById } from '@/data/trials'
+import { getFeaturedTrialWeek, getTrialById } from '@/data/trials'
 
 export type LearningPathStep = { kind: 'guide'; slug: string } | { kind: 'trial'; id: string }
 
@@ -16,33 +19,40 @@ export type RecommendedLearningPath = {
     steps: LearningPathStep[]
 }
 
-export const RECOMMENDED_LEARNING_PATHS: RecommendedLearningPath[] = [
-    {
-        id: 'onboarding-arc',
-        title: 'Onboarding to ARC Raiders',
-        blurb: 'Maps desk, squad roles, a forgiving trial, Trials prep, then a second run.',
-        difficultyBand: 'onboarding',
-        steps: [
-            { kind: 'guide', slug: 'maps-command-center' },
-            { kind: 'guide', slug: 'roles-at-a-glance' },
-            { kind: 'trial', id: 'trial-carriable-dash' },
-            { kind: 'guide', slug: 'weekly-trials-prep' },
-            { kind: 'trial', id: 'trial-flying-arc-hunt' },
-        ],
-    },
-    {
+/** Static paths (onboarding). Weekly warmup is built from `getFeaturedTrialWeek()` so it tracks the live rotation. */
+export const ONBOARDING_LEARNING_PATH: RecommendedLearningPath = {
+    id: 'onboarding-arc',
+    title: 'Onboarding to ARC Raiders',
+    blurb: 'Maps desk, squad roles, a forgiving trial, Trials prep, then a second run.',
+    difficultyBand: 'onboarding',
+    steps: [
+        { kind: 'guide', slug: 'maps-command-center' },
+        { kind: 'guide', slug: 'roles-at-a-glance' },
+        { kind: 'trial', id: 'trial-carriable-dash' },
+        { kind: 'guide', slug: 'weekly-trials-prep' },
+        { kind: 'trial', id: 'trial-flying-arc-hunt' },
+    ],
+}
+
+export const RECOMMENDED_LEARNING_PATHS: RecommendedLearningPath[] = [ONBOARDING_LEARNING_PATH]
+
+/** Matches the same featured week as /trials “This week’s” block. */
+export function getWeeklyWarmupPath(): RecommendedLearningPath {
+    const featured = getFeaturedTrialWeek()
+    const trialSteps = featured.trials.map((t) => ({ kind: 'trial' as const, id: t.id }))
+    return {
         id: 'weekly-warmup',
         title: 'Weekly playlist warmup',
-        blurb: 'Prep brief first, then drill three rotation-A trials in order (swap mentally if your featured week differs).',
+        blurb: `Prep brief, then this week’s rotation: ${featured.label}.`,
         difficultyBand: 'casual',
-        steps: [
-            { kind: 'guide', slug: 'weekly-trials-prep' },
-            { kind: 'trial', id: 'trial-hornet-havoc' },
-            { kind: 'trial', id: 'trial-carriable-dash' },
-            { kind: 'trial', id: 'trial-bombardier-siege' },
-        ],
-    },
-]
+        steps: [{ kind: 'guide', slug: 'weekly-trials-prep' }, ...trialSteps],
+    }
+}
+
+/** Paths shown in hubs: onboarding + current week’s warmup. */
+export function getHubRecommendedPaths(): RecommendedLearningPath[] {
+    return [ONBOARDING_LEARNING_PATH, getWeeklyWarmupPath()]
+}
 
 export function estimatePathMinutes(path: RecommendedLearningPath): number {
     let m = 0
@@ -70,5 +80,6 @@ export function getPathStepLabel(step: LearningPathStep): string {
 }
 
 export function getRecommendedPathById(id: string): RecommendedLearningPath | undefined {
+    if (id === 'weekly-warmup') return getWeeklyWarmupPath()
     return RECOMMENDED_LEARNING_PATHS.find((p) => p.id === id)
 }

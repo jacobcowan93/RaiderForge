@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import {
-    RECOMMENDED_LEARNING_PATHS,
+    getHubRecommendedPaths,
     estimatePathMinutes,
     getPathStepHref,
     getPathStepLabel,
@@ -12,6 +12,7 @@ import { useLearningProgress } from '@/lib/progression/learningProgressContext'
 
 export function RecommendedTracksSection() {
     const { hydrated, pathCompletion, resetAll } = useLearningProgress()
+    const paths = getHubRecommendedPaths()
 
     const onReset = () => {
         if (typeof window !== 'undefined' && window.confirm('Clear all saved learning progress on this device?')) {
@@ -39,7 +40,7 @@ export function RecommendedTracksSection() {
                 done on each page.
             </p>
             <ul className="grid grid-cols-1 lg:grid-cols-2 gap-4 list-none p-0 m-0">
-                {RECOMMENDED_LEARNING_PATHS.map((path) => {
+                {paths.map((path) => {
                     const mins = estimatePathMinutes(path)
                     const stats = hydrated ? pathCompletion(path) : { completed: 0, total: path.steps.length, completedFocusMinutes: 0, totalMinutes: mins }
                     return (
@@ -67,7 +68,10 @@ export function RecommendedTracksSection() {
                             )}
                             <ol className="text-xs text-white/45 space-y-1.5 list-decimal list-inside mb-4 flex-1">
                                 {path.steps.map((step, i) => (
-                                    <li key={`${path.id}-${i}`} className="break-words">
+                                    <li
+                                        key={`${path.id}-${i}-${step.kind === 'trial' ? step.id : step.slug}`}
+                                        className="break-words"
+                                    >
                                         <Link
                                             href={getPathStepHref(step)}
                                             className="text-rf-red/85 hover:text-rf-red underline-offset-2 hover:underline"

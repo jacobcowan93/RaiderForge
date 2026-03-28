@@ -6,6 +6,7 @@ import { ALL_GUIDE_TAGS } from '@/data/guides'
 import type { LearningDifficulty, LearningTag } from '@/data/learningShared'
 import { DIFFICULTY_LABEL, LEARNING_TAG_LABEL } from '@/data/learningShared'
 import { GuideArticleCard } from '@/components/learning/GuideArticleCard'
+import { useLearningProgress } from '@/lib/progression/learningProgressContext'
 
 type Props = {
     articles: GuideArticle[]
@@ -14,16 +15,19 @@ type Props = {
 const DIFFICULTIES: LearningDifficulty[] = ['onboarding', 'casual', 'advanced']
 
 export function GuidesHubClient({ articles }: Props) {
+    const { hydrated, getGuideStatus } = useLearningProgress()
     const [difficulty, setDifficulty] = useState<LearningDifficulty | 'all'>('all')
     const [tag, setTag] = useState<LearningTag | 'all'>('all')
+    const [hideCompleted, setHideCompleted] = useState(false)
 
     const filtered = useMemo(() => {
         return articles.filter((a) => {
             if (difficulty !== 'all' && a.difficulty !== difficulty) return false
             if (tag !== 'all' && !a.tags.includes(tag)) return false
+            if (hydrated && hideCompleted && getGuideStatus(a.slug) === 'completed') return false
             return true
         })
-    }, [articles, difficulty, tag])
+    }, [articles, difficulty, tag, getGuideStatus, hideCompleted, hydrated])
 
     return (
         <div>
@@ -95,16 +99,34 @@ export function GuidesHubClient({ articles }: Props) {
                         ))}
                     </div>
                 </div>
+                <div className="flex items-center gap-2">
+                    <input
+                        id="guides-hide-completed"
+                        type="checkbox"
+                        checked={hideCompleted}
+                        onChange={(e) => setHideCompleted(e.target.checked)}
+                        disabled={!hydrated}
+                        className="rounded border-white/20 bg-black/40 text-rf-red focus:ring-red-500/40 h-4 w-4 shrink-0"
+                        aria-label="Hide completed guides in this list"
+                    />
+                    <label htmlFor="guides-hide-completed" className="text-xs text-white/50 cursor-pointer select-none">
+                        Hide completed
+                    </label>
+                </div>
             </div>
 
             {filtered.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-white/15 bg-black/25 px-6 py-10 text-center">
                     <p className="text-sm text-white/55 mb-2">No guides match these filters.</p>
+                    {hideCompleted && hydrated ? (
+                        <p className="text-xs text-white/40 mb-3">Uncheck &quot;Hide completed&quot; to show guides you already finished.</p>
+                    ) : null}
                     <button
                         type="button"
                         onClick={() => {
                             setDifficulty('all')
                             setTag('all')
+                            setHideCompleted(false)
                         }}
                         className="text-xs font-semibold text-rf-red/90 hover:text-rf-red"
                     >

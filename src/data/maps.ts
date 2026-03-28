@@ -1,4 +1,4 @@
-import { MAP_COVERS } from '@/lib/maps/mapCovers'
+import { MAP_COVERS, encodeLocalPublicPath, mapCoverPath, UNKNOWN_ZONE_THUMBNAIL_FALLBACK } from '@/lib/maps/mapCovers'
 
 /**
  * maps.ts
@@ -80,7 +80,7 @@ export const MAPS: MapMeta[] = [
       "It feels like a monument to the old world's power, now reduced to a quiet husk where raiders pick through forgotten infrastructure for one more haul.",
     risk: 'High',
     coverImage: MAP_COVERS['dam-battlegrounds'],
-    image: '/images/ARC Raiders Maps/dam-battleground.png',
+    image: encodeLocalPublicPath('/images/ARC Raiders Maps/dam-battleground.png'),
     mapType: 'standard',
     features: ['Harvester Spawns', 'Contested POIs', 'Industrial Loot'],
     tileConfig: {
@@ -111,7 +111,7 @@ export const MAPS: MapMeta[] = [
       'Tight streets and lonely plazas tell the story of a town that once thrived, now reduced to a sand-choked relic where every alley and rooftop hides both danger and opportunity.',
     risk: 'Medium',
     coverImage: MAP_COVERS['burial-city'],
-    image: '/images/ARC Raiders Maps/buried_city.png',
+    image: encodeLocalPublicPath('/images/ARC Raiders Maps/buried_city.png'),
     mapType: 'standard',
     features: ['Urban Cover', 'Cache Spawns', 'ARC Nests'],
     tileConfig: {
@@ -141,7 +141,7 @@ export const MAPS: MapMeta[] = [
       "Today it's a graveyard of stalled dreams, packed with cargo, checkpoints, and launch towers that raiders comb for valuables while ARC forces guard the remnants of humanity's escape plan.",
     risk: 'Extreme',
     coverImage: MAP_COVERS.spaceport,
-    image: '/images/ARC Raiders Maps/spaceport.png',
+    image: encodeLocalPublicPath('/images/ARC Raiders Maps/spaceport.png'),
     mapType: 'standard',
     features: ['Launch Tower Loot', 'High-Tech Salvage', 'ARC Patrols'],
     tileConfig: {
@@ -171,7 +171,7 @@ export const MAPS: MapMeta[] = [
       'Wide sightlines and sudden drops into enclosed compounds keep you constantly shifting between long-range engagements in the open air and frantic close-quarters skirmishes beneath the rock.',
     risk: 'Medium',
     coverImage: MAP_COVERS['blue-gate'],
-    image: '/images/ARC Raiders Maps/blue_gate.png',
+    image: encodeLocalPublicPath('/images/ARC Raiders Maps/blue_gate.png'),
     mapType: 'standard',
     features: ['Open Terrain', 'Fortified Positions', 'Resource Nodes'],
     tileConfig: {
@@ -204,8 +204,16 @@ export const MAPS: MapMeta[] = [
     image: null,
     mapType: 'multi-floor',
     floors: [
-      { id: 'upper', label: 'Upper Level', image: '/images/ARC Raiders Maps/stella_montis_map_upper_level.png.webp' },
-      { id: 'lower', label: 'Lower Level', image: '/images/ARC Raiders Maps/stella_montis_map_lower_level.png.webp' },
+      {
+        id: 'upper',
+        label: 'Upper Level',
+        image: encodeLocalPublicPath('/images/ARC Raiders Maps/stella_montis_map_upper_level.png.webp'),
+      },
+      {
+        id: 'lower',
+        label: 'Lower Level',
+        image: encodeLocalPublicPath('/images/ARC Raiders Maps/stella_montis_map_lower_level.png.webp'),
+      },
     ],
     features: ['Multi-Level', 'Night Raids', 'Research Loot'],
     tileConfig: {
@@ -255,8 +263,10 @@ export function getMapById(id: string): MapMeta | undefined {
 }
 
 export function getMapThumbnail(map: MapMeta): string {
-  if (map.coverImage) return map.coverImage
-  if (map.image) return map.image
-  if (map.floors && map.floors.length > 0) return map.floors[0].image
-  return '/images/ARC_Maps.PNG'
+  const registered = mapCoverPath(map.id)
+  if (registered) return registered
+  if (map.coverImage) return encodeLocalPublicPath(map.coverImage)
+  if (map.image) return encodeLocalPublicPath(map.image)
+  if (map.floors && map.floors.length > 0) return encodeLocalPublicPath(map.floors[0].image)
+  return UNKNOWN_ZONE_THUMBNAIL_FALLBACK
 }

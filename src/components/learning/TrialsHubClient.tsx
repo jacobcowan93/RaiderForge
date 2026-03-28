@@ -6,6 +6,7 @@ import { getAllTrialsCatalog } from '@/data/trials'
 import type { LearningDifficulty, LearningTag } from '@/data/learningShared'
 import { DIFFICULTY_LABEL, LEARNING_TAG_LABEL } from '@/data/learningShared'
 import { TrialSummaryCard } from '@/components/learning/TrialSummaryCard'
+import { useLearningProgress } from '@/lib/progression/learningProgressContext'
 
 type Props = {
     liveHints: Record<string, string | null>
@@ -23,21 +24,24 @@ function allTagsFromCatalog(catalog: WeeklyTrial[]): LearningTag[] {
 }
 
 export function TrialsHubClient({ liveHints }: Props) {
+    const { hydrated, getTrialStatus } = useLearningProgress()
     const catalog = useMemo(() => getAllTrialsCatalog(), [])
     const tagOptions = useMemo(() => allTagsFromCatalog(catalog), [catalog])
 
     const [branch, setBranch] = useState<TrialBranch | 'all'>('all')
     const [difficulty, setDifficulty] = useState<LearningDifficulty | 'all'>('all')
     const [tag, setTag] = useState<LearningTag | 'all'>('all')
+    const [hideCompleted, setHideCompleted] = useState(false)
 
     const filtered = useMemo(() => {
         return catalog.filter((t) => {
             if (branch !== 'all' && t.branch !== branch) return false
             if (difficulty !== 'all' && t.difficulty !== difficulty) return false
             if (tag !== 'all' && !t.tags.includes(tag)) return false
+            if (hydrated && hideCompleted && getTrialStatus(t.id) === 'completed') return false
             return true
         })
-    }, [catalog, branch, difficulty, tag])
+    }, [catalog, branch, difficulty, tag, getTrialStatus, hideCompleted, hydrated])
 
     return (
         <div>
@@ -132,17 +136,35 @@ export function TrialsHubClient({ liveHints }: Props) {
                         ))}
                     </div>
                 </div>
+                <div className="flex items-center gap-2">
+                    <input
+                        id="trials-hide-completed"
+                        type="checkbox"
+                        checked={hideCompleted}
+                        onChange={(e) => setHideCompleted(e.target.checked)}
+                        disabled={!hydrated}
+                        className="rounded border-white/20 bg-black/40 text-rf-red focus:ring-red-500/40 h-4 w-4 shrink-0"
+                        aria-label="Hide completed trials in this list"
+                    />
+                    <label htmlFor="trials-hide-completed" className="text-xs text-white/50 cursor-pointer select-none">
+                        Hide completed
+                    </label>
+                </div>
             </div>
 
             {filtered.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-white/15 bg-black/25 px-6 py-10 text-center">
                     <p className="text-sm text-white/55 mb-2">No trials match these filters.</p>
+                    {hideCompleted && hydrated ? (
+                        <p className="text-xs text-white/40 mb-3">Uncheck &quot;Hide completed&quot; to show trials you already finished.</p>
+                    ) : null}
                     <button
                         type="button"
                         onClick={() => {
                             setBranch('all')
                             setDifficulty('all')
                             setTag('all')
+                            setHideCompleted(false)
                         }}
                         className="text-xs font-semibold text-rf-red/90"
                     >
