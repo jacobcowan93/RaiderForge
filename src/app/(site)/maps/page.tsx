@@ -44,7 +44,8 @@ export default async function MapsPage() {
             displayName:    map.displayName,
             subtitle:       map.subtitle,
             description:    map.description,
-            thumb:          resolveMapThumbWithGameData(map, gameByRfId),
+            // coverImage (local art) takes priority; CDN/static thumb is the fallback
+            thumb:          map.coverImage ?? resolveMapThumbWithGameData(map, gameByRfId),
             risk:           map.risk,
             hasEvents:      conditions.activeConditions.length > 0,
             conditionBadges,

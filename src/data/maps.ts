@@ -57,6 +57,8 @@ export type MapMeta = {
   subtitle: string
   description: string
   risk: 'Low' | 'Medium' | 'High' | 'Extreme'
+  /** Dedicated cover/hero image for the /maps listing rows. Preferred over `image`. */
+  coverImage?: string
   image: string | null          // null for multi-floor maps (use floors[0].image)
   mapType: 'standard' | 'multi-floor'
   floors?: MapFloor[]
@@ -75,6 +77,7 @@ export const MAPS: MapMeta[] = [
       'The broken spillways and drowned lowlands are slowly being reclaimed by tough plant life and hardy wildlife, creating a strange mix of heavy industry and wild overgrowth. ' +
       "It feels like a monument to the old world's power, now reduced to a quiet husk where raiders pick through forgotten infrastructure for one more haul.",
     risk: 'High',
+    coverImage: '/images/ARC Raiders Maps/dam_battlegrounds.png',
     image: '/images/ARC Raiders Maps/dam-battleground.png',
     mapType: 'standard',
     features: ['Harvester Spawns', 'Contested POIs', 'Industrial Loot'],
@@ -105,6 +108,7 @@ export const MAPS: MapMeta[] = [
       'Buried City sits half-swallowed by dunes in a harsh, wind-scoured desert. Here, rusted cars, faded billboards, and crumbling storefronts hint at a warmer, more human past that predates the cold steel of the Exodus age. ' +
       'Tight streets and lonely plazas tell the story of a town that once thrived, now reduced to a sand-choked relic where every alley and rooftop hides both danger and opportunity.',
     risk: 'Medium',
+    coverImage: '/images/ARC Raiders Maps/buried_city_cover.png',
     image: '/images/ARC Raiders Maps/buried_city.png',
     mapType: 'standard',
     features: ['Urban Cover', 'Cache Spawns', 'ARC Nests'],
@@ -134,6 +138,7 @@ export const MAPS: MapMeta[] = [
       'Towering gantries, grounded vessels, and sprawling terminals speak to an era of desperate ambition, when every launch meant another gamble on survival. ' +
       "Today it's a graveyard of stalled dreams, packed with cargo, checkpoints, and launch towers that raiders comb for valuables while ARC forces guard the remnants of humanity's escape plan.",
     risk: 'Extreme',
+    coverImage: '/images/ARC Raiders Maps/spaceport_cover.png',
     image: '/images/ARC Raiders Maps/spaceport.png',
     mapType: 'standard',
     features: ['Launch Tower Loot', 'High-Tech Salvage', 'ARC Patrols'],
@@ -163,6 +168,7 @@ export const MAPS: MapMeta[] = [
       'The region blends open plateaus, scattered villages, twisting tunnels, and buried facilities into one large interconnected battleground. ' +
       'Wide sightlines and sudden drops into enclosed compounds keep you constantly shifting between long-range engagements in the open air and frantic close-quarters skirmishes beneath the rock.',
     risk: 'Medium',
+    coverImage: '/images/ARC Raiders Maps/blue_gate_cover.png',
     image: '/images/ARC Raiders Maps/blue_gate.png',
     mapType: 'standard',
     features: ['Open Terrain', 'Fortified Positions', 'Resource Nodes'],
@@ -192,6 +198,7 @@ export const MAPS: MapMeta[] = [
       "The complex once served as a final safeguard for humanity's long-term survival, with labs and infrastructure dedicated to preserving what little remained. " +
       'Now, icy walkways, buried structures, and frozen ravines form a chilly maze where raiders risk frostbite and ARC patrols alike in search of the secrets and supplies left behind.',
     risk: 'High',
+    coverImage: '/images/ARC Raiders Maps/stella_cover.png',
     image: null,
     mapType: 'multi-floor',
     floors: [
