@@ -23,6 +23,7 @@ import {
     type SortMode,
 } from '@/lib/blueprints/sortBlueprints'
 import { warnIfAllowlistDriftFromGameOrder } from '@/lib/blueprints/blueprintInGameOrder'
+import { mergeAllowlistMatchedBlueprints } from '@/lib/blueprints/blueprintAllowlistMerge'
 import {
     getBlueprintAllowlistEntries,
     logSpreadsheetMatchStats,
@@ -105,9 +106,10 @@ export default function BlueprintsPage() {
                     const raw = blueprintsFromCatalogItems(data.items)
                     const { blueprints: matched, stats } = matchBlueprintsToAllowlist(raw)
                     logSpreadsheetMatchStats(stats)
-                    warnIfAllowlistDriftFromGameOrder(getBlueprintAllowlistEntries().map((e) => e.name))
+                    const allowlistEntries = getBlueprintAllowlistEntries()
+                    warnIfAllowlistDriftFromGameOrder(allowlistEntries.map((e) => e.name))
                     setAllowlistStats(stats)
-                    setBlueprints(matched)
+                    setBlueprints(mergeAllowlistMatchedBlueprints(matched, allowlistEntries))
                 }
             } catch (e) {
                 if (!cancelled) setCatalogError(e instanceof Error ? e.message : 'Failed to load catalog')
@@ -188,9 +190,10 @@ export default function BlueprintsPage() {
                             {allowlistStats && allowlistStats.unmatchedSheetNames.length > 0 ? (
                                 <p className="mt-2 text-[10px] text-rf-orange/90 leading-relaxed max-w-2xl">
                                     {allowlistStats.unmatchedSheetNames.length} spreadsheet row
-                                    {allowlistStats.unmatchedSheetNames.length === 1 ? ' has' : 's have'} no ARDB match and{' '}
-                                    {allowlistStats.unmatchedSheetNames.length === 1 ? 'is' : 'are'} omitted from this list.
-                                    Names are logged in the browser dev console.
+                                    {allowlistStats.unmatchedSheetNames.length === 1 ? ' has' : 's have'} no safe ARDB
+                                    catalog match. Those entries still count toward the full collection and appear as tiles
+                                    (title, checkbox, reference art when available). Hover notes when catalog metadata is
+                                    missing. Names are logged in the browser dev console.
                                 </p>
                             ) : null}
                             {syncedAt && (
@@ -217,7 +220,7 @@ export default function BlueprintsPage() {
                         <div className="animate-pulse space-y-3">
                             <div className="h-6 bg-white/10 rounded w-40" />
                             <div className="h-3 bg-white/[0.06] rounded w-full max-w-sm" />
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-3.5 pt-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-3.5 pt-3">
                                 {Array.from({ length: 12 }).map((_, i) => (
                                     <div key={i} className="rf-card rounded-lg aspect-[5/6] border border-white/5" />
                                 ))}
@@ -417,7 +420,7 @@ export default function BlueprintsPage() {
                                 No blueprints match your filters.
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-3.5 justify-items-stretch">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-3.5 justify-items-stretch">
                                 {filtered.map((b) => (
                                     <BlueprintCard
                                         key={b.id}

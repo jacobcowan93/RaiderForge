@@ -3,6 +3,7 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent, RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { isAllowlistPlaceholderBlueprint } from '@/lib/blueprints/blueprintAllowlistMerge'
 import type { NormalizedBlueprint } from '@/lib/blueprints/normalizeBlueprints'
 import { stripTrailingBlueprintSuffix } from '@/lib/blueprints/blueprintSlug'
 import { resolveBlueprintImageCandidates } from '@/lib/blueprints/resolveBlueprintImage'
@@ -178,6 +179,12 @@ function BlueprintInspectPanel({
             onMouseLeave={onPanelLeave}
         >
             <p className="text-xs font-bold uppercase tracking-wide text-white leading-snug">{titleLabel}</p>
+            {isAllowlistPlaceholderBlueprint(b) ? (
+                <p className="mt-2 text-[10px] text-rf-textSoft leading-relaxed">
+                    Catalog metadata is unavailable: this allowlist row has no safe match in the synced ARDB blueprint
+                    list.
+                </p>
+            ) : null}
             {b.rarity?.trim() ? (
                 <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-rf-textSoft">
                     {formatRarityLabel(b.rarity)}
