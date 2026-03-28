@@ -1,4 +1,4 @@
-import { MAPS, PRACTICE_RANGE_OVERVIEW } from '@/data/maps'
+import { MAPS } from '@/data/maps'
 import { CONTAINERS_BY_MAP } from '@/data/containers'
 import { fetchMfEventsSchedule } from '@/api/metaforgeService'
 import { fetchArdbQuests } from '@/api/ardbService'
@@ -9,21 +9,21 @@ import { getGameDataProvider } from '@/lib/game-data/provider'
 import { indexGameMapsByRfId, resolveMapThumbWithGameData } from '@/lib/maps/rfGameMapBridge'
 
 export default async function MapsPage() {
-    // Parallel fetches — all fail gracefully. Game maps use the same provider as GET /api/game/maps.
+    // Parallel fetches — all fail gracefully.
     const [events, ardbQuests, gameMaps] = await Promise.all([
         fetchMfEventsSchedule().catch(() => []),
-        fetchArdbQuests().catch(() => []), // 30-min cache, used for quest count badges
+        fetchArdbQuests().catch(() => []),
         getGameDataProvider()
             .getMaps()
             .catch((err) => {
-                console.warn('[maps] game-data getMaps failed (pipeline: /api/game/maps)', err)
+                console.warn('[maps] game-data getMaps failed', err)
                 return []
             }),
     ])
 
     const gameByRfId = indexGameMapsByRfId(gameMaps)
 
-    // Build quest-count-per-map from ARDB data
+    // Quest count per map from ARDB data
     const questCountByMap: Record<string, number> = {}
     for (const q of ardbQuests) {
         for (const m of q.maps ?? []) {
@@ -34,30 +34,30 @@ export default async function MapsPage() {
     const now = new Date()
 
     const zones: MapZoneHubDTO[] = MAPS.map((map) => {
-        const conditions = getActiveConditionsForMap(map.id, now, events)
+        const conditions    = getActiveConditionsForMap(map.id, now, events)
         const conditionBadges = conditions.activeConditions.map((name) => {
             const style = getEventStyle(name)
             return { name, bg: style.bg, border: style.border, text: style.text }
         })
         return {
-            id: map.id,
-            displayName: map.displayName,
-            subtitle: map.subtitle,
-            thumb: resolveMapThumbWithGameData(map, gameByRfId),
-            risk: map.risk,
-            hasEvents: conditions.activeConditions.length > 0,
+            id:             map.id,
+            displayName:    map.displayName,
+            subtitle:       map.subtitle,
+            description:    map.description,
+            thumb:          resolveMapThumbWithGameData(map, gameByRfId),
+            risk:           map.risk,
+            hasEvents:      conditions.activeConditions.length > 0,
             conditionBadges,
-            questCount: questCountByMap[map.id] ?? 0,
+            questCount:     questCountByMap[map.id] ?? 0,
             containerCount: (CONTAINERS_BY_MAP[map.id] ?? []).length,
-            featuresLine: map.features.slice(0, 2).join(' · '),
+            features:       map.features,
         }
     })
 
     return (
-        <div className="py-14 px-6 max-w-6xl mx-auto">
+        <div className="py-14 px-6 max-w-5xl mx-auto">
 
-            {/* ── Header ─────────────────────────────────────────────────────────
-                Red rail + text-shadow; body copy stays white for contrast on tinted bg. */}
+            {/* ── Header ──────────────────────────────────────────────────────── */}
             <div className="mb-10 pl-1">
                 <div className="border-l-2 border-rf-red pl-5">
                     <span className="text-xs uppercase tracking-widest text-rf-red font-semibold drop-shadow-sm">
@@ -68,13 +68,22 @@ export default async function MapsPage() {
                         <span className="text-rf-red">Interactive Maps</span>
                     </h1>
                     <p className="mt-2.5 text-sm max-w-xl text-white text-shadow-hero leading-relaxed">
-                        Browse all ARC Raiders zones in one place, complete with lore snippets and embedded interactive
-                        maps. The in&#x2011;game layouts and POIs are powered by Wesley&apos;s excellent work at{' '}
+                        All five ARC Raiders zones with embedded interactive maps, curated POI pins, and
+                        live condition tracking. Tile data provided by{' '}
+                        <a
+                            href="https://ardb.app"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-white/55 hover:text-white/80 transition-colors underline underline-offset-2"
+                        >
+                            ardb.app
+                        </a>
+                        {'; '}community reference maps at{' '}
                         <a
                             href="https://maps.tcno.co/arc"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-rf-blue hover:underline font-medium text-rf-text"
+                            className="text-white/55 hover:text-white/80 transition-colors underline underline-offset-2"
                         >
                             maps.tcno.co/arc
                         </a>
@@ -83,56 +92,11 @@ export default async function MapsPage() {
                 </div>
             </div>
 
-            <div className="rf-card rounded-xl px-4 py-3.5 mb-8 border border-white/[0.06] bg-white/[0.02]">
-                <p className="text-[11px] text-white/85 leading-relaxed">
-                    Community-run reference maps with extra POIs and keys are available at{' '}
-                    <a
-                        href="https://maps.tcno.co/arc"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-rf-blue hover:underline font-medium text-rf-text"
-                    >
-                        TroubleChute — ARC Raiders maps
-                    </a>
-                    . RaiderForge uses its own markers and{' '}
-                    <a href="https://ardb.app" target="_blank" rel="noopener noreferrer" className="text-rf-blue hover:underline">
-                        ardb.app
-                    </a>{' '}
-                    tiles; we do not mirror their data.
-                </p>
-            </div>
-
+            {/* ── Zone list ────────────────────────────────────────────────────── */}
             <MapsTacticalZonesClient zones={zones} />
 
-            <section
-                className="mt-16 border-t border-white/[0.06] pt-12 max-w-3xl"
-                aria-label="Zone field notes"
-            >
-                <p className="text-xs uppercase tracking-widest text-rf-red/90 font-semibold mb-8 drop-shadow-sm">
-                    Zone field notes
-                </p>
-                <div className="space-y-10">
-                    {MAPS.map((m) => (
-                        <article key={m.id}>
-                            <h2 className="text-xl font-bold tracking-tight text-white text-shadow-hero border-l-2 border-rf-red pl-3">
-                                {m.displayName}
-                            </h2>
-                            <p className="mt-3 text-sm text-white font-normal leading-[1.65]">{m.description}</p>
-                        </article>
-                    ))}
-                    <article>
-                        <h2 className="text-xl font-bold tracking-tight text-white text-shadow-hero border-l-2 border-rf-red pl-3">
-                            {PRACTICE_RANGE_OVERVIEW.displayName}
-                        </h2>
-                        <p className="mt-3 text-sm text-white font-normal leading-[1.65]">
-                            {PRACTICE_RANGE_OVERVIEW.description}
-                        </p>
-                    </article>
-                </div>
-            </section>
-
-            {/* Attribution */}
-            <p className="mt-12 text-[11px] text-white/20 text-shadow-hero">
+            {/* ── Attribution ──────────────────────────────────────────────────── */}
+            <p className="mt-10 text-[11px] text-white/20 text-shadow-hero">
                 Live conditions via{' '}
                 <a href="https://metaforge.app/arc-raiders" target="_blank" rel="noopener noreferrer"
                    className="hover:text-white/40 transition-colors">
