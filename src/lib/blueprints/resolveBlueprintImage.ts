@@ -24,7 +24,15 @@ function firstNonGenericSource(urls: string[]): string | null {
     return null
 }
 
-type ImageFields = Pick<
+function pushUnique(out: string[], seen: Set<string>, url: string | null | undefined) {
+    if (!url || !url.trim()) return
+    const u = url.trim()
+    if (seen.has(u)) return
+    seen.add(u)
+    out.push(u)
+}
+
+export type BlueprintImageFields = Pick<
     NormalizedBlueprint,
     | 'id'
     | 'name'
@@ -35,43 +43,58 @@ type ImageFields = Pick<
     | 'trackerDisplayName'
 >
 
-function displayLabelForReferenceArt(b: ImageFields): string {
+function displayLabelForReferenceArt(b: BlueprintImageFields): string {
     if (b.trackerDisplayName?.trim()) return b.trackerDisplayName.trim()
     return b.name.replace(/\s+blueprint\s*$/i, '').trim()
 }
 
 /**
- * Priority:
- * 1. Local tiles sliced from the reference tracker grid (`public/assets/blueprints/registry`), keyed by spreadsheet label
- * 2. Item-specific ARDB `imageUrl` / `iconUrl` (skip generic recipe sheet)
- * 3. Manual `LOCAL_BY_ARDB_ID` / `LOCAL_BY_NAME_KEY` overrides
- * 4. ARDB `sourceImageUrls`, then `craftedItemIconUrl`
- * 5. Generic `imageUrl` / `iconUrl` last resort
+ * Ordered candidate URLs for `<img src>` — try in order; use `onError` in the UI to advance when a URL 404s or fails.
+ * This avoids blank tiles when the registry path is wrong in production while ARDB art would still load.
  */
-export function resolveBlueprintImage(b: ImageFields): string | null {
-    const refArt = resolveReferenceBlueprintArt(displayLabelForReferenceArt(b))
-    if (refArt) return refArt
+export function resolveBlueprintImageCandidates(b: BlueprintImageFields): string[] {
+    const seen = new Set<string>()
+    const out: string[] = []
 
-    if (b.imageUrl && !isGenericRecipeUrl(b.imageUrl)) return b.imageUrl
-    if (b.iconUrl && !isGenericRecipeUrl(b.iconUrl)) return b.iconUrl
+    pushUnique(out, seen, resolveReferenceBlueprintArt(displayLabelForReferenceArt(b)))
+
+    pushUnique(out, seen, b.imageUrl && !isGenericRecipeUrl(b.imageUrl) ? b.imageUrl : null)
+    pushUnique(out, seen, b.iconUrl && !isGenericRecipeUrl(b.iconUrl) ? b.iconUrl : null)
 
     const localId = LOCAL_BY_ARDB_ID[b.id]
-    if (localId && localId.trim() !== '') return localId
+    pushUnique(out, seen, localId)
     const localName = LOCAL_BY_NAME_KEY[blueprintLookupKey(b.name)]
-    if (localName && localName.trim() !== '') return localName
+    pushUnique(out, seen, localName)
 
     const fromSources = firstNonGenericSource(b.sourceImageUrls)
-    if (fromSources) return fromSources
-    if (b.sourceImageUrls.length > 0 && b.sourceImageUrls[0]?.trim() !== '') return b.sourceImageUrls[0]
-
-    if (b.craftedItemIconUrl && !isGenericRecipeUrl(b.craftedItemIconUrl)) return b.craftedItemIconUrl
-
-    if (b.imageUrl) return b.imageUrl
-    if (b.iconUrl) return b.iconUrl
-
-    if (process.env.NODE_ENV === 'development' && !warnedMissingImageIds.has(b.id)) {
-        warnedMissingImageIds.add(b.id)
-        console.warn('[blueprints] No image resolved for', displayLabelForReferenceArt(b), `(id ${b.id})`)
+    pushUnique(out, seen, fromSources)
+    if (b.sourceImageUrls.length > 0 && b.sourceImageUrls[0]?.trim() !== '') {
+        pushUnique(out, seen, b.sourceImageUrls[0])
     }
-    return null
+
+    pushUnique(
+        out,
+        seen,
+        b.craftedItemIconUrl && !isGenericRecipeUrl(b.craftedItemIconUrl) ? b.craftedItemIconUrl : null
+    )
+
+    pushUnique(out, seen, b.imageUrl)
+    pushUnique(out, seen, b.iconUrl)
+
+    return out
+}
+
+/**
+ * First candidate (legacy callers: export, print). Prefer `resolveBlueprintImageCandidates` + onError in UI.
+ */
+export function resolveBlueprintImage(b: BlueprintImageFields): string | null {
+    const c = resolveBlueprintImageCandidates(b)
+    if (c.length === 0) {
+        if (process.env.NODE_ENV === 'development' && !warnedMissingImageIds.has(b.id)) {
+            warnedMissingImageIds.add(b.id)
+            console.warn('[blueprints] No image resolved for', displayLabelForReferenceArt(b), `(id ${b.id})`)
+        }
+        return null
+    }
+    return c[0]!
 }

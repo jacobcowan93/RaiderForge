@@ -27,6 +27,7 @@ import {
     matchBlueprintsToAllowlist,
     type SpreadsheetMatchStats,
 } from '@/lib/blueprints/blueprintSpreadsheetMatcher'
+import { stripTrailingBlueprintSuffix } from '@/lib/blueprints/blueprintSlug'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -477,7 +478,7 @@ export default function BlueprintsPage() {
                                             className="border border-neutral-200 rounded-xl p-4 break-inside-avoid"
                                         >
                                             <h3 className="font-semibold text-base text-neutral-900 leading-tight">
-                                                {blueprintDisplayName(b)}
+                                                {stripTrailingBlueprintSuffix(blueprintDisplayName(b))}
                                             </h3>
                                             {b.rarity ? (
                                                 <p className="text-sm text-neutral-600 mt-1">

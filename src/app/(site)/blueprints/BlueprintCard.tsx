@@ -1,8 +1,10 @@
 'use client'
 
 import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { NormalizedBlueprint } from '@/lib/blueprints/normalizeBlueprints'
-import { resolveBlueprintImage } from '@/lib/blueprints/resolveBlueprintImage'
+import { stripTrailingBlueprintSuffix } from '@/lib/blueprints/blueprintSlug'
+import { resolveBlueprintImageCandidates } from '@/lib/blueprints/resolveBlueprintImage'
 import {
     formatRarityLabel,
     getRarityVisualTier,
@@ -27,7 +29,15 @@ export type BlueprintCardProps = {
 
 export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleMode }: BlueprintCardProps) {
     const tier = getRarityVisualTier(b.rarity)
-    const img = resolveBlueprintImage(b)
+    const candidates = useMemo(() => resolveBlueprintImageCandidates(b), [b])
+    const [attempt, setAttempt] = useState(0)
+
+    useEffect(() => {
+        setAttempt(0)
+    }, [b.id])
+
+    const src = attempt < candidates.length ? candidates[attempt] : undefined
+    const titleLabel = stripTrailingBlueprintSuffix(b.trackerDisplayName ?? b.name)
     const desc = b.description?.trim()
 
     function handleCardClick(e: MouseEvent) {
@@ -67,7 +77,7 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                                 owned ? 'line-through text-rf-textSoft/70' : 'group-hover:text-white'
                             }`}
                         >
-                            {b.trackerDisplayName ?? b.name}
+                            {titleLabel}
                         </h2>
                         {b.spreadsheetType ? (
                             <p className="mt-1 text-[10px] uppercase tracking-wider text-rf-textSoft/80">
@@ -101,11 +111,13 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                     style={blueprintGridStyle}
                 >
                     <div className={`${rarityImageBackdropClass(tier)} rounded-xl`} aria-hidden />
-                    {img ? (
+                    {src ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                            src={img}
+                            key={`${b.id}-${attempt}-${src.slice(0, 48)}`}
+                            src={src}
                             alt=""
+                            onError={() => setAttempt((a) => a + 1)}
                             className={`relative z-[1] h-full w-full max-h-full max-w-full object-contain object-center drop-shadow-[0_8px_28px_rgba(0,0,0,0.65)] transition-opacity duration-200 ${
                                 owned ? 'opacity-45' : 'opacity-100'
                             }`}

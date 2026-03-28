@@ -1,5 +1,6 @@
 import type { NormalizedBlueprint } from '@/lib/blueprints/normalizeBlueprints'
-import { resolveBlueprintImage } from '@/lib/blueprints/resolveBlueprintImage'
+import { stripTrailingBlueprintSuffix } from '@/lib/blueprints/blueprintSlug'
+import { resolveBlueprintImageCandidates } from '@/lib/blueprints/resolveBlueprintImage'
 import { applyBlueprintSort, type SortMode } from '@/lib/blueprints/sortBlueprints'
 
 const BG = '#05060a'
@@ -73,9 +74,9 @@ export async function exportMissingBlueprintsAsJpeg(
     const maxTextW = W - textXBase - PAD
 
     for (const b of sorted) {
-        const imgUrl = resolveBlueprintImage(b)
+        const urls = resolveBlueprintImageCandidates(b)
         let drawnImg = false
-        if (imgUrl) {
+        for (const imgUrl of urls) {
             try {
                 const img = await loadImageCors(imgUrl)
                 const h = img.naturalHeight || img.height
@@ -89,8 +90,9 @@ export async function exportMissingBlueprintsAsJpeg(
                 ctx.fillRect(PAD, y, IMG_SIZE, IMG_SIZE)
                 ctx.drawImage(img, ox, oy, dw, dh)
                 drawnImg = true
+                break
             } catch {
-                /* CORS or load failure — text only */
+                /* try next candidate */
             }
         }
         if (!drawnImg) {
@@ -103,7 +105,7 @@ export async function exportMissingBlueprintsAsJpeg(
 
         ctx.fillStyle = TEXT
         ctx.font = '600 17px system-ui, sans-serif'
-        ctx.fillText(b.trackerDisplayName ?? b.name, textXBase, y + 22)
+        ctx.fillText(stripTrailingBlueprintSuffix(b.trackerDisplayName ?? b.name), textXBase, y + 22)
 
         const rare = b.rarity?.trim()
         ctx.fillStyle = MUTED
