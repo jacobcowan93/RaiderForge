@@ -1,65 +1,119 @@
 import NextAuth from "next-auth"
 import type { NextAuthOptions } from "next-auth"
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import GoogleProvider from "next-auth/providers/google"
 import DiscordProvider from "next-auth/providers/discord"
-import CredentialsProvider from "next-auth/providers/credentials"
+import EmailProvider from "next-auth/providers/email"
+import { getPrisma } from "@/lib/prisma"
 
-const providers: NextAuthOptions["providers"] = [
-    GoogleProvider({
-        clientId: process.env.GOOGLE_CLIENT_ID || "",
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
-    DiscordProvider({
-        clientId: process.env.DISCORD_CLIENT_ID || "",
-        clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
-    }),
-    // Credentials provider — UI-ready, backend not yet wired.
-    // authorize() always returns null (controlled failure) until a real
-    // auth backend (email magic-link, OTP, etc.) is implemented.
-    CredentialsProvider({
-        id: "credentials",
-        name: "Email or Phone",
-        credentials: {
-            identifier: { label: "Email or phone", type: "text" },
-        },
-        async authorize() {
-            // TODO: implement real verification (magic link / OTP / password).
-            // Returning null tells NextAuth the credentials are invalid.
-            return null
-        },
-    }),
-]
+function buildEmailProvider() {
+    const from = process.env.EMAIL_FROM?.trim()
+    if (!from) return null
 
-// NextAuth route for App Router (route handler)
-// This file runs on the server only. Client secrets are read from process.env.
-export const handler = NextAuth({
-    providers,
+    const conn = process.env.EMAIL_SERVER?.trim()
+    if (conn) {
+        return EmailProvider({ server: conn, from })
+    }
+
+    const host = process.env.EMAIL_SERVER_HOST?.trim()
+    if (!host) return null
+
+    return EmailProvider({
+        server: {
+            host,
+            port: Number(process.env.EMAIL_SERVER_PORT || 587),
+            auth: {
+                user: process.env.EMAIL_SERVER_USER || "",
+                pass: process.env.EMAIL_SERVER_PASSWORD || "",
+            },
+        },
+        from,
+    })
+}
+
+function buildProviders(): NextAuthOptions["providers"] {
+    const list: NextAuthOptions["providers"] = []
+
+    const googleId = process.env.GOOGLE_CLIENT_ID?.trim()
+    const googleSecret = process.env.GOOGLE_CLIENT_SECRET?.trim()
+    if (googleId && googleSecret) {
+        list.push(
+            GoogleProvider({
+                clientId: googleId,
+                clientSecret: googleSecret,
+            })
+        )
+    }
+
+    const discordId = process.env.DISCORD_CLIENT_ID?.trim()
+    const discordSecret = process.env.DISCORD_CLIENT_SECRET?.trim()
+    if (discordId && discordSecret) {
+        list.push(
+            DiscordProvider({
+                clientId: discordId,
+                clientSecret: discordSecret,
+            })
+        )
+    }
+
+    const prisma = getPrisma()
+    const emailProvider = buildEmailProvider()
+    if (prisma && emailProvider) {
+        list.push(emailProvider)
+    }
+
+    return list
+}
+
+const prisma = getPrisma()
+const useDatabase = Boolean(prisma)
+
+export const authOptions: NextAuthOptions = {
+    adapter: prisma ? PrismaAdapter(prisma) : undefined,
+    providers: buildProviders(),
     secret: process.env.NEXTAUTH_SECRET,
     session: {
-        strategy: 'jwt'
+        strategy: useDatabase ? "database" : "jwt",
+    },
+    pages: {
+        signIn: "/auth/signin",
     },
     callbacks: {
-        async jwt({ token, user, account }) {
-            // Only store minimal info in the token. Do not persist raw access tokens unless needed.
+        async jwt({ token, user }) {
             if (user) {
-                token.name = (user as any).name
-                token.email = (user as any).email
-                token.picture = (user as any).image
-                token.sub = (user as any).id // Store the provider's user ID
+                token.name = (user as { name?: string | null }).name
+                token.email = (user as { email?: string | null }).email
+                token.picture = (user as { image?: string | null }).image
+                token.sub = (user as { id?: string }).id ?? token.sub
             }
             return token
         },
-        async session({ session, token }) {
-            if (token) {
-                session.user = session.user || {}
-                    ; (session.user as any).name = token.name as any
-                    ; (session.user as any).email = token.email as any
-                    ; (session.user as any).image = token.picture as any
-                    ; (session.user as any).id = token.sub as any // Add id to session user
+        async session({ session, user, token }) {
+            session.user = session.user ?? { name: null, email: null, image: null }
+
+            if (user) {
+                const u = user as {
+                    id: string
+                    name?: string | null
+                    email?: string | null
+                    image?: string | null
+                }
+                ;(session.user as { id?: string }).id = u.id
+                session.user.name = u.name
+                session.user.email = u.email
+                session.user.image = u.image
+            } else if (token) {
+                ;(session.user as { id?: string }).id = token.sub as string
+                session.user.name = token.name as string | null | undefined
+                session.user.email = token.email as string | null | undefined
+                session.user.image = token.picture as string | null | undefined
             }
+
             return session
-        }
-    }
-})
+        },
+    },
+}
+
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }

@@ -154,12 +154,12 @@ export default function NavBar() {
                             >
                                 Sign In
                             </button>
-                            <button
-                                onClick={() => signIn()}
-                                className="rounded-md bg-rf-red px-4 py-2 text-xs font-semibold text-white shadow-md shadow-rf-red/40 transition-all hover:bg-rf-redSoft hover:shadow-rf-red/20"
+                            <Link
+                                href="/auth/signin?intent=signup"
+                                className="rounded-md bg-rf-red px-4 py-2 text-xs font-semibold text-white shadow-md shadow-rf-red/40 transition-all hover:bg-rf-redSoft hover:shadow-rf-red/20 inline-flex items-center"
                             >
                                 Sign Up
-                            </button>
+                            </Link>
                         </div>
                     )}
                 </div>

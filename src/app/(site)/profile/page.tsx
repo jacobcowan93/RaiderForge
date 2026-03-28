@@ -55,7 +55,7 @@ export default function ProfilePage() {
                     <div>
                         <p className="font-semibold text-white text-lg">{user.name ?? 'Unknown Raider'}</p>
                         <p className="text-sm text-rf-textSoft">{user.email}</p>
-                        <p className="text-xs text-white/30 mt-0.5">Signed in via Discord / Google</p>
+                        <p className="text-xs text-white/30 mt-0.5">Signed in to RaiderForge</p>
                     </div>
                 </div>
             </section>
