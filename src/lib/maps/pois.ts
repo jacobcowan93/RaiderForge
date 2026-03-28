@@ -1,4 +1,10 @@
-import { blueGatePois, burialCityPois, damBattlegroundsPois, spaceportPois } from '@/data/pois'
+import {
+    blueGatePois,
+    burialCityPois,
+    damBattlegroundsPois,
+    spaceportPois,
+    stellaMontisPois,
+} from '@/data/pois'
 import type { MapPoi, PoiCategory } from './poi-types'
 
 export type { MapPoi, PoiCategory } from './poi-types'
@@ -9,6 +15,7 @@ export const ALL_MAP_POIS: MapPoi[] = [
     ...burialCityPois,
     ...blueGatePois,
     ...spaceportPois,
+    ...stellaMontisPois,
 ]
 
 export const POI_MVP_CATEGORIES: readonly PoiCategory[] = ['quest', 'container', 'key', 'extract']
