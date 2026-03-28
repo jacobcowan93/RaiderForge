@@ -23,11 +23,21 @@ function sanitizeMaps(raw: unknown): MapProgressSaveV1['maps'] {
         const q = sanitizeBucket(s.q)
         const c = sanitizeBucket(s.c)
         const l = sanitizeBucket(s.l)
-        if (Object.keys(q).length + Object.keys(c).length + Object.keys(l).length === 0) continue
+        const p = sanitizeBucket(s.p)
+        if (
+            Object.keys(q).length +
+                Object.keys(c).length +
+                Object.keys(l).length +
+                Object.keys(p).length ===
+            0
+        ) {
+            continue
+        }
         const entry: MapProgressSliceV1 = {}
         if (Object.keys(q).length) entry.q = q
         if (Object.keys(c).length) entry.c = c
         if (Object.keys(l).length) entry.l = l
+        if (Object.keys(p).length) entry.p = p
         out[mid] = entry
     }
     return out

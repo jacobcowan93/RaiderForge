@@ -70,10 +70,13 @@ export function parseMapProgressSaveBody(body: unknown): ParsedMapProgressSave {
         if (c.ok === false) return c
         const l = sanitizeBucketIn(sl.l, 'l')
         if (l.ok === false) return l
+        const p = sanitizeBucketIn(sl.p, 'p')
+        if (p.ok === false) return p
         const slice: MapProgressSliceV1 = {}
         if (Object.keys(q.bucket).length) slice.q = q.bucket
         if (Object.keys(c.bucket).length) slice.c = c.bucket
         if (Object.keys(l.bucket).length) slice.l = l.bucket
+        if (Object.keys(p.bucket).length) slice.p = p.bucket
         if (Object.keys(slice).length) maps[mid] = slice
     }
     return { ok: true, save: { version: 1, maps } }

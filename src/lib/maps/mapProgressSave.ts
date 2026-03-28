@@ -6,6 +6,8 @@ export type MapProgressSliceV1 = {
     c?: Record<string, boolean>
     /** Loot area marker id → visited */
     l?: Record<string, boolean>
+    /** Curated `MapPoi.id` → visited (Pins layer); synced with `/api/user/map-progress` when signed in. */
+    p?: Record<string, boolean>
 }
 
 export type MapProgressSaveV1 = {
@@ -34,7 +36,7 @@ export function isMapProgressSaveEmpty(save: MapProgressSaveV1): boolean {
 
 export function sliceCount(slice: MapProgressSliceV1 | undefined): number {
     if (!slice) return 0
-    return countTrue(slice.q) + countTrue(slice.c) + countTrue(slice.l)
+    return countTrue(slice.q) + countTrue(slice.c) + countTrue(slice.l) + countTrue(slice.p)
 }
 
 function countTrue(rec: Record<string, boolean> | undefined): number {
@@ -49,6 +51,7 @@ export function getSlice(save: MapProgressSaveV1, mapId: string): MapProgressSli
         q: s.q ? { ...s.q } : {},
         c: s.c ? { ...s.c } : {},
         l: s.l ? { ...s.l } : {},
+        p: s.p ? { ...s.p } : {},
     }
 }
 
@@ -86,13 +89,20 @@ function compactSlice(slice: MapProgressSliceV1): MapProgressSliceV1 {
         }
         if (Object.keys(l).length) out.l = l
     }
+    if (slice.p) {
+        const p: Record<string, boolean> = {}
+        for (const [k, v] of Object.entries(slice.p)) {
+            if (v) p[k] = true
+        }
+        if (Object.keys(p).length) out.p = p
+    }
     return out
 }
 
 export function toggleVisit(
     save: MapProgressSaveV1,
     mapId: string,
-    kind: 'q' | 'c' | 'l',
+    kind: 'q' | 'c' | 'l' | 'p',
     key: string,
     visited: boolean
 ): MapProgressSaveV1 {
@@ -108,7 +118,7 @@ export function toggleVisit(
     return setSlice(save, mapId, nextSlice)
 }
 
-export function isVisited(save: MapProgressSaveV1, mapId: string, kind: 'q' | 'c' | 'l', key: string): boolean {
+export function isVisited(save: MapProgressSaveV1, mapId: string, kind: 'q' | 'c' | 'l' | 'p', key: string): boolean {
     const slice = save.maps[mapId]
     if (!slice) return false
     return Boolean(slice[kind]?.[key])
