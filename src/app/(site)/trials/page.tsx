@@ -1,141 +1,44 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
-import { getMapById, MAPS } from '@/data/maps'
-import { getAlternateTrialWeeks, getFeaturedTrialWeek, type TrialBranch, type WeeklyTrial } from '@/data/trials'
+import { TrialSummaryCard } from '@/components/learning/TrialSummaryCard'
+import { TrialsHubClient } from '@/components/learning/TrialsHubClient'
+import { MAPS } from '@/data/maps'
+import { getAllTrialsCatalog, getAlternateTrialWeeks, getFeaturedTrialWeek } from '@/data/trials'
 import { fetchCurrentEvents } from '@/lib/data/metaforge-events'
-import { getLiveMapConditions } from '@/lib/live-data/mapConditions'
-import { mapCoverPath } from '@/lib/maps/mapCovers'
+import { formatLiveHintForMap } from '@/lib/trials/liveMapTrialHint'
 import { METAFORGE_GUIDES_ATTRIBUTION } from '@/lib/live-data/attribution'
+import type { MfEvent } from '@/lib/events/conditions'
 
 export const metadata = {
     title: 'Trials — Weekly Briefing | Raider Forge',
     description:
-        'ARC Raiders weekly Trials briefing: maps, modifiers, scoring focus, and max-score strategies — with live zone context when MetaForge data is available.',
+        'ARC Raiders weekly Trials: playlist order, full catalog with filters, and max-score briefings — with live zone hints when MetaForge data matches a map.',
 }
 
-const BRANCH_STYLE: Record<TrialBranch, string> = {
-    conditioning: 'border-orange-500/35 bg-orange-500/10 text-orange-100/90',
-    mobility: 'border-sky-500/35 bg-sky-500/10 text-sky-100/90',
-    survival: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-100/90',
-}
-
-function LiveLine({ label, line }: { label: string; line: string }) {
-    return (
-        <p className="text-[11px] text-white/38 mt-2 border-l border-white/10 pl-2">
-            <span className="text-white/45 font-medium">{label} live: </span>
-            {line}
-        </p>
-    )
-}
-
-function TrialCard({
-    trial,
-    liveLine,
-}: {
-    trial: WeeklyTrial
-    liveLine: string | null
-}) {
-    const map = trial.mapRfId ? getMapById(trial.mapRfId) : undefined
-    const cover = trial.mapRfId ? mapCoverPath(trial.mapRfId) : undefined
-    const mapName = map?.displayName ?? 'Open maps'
-
-    return (
-        <article className="rounded-xl border border-white/[0.08] bg-black/40 overflow-hidden flex flex-col sm:flex-row">
-            <div className="relative w-full sm:w-[min(44%,220px)] shrink-0 aspect-[16/10] sm:aspect-auto sm:min-h-[200px] bg-rf-bgSoft">
-                {cover ? (
-                    <Image
-                        src={cover}
-                        alt={`${mapName} — trial zone preview`}
-                        fill
-                        className="object-cover opacity-90"
-                        sizes="(max-width: 640px) 100vw, 220px"
-                    />
-                ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-white/25 text-xs px-4 text-center">
-                        Multi-zone trial — see strategy below
-                    </div>
-                )}
-                {trial.iconSrc ? (
-                    <div className="absolute bottom-2 left-2 w-10 h-10 rounded-lg bg-black/70 border border-white/10 p-1.5">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={trial.iconSrc} alt="" className="w-full h-full object-contain" />
-                    </div>
-                ) : null}
-            </div>
-            <div className="flex-1 p-4 sm:p-5 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span
-                        className={`text-[10px] font-bold uppercase tracking-wider rounded px-2 py-0.5 border ${BRANCH_STYLE[trial.branch]}`}
-                    >
-                        {trial.branch}
-                    </span>
-                    {trial.mapRfId ? (
-                        <Link
-                            href={`/maps/${trial.mapRfId}`}
-                            className="text-[11px] font-semibold text-rf-red/90 hover:text-rf-red"
-                        >
-                            Tactical map →
-                        </Link>
-                    ) : (
-                        <Link href="/maps" className="text-[11px] font-semibold text-rf-red/90 hover:text-rf-red">
-                            Maps hub →
-                        </Link>
-                    )}
-                </div>
-                <h3 className="text-xl font-black text-white tracking-tight">{trial.name}</h3>
-                <p className="text-xs text-white/45 mt-1">{mapName}</p>
-                <dl className="mt-4 space-y-3 text-sm">
-                    <div>
-                        <dt className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">Modifiers</dt>
-                        <dd className="text-white/65 leading-relaxed">{trial.modifiersSummary}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">Scoring focus</dt>
-                        <dd className="text-white/65 leading-relaxed">{trial.scoringFocus}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-[10px] uppercase tracking-wider text-emerald-200/50 font-semibold">
-                            Max score playbook
-                        </dt>
-                        <dd className="text-white/75 leading-relaxed">{trial.maxScoreTips}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-[10px] uppercase tracking-wider text-red-300/50 font-semibold">Avoid</dt>
-                        <dd className="text-white/55 leading-relaxed">{trial.avoid}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">Role hint</dt>
-                        <dd className="text-white/65 leading-relaxed">{trial.roleHint}</dd>
-                    </div>
-                </dl>
-                {liveLine ? <LiveLine label={mapName} line={liveLine} /> : null}
-            </div>
-        </article>
-    )
-}
-
-function formatLiveHint(mapId: string, now: Date, events: import('@/lib/events/conditions').MfEvent[], upstreamOk: boolean): string | null {
-    const cond = getLiveMapConditions(mapId, now, events, upstreamOk)
-    if (cond.source === 'api' && cond.activeConditions.length > 0) {
-        return `${cond.activeConditions.join(', ')} (MetaForge schedule) — factor into route timing.`
+function buildLiveHints(
+    catalog: ReturnType<typeof getAllTrialsCatalog>,
+    now: Date,
+    events: MfEvent[],
+    upstreamOk: boolean,
+): Record<string, string | null> {
+    const out: Record<string, string | null> = {}
+    for (const t of catalog) {
+        out[t.id] = t.mapRfId ? formatLiveHintForMap(t.mapRfId, now, events, upstreamOk) : null
     }
-    if (cond.source === 'rotation-fallback' && cond.activeConditions.length > 0) {
-        return `${cond.activeConditions.join(', ')} (rotation fallback) — verify in-raid.`
-    }
-    return null
+    return out
 }
 
 export default async function TrialsPage() {
     const featured = getFeaturedTrialWeek()
     const alternates = getAlternateTrialWeeks()
+    const catalog = getAllTrialsCatalog()
     const eventsPayload = await fetchCurrentEvents().catch(() => ({
-        events: [] as import('@/lib/events/conditions').MfEvent[],
+        events: [] as MfEvent[],
         fetchedAt: new Date().toISOString(),
         upstreamOk: false,
     }))
     const now = new Date()
-    const upstream = eventsPayload.upstreamOk
+    const liveHints = buildLiveHints(catalog, now, eventsPayload.events, eventsPayload.upstreamOk)
 
     return (
         <div className="py-10 px-4 sm:px-6 max-w-4xl mx-auto">
@@ -144,10 +47,16 @@ export default async function TrialsPage() {
                     <h1 className="text-3xl font-black text-white tracking-tight">ARC Raiders Trials</h1>
                     <PageMaturityBadge level="beta" />
                 </div>
-                <p className="text-lg font-semibold text-white/75">Weekly briefing</p>
-                <p className="text-sm text-white/55 mt-3 max-w-2xl leading-relaxed">
-                    What this week&apos;s trial types reward, where they play best, and how to push scores — with optional
-                    live zone context from MetaForge when it matches a map.
+                <p className="text-xs uppercase tracking-widest text-rf-red font-semibold mb-2">Weekly playlist</p>
+                <p className="text-sm text-white/55 max-w-2xl leading-relaxed">
+                    This week&apos;s order is your broadcast schedule; the catalog below is the full rotation library — filter by
+                    difficulty, branch, or topic. Open any card for the full briefing. Live zone lines appear when MetaForge lines
+                    up with a trial&apos;s primary map.
+                </p>
+                <p className="text-xs text-white/40 mt-3">
+                    <Link href="/guides" className="text-rf-red/80 hover:text-rf-red font-semibold">
+                        Prep guides →
+                    </Link>
                 </p>
             </header>
 
@@ -161,15 +70,23 @@ export default async function TrialsPage() {
                         {featured.seasonNote}
                     </p>
                 ) : null}
-                <div className="space-y-6">
-                    {featured.trials.map((trial) => {
-                        const liveLine =
-                            trial.mapRfId != null
-                                ? formatLiveHint(trial.mapRfId, now, eventsPayload.events, upstream)
-                                : null
-                        return <TrialCard key={trial.id} trial={trial} liveLine={liveLine} />
-                    })}
-                </div>
+                <ul className="space-y-4 list-none p-0 m-0">
+                    {featured.trials.map((trial) => (
+                        <li key={trial.id}>
+                            <TrialSummaryCard trial={trial} liveHint={liveHints[trial.id] ?? null} emphasize />
+                        </li>
+                    ))}
+                </ul>
+            </section>
+
+            <section aria-labelledby="catalog-heading" className="mb-12">
+                <h2 id="catalog-heading" className="text-xs uppercase tracking-[0.2em] text-white/40 font-bold mb-2">
+                    Full catalog
+                </h2>
+                <p className="text-sm text-white/45 mb-2">
+                    Same trials as above, plus alternate-week entries — use filters to drill down.
+                </p>
+                <TrialsHubClient liveHints={liveHints} />
             </section>
 
             <section aria-labelledby="scoring-tips-heading" className="mb-12 rounded-xl border border-white/[0.06] bg-black/35 p-5 sm:p-6">

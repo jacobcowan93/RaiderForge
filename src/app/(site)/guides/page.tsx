@@ -1,13 +1,14 @@
 import Link from 'next/link'
+import { GuidesHubClient } from '@/components/learning/GuidesHubClient'
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
-import { GUIDE_HUB_TILES } from '@/data/guides'
+import { GUIDE_ARTICLES, GUIDE_HUB_SHORTCUTS } from '@/data/guides'
 import { fetchMetaforgeGuidesSnapshot } from '@/lib/data/metaforge-guides'
 import { METAFORGE_GUIDES_ATTRIBUTION } from '@/lib/live-data/attribution'
 
 export const metadata = {
     title: 'Guides — ARC Raiders | Raider Forge',
     description:
-        'RaiderForge guides hub: weekly trials prep, map intel, and MetaForge-powered quest & arc previews for ARC Raiders.',
+        'RaiderForge guides: scannable briefings for maps, weekly Trials prep, live conditions, and squad roles — plus MetaForge reference snapshots.',
 }
 
 export default async function GuidesPage() {
@@ -20,9 +21,11 @@ export default async function GuidesPage() {
                     <h1 className="text-3xl font-black text-white tracking-tight">Guides</h1>
                     <PageMaturityBadge level="beta" />
                 </div>
+                <p className="text-xs uppercase tracking-widest text-rf-red font-semibold mb-2">Briefings</p>
                 <p className="text-sm text-white/60 max-w-2xl leading-relaxed">
-                    Command-center style briefings for Trials, maps, and squad roles — informed by MetaForge&apos;s public ARC
-                    Raiders data where we show live names and summaries. Deep editorial guides remain on{' '}
+                    Short, trustworthy write-ups you can skim before a run: maps workflow, Trials prep, economy habits, and how
+                    live conditions behave. Filter by difficulty or topic; each guide opens as a single readable page. For raw
+                    quest and arc data, we still mirror a live snapshot from{' '}
                     <a
                         href={METAFORGE_GUIDES_ATTRIBUTION.url}
                         target="_blank"
@@ -30,17 +33,22 @@ export default async function GuidesPage() {
                         className="text-rf-red/90 hover:text-rf-red underline underline-offset-2"
                     >
                         MetaForge
-                    </a>
-                    .
+                    </a>{' '}
+                    below.
+                </p>
+                <p className="text-xs text-white/40 mt-3">
+                    <Link href="/trials" className="text-rf-red/80 hover:text-rf-red font-semibold">
+                        Weekly Trials playlist →
+                    </Link>
                 </p>
             </header>
 
-            <section aria-labelledby="hub-tiles-heading" className="mb-14">
-                <h2 id="hub-tiles-heading" className="text-xs uppercase tracking-[0.2em] text-white/40 font-bold mb-4">
+            <section aria-labelledby="shortcuts-heading" className="mb-12">
+                <h2 id="shortcuts-heading" className="text-xs uppercase tracking-[0.2em] text-white/40 font-bold mb-4">
                     Start here
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {GUIDE_HUB_TILES.map((tile) => {
+                    {GUIDE_HUB_SHORTCUTS.map((tile) => {
                         const CardInner = (
                             <>
                                 <h3 className="text-lg font-bold text-white mb-2">{tile.title}</h3>
@@ -74,6 +82,17 @@ export default async function GuidesPage() {
                         )
                     })}
                 </div>
+            </section>
+
+            <section aria-labelledby="catalog-heading" className="mb-14">
+                <h2 id="catalog-heading" className="text-xs uppercase tracking-[0.2em] text-white/40 font-bold mb-2">
+                    All guides
+                </h2>
+                <p className="text-sm text-white/45 mb-6 max-w-2xl">
+                    Use quick entry for difficulty bands, or filter by topic. Cards show read time and type (guide, tutorial,
+                    reference).
+                </p>
+                <GuidesHubClient articles={GUIDE_ARTICLES} />
             </section>
 
             <section aria-labelledby="metaforge-data-heading" className="mb-10">
