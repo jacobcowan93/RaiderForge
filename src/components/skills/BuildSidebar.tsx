@@ -82,14 +82,19 @@ function BranchRow({ row }: { row: BuildSummaryRow }) {
 
             {/* Expanded selected skills list */}
             {open && row.selected.length > 0 && (
-                <ul className="pb-2 px-3 space-y-1">
+                <ul className="pb-2 px-3 space-y-2">
                     {row.selected.map((s) => (
-                        <li key={s.uid} className="flex items-center justify-between gap-2">
-                            <span className="text-[10px] text-white/55 truncate">{s.name}</span>
-                            <span className="text-[10px] font-semibold tabular-nums shrink-0"
-                                  style={{ color: `${meta.hex}cc` }}>
-                                {s.maxRanks > 1 ? `${s.ranks}/${s.maxRanks}` : '✓'}
-                            </span>
+                        <li key={s.uid} className="border-b border-white/[0.04] pb-2 last:border-0 last:pb-0">
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-[10px] font-semibold text-white/70 truncate">{s.name}</span>
+                                <span className="text-[10px] font-bold tabular-nums shrink-0"
+                                      style={{ color: `${meta.hex}cc` }}>
+                                    {s.maxRanks > 1 ? `${s.ranks}/${s.maxRanks}` : '✓'}
+                                </span>
+                            </div>
+                            <p className="text-[9px] text-white/35 leading-relaxed mt-0.5">
+                                {s.description}
+                            </p>
                         </li>
                     ))}
                 </ul>

@@ -2,11 +2,9 @@
 
 import type { SkillNode, SkillNodeState } from '@/data/skillTree'
 import { BRANCH_META } from '@/data/skillTree'
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 
 // ── Rank pips ─────────────────────────────────────────────────────────────────
-// Smaller dots (3 px) so they sit compactly between the node button and the
-// name label without adding too much height.
 
 function RankPips({ ranks, maxRanks, color, locked }: {
     ranks:    number
@@ -36,28 +34,25 @@ function RankPips({ ranks, maxRanks, color, locked }: {
 }
 
 // ── Node label ────────────────────────────────────────────────────────────────
-// One-line compact name — 8 px, truncated with ellipsis.  Dark text-shadow
-// keeps it legible over connector lines.
+// Always-visible compact name below the node button.  Dark text-shadow keeps
+// it legible over the SVG connector lines.
 
 function NodeLabel({ name, color, locked }: { name: string; color: string; locked: boolean }) {
-    const textColor = locked
-        ? 'rgba(255,255,255,0.22)'
-        : color
     return (
         <span
-            aria-hidden="true"           // the button's aria-label already carries the name
+            aria-hidden="true"           // button's aria-label already carries the name
             className="block text-center overflow-hidden whitespace-nowrap pointer-events-none select-none"
             style={{
-                fontSize:   '7.5px',
-                fontWeight: 600,
-                lineHeight: 1.2,
-                maxWidth:   64,
-                color:      textColor,
-                textShadow: '0 1px 4px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.9)',
+                fontSize:     '7.5px',
+                fontWeight:   600,
+                lineHeight:   1.2,
+                maxWidth:     72,
+                color:        locked ? 'rgba(255,255,255,0.22)' : color,
+                textShadow:   '0 1px 4px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.9)',
                 textOverflow: 'ellipsis',
-                marginTop:  '3px',
-                letterSpacing: '0.01em',
-                transition: 'color 0.2s',
+                marginTop:    '3px',
+                letterSpacing:'0.01em',
+                transition:   'color 0.2s',
             }}
         >
             {name}
@@ -68,13 +63,15 @@ function NodeLabel({ name, color, locked }: { name: string; color: string; locke
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
-    node:         SkillNode
-    ranks:        number
-    state:        SkillNodeState
-    lockReason?:  string | null
-    onClick:      () => void
-    onDecrement?: () => void           // keyboard −1 / right-click
-    tooltipSide?: 'above' | 'below'   // flip for root node (row 0)
+    node:          SkillNode
+    ranks:         number
+    state:         SkillNodeState
+    lockReason?:   string | null
+    onClick:       () => void
+    onDecrement?:  () => void                              // keyboard −1 / right-click
+    tooltipSide?:  'above' | 'below'                      // flip for root node (row 0)
+    tooltipAlign?: 'left' | 'center' | 'right'            // clamp for edge columns
+    onActivate?:   (active: boolean) => void              // hover/focus notification
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -86,24 +83,30 @@ export function SkillNodeBtn({
     lockReason,
     onClick,
     onDecrement,
-    tooltipSide = 'above',
+    tooltipSide   = 'above',
+    tooltipAlign  = 'center',
+    onActivate,
 }: Props) {
-    const [showTip, setShowTip] = useState(false)
-    const [focused, setFocused] = useState(false)
-    const tipId   = useId()
-    const meta    = BRANCH_META[node.branch]
-    const isMajor = node.size === 'major'
-    const locked  = state === 'locked'
-    const maxed   = state === 'maxed'
+    const [showTip,    setShowTip]    = useState(false)
+    const [kbFocused,  setKbFocused]  = useState(false)   // keyboard-only focus ring
+    const tipId     = useId()
+    const meta      = BRANCH_META[node.branch]
+    const isMajor   = node.size === 'major'
+    const locked    = state === 'locked'
+    const maxed     = state === 'maxed'
+
+    // Track whether focus arrived via pointer so we can suppress the ring
+    // on mouse click (only show it for keyboard navigation).
+    const pointerRef = useRef(false)
 
     // ── Sizes ─────────────────────────────────────────────────────────────────
     const sz  = isMajor ? 54 : 42
     const rSz = isMajor ?  7 :  5
 
     // ── Colors by state ───────────────────────────────────────────────────────
-    let bgColor     = 'rgba(12,16,22,0.97)'
-    let borderColor = 'rgba(255,255,255,0.07)'
-    let glowColor   = 'transparent'
+    let bgColor      = 'rgba(12,16,22,0.97)'
+    let borderColor  = 'rgba(255,255,255,0.07)'
+    let glowColor    = 'transparent'
     let contentColor = 'rgba(255,255,255,0.22)'
 
     if (!locked && ranks === 0) {
@@ -123,8 +126,8 @@ export function SkillNodeBtn({
         contentColor = meta.hex
     }
 
-    // Focus ring uses branch color (available/selected) or muted (locked)
-    const ringColor = locked ? 'rgba(255,255,255,0.30)' : `${meta.hex}cc`
+    // Focus ring uses branch color for keyboard focus; hidden otherwise
+    const ringColor = locked ? 'rgba(255,255,255,0.45)' : `${meta.hex}cc`
 
     // ── Event handlers ────────────────────────────────────────────────────────
     const handleClick = () => { if (!locked) onClick() }
@@ -145,6 +148,12 @@ export function SkillNodeBtn({
         if (!locked) onDecrement?.()
     }
 
+    const handlePointerDown = () => { pointerRef.current = true }
+    // Use rAF so the flag outlasts the focus event that fires after pointerup
+    const handlePointerUp   = () => {
+        requestAnimationFrame(() => { pointerRef.current = false })
+    }
+
     const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (!locked) e.currentTarget.style.transform = 'scale(0.92)'
     }
@@ -152,8 +161,38 @@ export function SkillNodeBtn({
         e.currentTarget.style.transform = 'scale(1)'
     }
 
-    // ── Tooltip content ───────────────────────────────────────────────────────
-    const tooltip = showTip || focused
+    const handleMouseEnter = () => { setShowTip(true);  onActivate?.(true)  }
+    const handleMouseLeave = () => { setShowTip(false); onActivate?.(false) }
+
+    const handleFocus = () => {
+        setShowTip(true)
+        if (!pointerRef.current) setKbFocused(true)
+        onActivate?.(true)
+    }
+    const handleBlur = () => {
+        setShowTip(false)
+        setKbFocused(false)
+        onActivate?.(false)
+    }
+
+    // ── Tooltip state + positioning ───────────────────────────────────────────
+    const tooltip = showTip
+
+    const tipVertical: React.CSSProperties = tooltipSide === 'below'
+        ? { top: '100%', marginTop: 8 }
+        : { bottom: '100%', marginBottom: 8 }
+
+    const tipHorizontal: React.CSSProperties =
+        tooltipAlign === 'left'  ? { left: 0 } :
+        tooltipAlign === 'right' ? { right: 0, left: 'auto' } :
+        { left: '50%', transform: 'translateX(-50%)' }
+
+    // Compose the aria-label: name + branch + rank/selected state + lock status
+    const rankFragment = node.maxRanks > 1
+        ? `, ${ranks} of ${node.maxRanks} ranks`
+        : ranks > 0 ? ', selected' : ''
+    const lockFragment = locked ? ', locked' : ''
+    const ariaLabel = `${node.name}${rankFragment}, ${node.branch}${lockFragment}`
 
     return (
         <div
@@ -166,15 +205,17 @@ export function SkillNodeBtn({
                 role="switch"
                 aria-checked={ranks > 0}
                 aria-disabled={locked || undefined}
-                aria-label={`${node.name}${node.maxRanks > 1 ? ` — ${ranks} of ${node.maxRanks} ranks` : ranks ? ' — selected' : ''}${locked ? ' (locked)' : ''}`}
+                aria-label={ariaLabel}
                 aria-describedby={tooltip ? tipId : undefined}
                 onClick={handleClick}
                 onKeyDown={handleKeyDown}
                 onContextMenu={handleContextMenu}
-                onMouseEnter={() => setShowTip(true)}
-                onMouseLeave={() => setShowTip(false)}
-                onFocus={() => { setShowTip(true); setFocused(true) }}
-                onBlur={() => { setShowTip(false); setFocused(false) }}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
                 // Never truly disabled — locked nodes remain in tab order for a11y
@@ -189,8 +230,8 @@ export function SkillNodeBtn({
                     boxShadow:    ranks > 0 || maxed
                         ? `0 0 0 1px rgba(0,0,0,0.6), 0 0 14px ${glowColor}, 0 2px 8px rgba(0,0,0,0.7)`
                         : '0 0 0 1px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.6)',
-                    // Focus ring — visible on keyboard focus only
-                    outline:      focused ? `2px solid ${ringColor}` : '2px solid transparent',
+                    // Focus ring — keyboard focus only (kbFocused state)
+                    outline:       kbFocused ? `2px solid ${ringColor}` : '2px solid transparent',
                     outlineOffset: 3,
                     transition:   'transform 0.1s, box-shadow 0.15s, outline-color 0.15s',
                 }}
@@ -261,17 +302,12 @@ export function SkillNodeBtn({
                     role="tooltip"
                     className="absolute z-[70] w-56 rounded-xl pointer-events-none"
                     style={{
-                        // Flip above/below based on row position
-                        ...(tooltipSide === 'below'
-                            ? { top: '100%', marginTop: 8 }
-                            : { bottom: '100%', marginBottom: 8 }),
-                        // Keep tooltip horizontally inside viewport — nudge if at column edges
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background:  'rgba(7,9,13,0.98)',
-                        border:      `1px solid ${locked ? 'rgba(255,255,255,0.07)' : `${meta.hex}50`}`,
-                        boxShadow:   '0 8px 36px rgba(0,0,0,0.9)',
-                        padding:     '10px 12px',
+                        ...tipVertical,
+                        ...tipHorizontal,
+                        background: 'rgba(7,9,13,0.98)',
+                        border:     `1px solid ${locked ? 'rgba(255,255,255,0.07)' : `${meta.hex}50`}`,
+                        boxShadow:  '0 8px 36px rgba(0,0,0,0.9)',
+                        padding:    '10px 12px',
                     }}
                 >
                     {/* Accent line */}
@@ -310,7 +346,7 @@ export function SkillNodeBtn({
                     )}
                     {locked && (
                         <p className="text-[9px] text-white/25 mt-1.5">
-                            Node locked — unlock prerequisites first
+                            Unlock prerequisites first
                         </p>
                     )}
                 </div>

@@ -273,7 +273,7 @@ export type BuildSummaryRow = {
     branch:    SkillBranch
     spent:     number
     maxPossible: number
-    selected:  Array<{ uid: string; name: string; ranks: number; maxRanks: number }>
+    selected:  Array<{ uid: string; name: string; description: string; ranks: number; maxRanks: number }>
 }
 
 export function buildSummary(allocs: BuildAllocations): BuildSummaryRow[] {
@@ -284,10 +284,11 @@ export function buildSummary(allocs: BuildAllocations): BuildSummaryRow[] {
         const selected = nodes
             .filter((n) => (allocs[n.uid] ?? 0) > 0)
             .map((n) => ({
-                uid:      n.uid,
-                name:     n.name,
-                ranks:    allocs[n.uid] ?? 0,
-                maxRanks: n.maxRanks,
+                uid:         n.uid,
+                name:        n.name,
+                description: n.description,
+                ranks:        allocs[n.uid] ?? 0,
+                maxRanks:     n.maxRanks,
             }))
         return { branch, spent, maxPossible, selected }
     })

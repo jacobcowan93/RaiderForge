@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useCallback, useId, useMemo, useRef, useState } from 'react'
 import type { SkillBranch } from '@/data/skillTree'
 import { BRANCH_META, TREE_EDGES } from '@/data/skillTree'
 import {
@@ -16,21 +16,8 @@ import { SkillNodeBtn } from './SkillNodeBtn'
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 //
-// The branch tree is rendered into a relative container using a 7-row × 3-col
-// grid.  SVG connector lines are drawn on an absolute overlay using the same
-// percentage coordinates.
-//
-//   Columns (percentage of container width):
-//     col 0 → 16.7%   col 1 → 50%   col 2 → 83.3%
-//
-//   Rows (percentage of container height):
-//     row 0 →  7%   (root)
-//     row 1 → 21%
-//     row 2 → 35%
-//     row 3 → 49%   ← point gate: 15 pts
-//     row 4 → 63%
-//     row 5 → 77%
-//     row 6 → 91%   ← point gate: 36 pts (capstones)
+//   Columns (% of container width):  col 0 → 16.7%  col 1 → 50%  col 2 → 83.3%
+//   Rows    (% of container height): row 0 →  7%    row 6 → 91%  (14% spacing)
 
 const COL_PCT = [16.7, 50, 83.3] as const
 const ROW_PCT = [7, 21, 35, 49, 63, 77, 91] as const
@@ -38,10 +25,10 @@ const ROW_PCT = [7, 21, 35, 49, 63, 77, 91] as const
 // ── Gate indicator ────────────────────────────────────────────────────────────
 
 interface GateLineProps {
-    rowPct:    number   // y-center of the gate row (%)
-    pts:       number   // current branch points
-    required:  number   // points required
-    color:     string   // branch hex
+    rowPct:   number
+    pts:      number
+    required: number
+    color:    string
 }
 
 function GateLine({ rowPct, pts, required, color }: GateLineProps) {
@@ -50,6 +37,7 @@ function GateLine({ rowPct, pts, required, color }: GateLineProps) {
         <div
             className="absolute left-[5%] right-[5%] flex items-center gap-2 pointer-events-none"
             style={{ top: `calc(${rowPct}% - 28px)`, zIndex: 3 }}
+            aria-hidden="true"
         >
             <div
                 className="flex-1 h-px transition-colors duration-300"
@@ -90,6 +78,7 @@ function ConnectorLayer({ nodes, allocs, color }: ConnectorLayerProps) {
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
             style={{ zIndex: 1 }}
+            aria-hidden="true"
         >
             {TREE_EDGES.map(([fromId, toId]) => {
                 const from = nodeByIdRef.get(fromId)
@@ -122,6 +111,59 @@ function ConnectorLayer({ nodes, allocs, color }: ConnectorLayerProps) {
     )
 }
 
+// ── Node detail strip ─────────────────────────────────────────────────────────
+// Rendered below the canvas; shows name + description of the hovered/focused
+// node without requiring a tooltip.  min-h prevents layout jump on clear.
+
+interface DetailStripProps {
+    node:  PlannedNode | null
+    ranks: number
+    hex:   string
+}
+
+function NodeDetailStrip({ node, ranks, hex }: DetailStripProps) {
+    return (
+        <div
+            aria-live="polite"
+            aria-atomic="true"
+            className="rounded-xl border px-3 py-2.5 transition-colors duration-150"
+            style={{
+                minHeight:   56,
+                background:  'rgba(11,14,20,0.75)',
+                borderColor: node ? `${hex}28` : 'rgba(255,255,255,0.05)',
+            }}
+        >
+            {node ? (
+                <>
+                    <div className="flex items-baseline gap-2 mb-1 flex-wrap">
+                        <span
+                            className="text-[11px] font-bold leading-snug"
+                            style={{ color: hex }}
+                        >
+                            {node.name}
+                        </span>
+                        {node.maxRanks > 1 && (
+                            <span
+                                className="text-[9px] font-semibold tabular-nums"
+                                style={{ color: `${hex}99` }}
+                            >
+                                {ranks}/{node.maxRanks}
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-[10px] text-white/50 leading-relaxed">
+                        {node.description}
+                    </p>
+                </>
+            ) : (
+                <p className="text-[10px] text-white/20 italic leading-snug pt-1">
+                    Hover or focus a skill to see its description
+                </p>
+            )}
+        </div>
+    )
+}
+
 // ── Branch tree ───────────────────────────────────────────────────────────────
 
 interface Props {
@@ -131,9 +173,10 @@ interface Props {
 }
 
 export function BranchTree({ branch, allocs, onChange }: Props) {
-    const meta   = BRANCH_META[branch]
-    const nodes  = useMemo(() => getPlannedNodes(branch), [branch])
-    const bpts   = useMemo(() => branchPoints(allocs, branch), [allocs, branch])
+    const meta      = BRANCH_META[branch]
+    const nodes     = useMemo(() => getPlannedNodes(branch), [branch])
+    const bpts      = useMemo(() => branchPoints(allocs, branch), [allocs, branch])
+    const headingId = useId()
 
     // Fast id → node lookup for lock reason text
     const nodeById = useMemo(() => {
@@ -142,11 +185,30 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
         return m
     }, [nodes])
 
+    // Active node — tracks hover/focus for the detail strip.
+    // Debounced clear prevents flicker when moving between adjacent nodes.
+    const [activeNode, setActiveNode] = useState<PlannedNode | null>(null)
+    const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    const handleActivate = useCallback((node: PlannedNode, active: boolean) => {
+        if (active) {
+            if (clearTimerRef.current) clearTimeout(clearTimerRef.current)
+            setActiveNode(node)
+        } else {
+            clearTimerRef.current = setTimeout(() => setActiveNode(null), 150)
+        }
+    }, [])
+
     return (
-        <div className="flex flex-col gap-3">
+        <div
+            role="group"
+            aria-labelledby={headingId}
+            className="flex flex-col gap-3"
+        >
             {/* Branch header */}
             <div className="px-1">
                 <h2
+                    id={headingId}
                     className="text-sm font-bold uppercase tracking-widest"
                     style={{ color: meta.hex }}
                 >
@@ -156,11 +218,12 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
                 <div className="mt-1.5 flex items-center gap-2">
                     <div
                         className="h-1 rounded-full transition-all duration-300"
-                        style={{
-                            width: '100%',
-                            background: `rgba(255,255,255,0.06)`,
-                            position: 'relative',
-                        }}
+                        style={{ width: '100%', background: 'rgba(255,255,255,0.06)', position: 'relative' }}
+                        role="progressbar"
+                        aria-label={`${meta.label} points`}
+                        aria-valuenow={bpts}
+                        aria-valuemin={0}
+                        aria-valuemax={51}
                     >
                         <div
                             className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
@@ -174,6 +237,7 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
                     <span
                         className="text-[10px] font-semibold tabular-nums shrink-0"
                         style={{ color: bpts > 0 ? meta.hex : 'rgba(255,255,255,0.25)' }}
+                        aria-hidden="true"
                     >
                         {bpts} pts
                     </span>
@@ -194,10 +258,10 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
 
                 {/* Skill nodes */}
                 {nodes.map((node) => {
-                    const state  = getNodeState(node, allocs, bpts)
-                    const ranks  = allocs[node.uid] ?? 0
+                    const state = getNodeState(node, allocs, bpts)
+                    const ranks = allocs[node.uid] ?? 0
 
-                    // Compute lock reason for tooltip — name specific missing prerequisites
+                    // Compute lock reason — list specific missing prerequisite names
                     let lockReason: string | null = null
                     if (state === 'locked') {
                         const missingPrereqs = node.prerequisites
@@ -209,6 +273,11 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
                             lockReason = `Requires: ${names}`
                         }
                     }
+
+                    // Tooltip alignment: keep edge-column tooltips inside the canvas
+                    const tooltipAlign =
+                        node.col === 0 ? 'left' :
+                        node.col === 2 ? 'right' : 'center'
 
                     const xPct = COL_PCT[node.col]
                     const yPct = ROW_PCT[node.row as 0|1|2|3|4|5|6]
@@ -232,11 +301,20 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
                                 onClick={() => onChange(cycleNode(allocs, node.uid))}
                                 onDecrement={() => onChange(decrementNode(allocs, node.uid))}
                                 tooltipSide={node.row === 0 ? 'below' : 'above'}
+                                tooltipAlign={tooltipAlign}
+                                onActivate={(active) => handleActivate(node, active)}
                             />
                         </div>
                     )
                 })}
             </div>
+
+            {/* Node detail strip — non-hover description path */}
+            <NodeDetailStrip
+                node={activeNode}
+                ranks={activeNode ? (allocs[activeNode.uid] ?? 0) : 0}
+                hex={meta.hex}
+            />
         </div>
     )
 }
