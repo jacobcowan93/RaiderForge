@@ -1,18 +1,28 @@
 import Link from 'next/link'
-import { MAPS, getMapThumbnail } from '@/data/maps'
+import { MAPS } from '@/data/maps'
 import { CONTAINERS_BY_MAP } from '@/data/containers'
 import { fetchMfEventsSchedule } from '@/api/metaforgeService'
 import { fetchArdbQuests } from '@/api/ardbService'
 import { getActiveConditionsForMap } from '@/lib/events/conditions'
 import { getEventStyle } from '@/lib/events/eventsConfig'
 import { MapsTacticalZonesClient, type MapZoneHubDTO } from '@/components/maps/MapsTacticalZonesClient'
+import { getGameDataProvider } from '@/lib/game-data/provider'
+import { indexGameMapsByRfId, resolveMapThumbWithGameData } from '@/lib/maps/rfGameMapBridge'
 
 export default async function MapsPage() {
-    // Parallel fetches — both fail gracefully
-    const [events, ardbQuests] = await Promise.all([
+    // Parallel fetches — all fail gracefully. Game maps use the same provider as GET /api/game/maps.
+    const [events, ardbQuests, gameMaps] = await Promise.all([
         fetchMfEventsSchedule().catch(() => []),
-        fetchArdbQuests().catch(() => []),    // 30-min cache, used for quest count badges
+        fetchArdbQuests().catch(() => []), // 30-min cache, used for quest count badges
+        getGameDataProvider()
+            .getMaps()
+            .catch((err) => {
+                console.warn('[maps] game-data getMaps failed (pipeline: /api/game/maps)', err)
+                return []
+            }),
     ])
+
+    const gameByRfId = indexGameMapsByRfId(gameMaps)
 
     // Build quest-count-per-map from ARDB data
     const questCountByMap: Record<string, number> = {}
@@ -34,7 +44,7 @@ export default async function MapsPage() {
             id: map.id,
             displayName: map.displayName,
             subtitle: map.subtitle,
-            thumb: getMapThumbnail(map),
+            thumb: resolveMapThumbWithGameData(map, gameByRfId),
             risk: map.risk,
             hasEvents: conditions.activeConditions.length > 0,
             conditionBadges,

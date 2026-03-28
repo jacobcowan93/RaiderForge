@@ -20,6 +20,8 @@ import { getActiveConditionsForMap } from '../lib/events/conditions'
 import { getEventStyle, EVENT_ICONS } from '../lib/events/eventsConfig'
 import { fmtCountdown } from '../lib/events/rotationTable'
 import { MAPS, getMapThumbnail } from '../data/maps'
+import type { GameMap } from '@/lib/game-data/types'
+import { buildRfThumbnailOverrideUrls } from '@/lib/maps/rfGameMapBridge'
 
 // Risk level -> display style
 const RISK_STYLE: Record<string, { label: string; classes: string }> = {
@@ -49,13 +51,15 @@ function MapConditionCard({
   map,
   now,
   apiEvents,
+  thumbByRfId,
 }: {
   map: (typeof MAPS)[number]
   now: Date
   apiEvents: import('../lib/events/conditions').MfEvent[]
+  thumbByRfId: Record<string, string>
 }) {
   const conditions = getActiveConditionsForMap(map.id, now, apiEvents)
-  const thumb = getMapThumbnail(map)
+  const thumb = thumbByRfId[map.id] ?? getMapThumbnail(map)
   const risk = RISK_STYLE[map.risk] ?? RISK_STYLE.Medium
   const hasLiveEvent = conditions.minor || conditions.major
 
@@ -109,11 +113,29 @@ function MapConditionCard({
 export default function LivePanel() {
   const { events, loading, error } = useEventsSchedule()
   const [now, setNow] = useState(() => new Date())
+  const [thumbByRfId, setThumbByRfId] = useState<Record<string, string>>({})
 
   // 1-second clock for countdown timers
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
+  }, [])
+
+  // Thumbnails from GET /api/game/maps (normalized GameMap); fallback to static RF art.
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/game/maps', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((body: unknown) => {
+        if (cancelled || !body || typeof body !== 'object') return
+        const o = body as { ok?: boolean; data?: { maps?: unknown } }
+        if (!o.ok || !Array.isArray(o.data?.maps)) return
+        setThumbByRfId(buildRfThumbnailOverrideUrls(o.data.maps as GameMap[]))
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return (
@@ -151,7 +173,13 @@ export default function LivePanel() {
             </>
           ) : (
             MAPS.map(map => (
-              <MapConditionCard key={map.id} map={map} now={now} apiEvents={events} />
+              <MapConditionCard
+                key={map.id}
+                map={map}
+                now={now}
+                apiEvents={events}
+                thumbByRfId={thumbByRfId}
+              />
             ))
           )}
 

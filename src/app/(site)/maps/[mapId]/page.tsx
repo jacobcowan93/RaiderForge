@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { MAPS, getMapThumbnail } from '@/data/maps'
+import { MAPS } from '@/data/maps'
 import { CONTAINERS_BY_MAP } from '@/data/containers'
 import { fetchMfEventsSchedule, fetchMfQuests } from '@/api/metaforgeService'
 import { fetchArdbQuests } from '@/api/ardbService'
@@ -11,6 +11,8 @@ import { getMapGuide } from '@/lib/maps/mapGuideContent'
 import { getMetaforgeMapLootAreas } from '@/lib/maps/metaforgeMapData'
 import MapImageDisplay from '@/components/MapImageDisplay'
 import MapFieldGuide from '@/components/MapFieldGuide'
+import { getGameDataProvider } from '@/lib/game-data/provider'
+import { indexGameMapsByRfId, resolveMapThumbWithGameData } from '@/lib/maps/rfGameMapBridge'
 
 type Props = { params: Promise<{ mapId: string }> }
 
@@ -26,20 +28,28 @@ export default async function MapDetailPage({ params }: Props) {
     const map = MAPS.find(m => m.id === mapId)
     if (!map) notFound()
 
-    // Parallel fetches — all fail gracefully
-    const [events, mfQuests, ardbQuests, mfLootAreas] = await Promise.all([
+    // Parallel fetches — all fail gracefully. Game maps: same pipeline as GET /api/game/maps.
+    const [events, mfQuests, ardbQuests, mfLootAreas, gameMaps] = await Promise.all([
         fetchMfEventsSchedule().catch(() => []),
         fetchMfQuests().catch(() => []),
         fetchArdbQuests().catch(() => []),
         getMetaforgeMapLootAreas(mapId).catch(() => []),
+        getGameDataProvider()
+            .getMaps()
+            .catch((err) => {
+                console.warn('[maps] game-data getMaps failed (pipeline: /api/game/maps)', err)
+                return []
+            }),
     ])
+
+    const gameByRfId = indexGameMapsByRfId(gameMaps)
 
     const allMergedQuests = mergeQuests(mfQuests, ardbQuests)
     const mapQuests       = filterQuestsByMap(allMergedQuests, map.id)
 
     const now        = new Date()
     const conditions = getActiveConditionsForMap(map.id, now, events)
-    const thumb      = getMapThumbnail(map)
+    const thumb      = resolveMapThumbWithGameData(map, gameByRfId)
     const risk       = riskStyle[map.risk]
     const hasEvents  = conditions.activeConditions.length > 0
 
