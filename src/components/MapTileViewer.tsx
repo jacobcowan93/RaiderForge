@@ -223,6 +223,17 @@ export default function MapTileViewer({
         layerRef.current = tileLayer
         LRef.current    = L
 
+        // Contrast tint above tiles, below overlay/marker panes (Leaflet: tile ~200, overlay ~400, marker ~600).
+        const panes = map.getPanes()
+        const tintEl = L.DomUtil.create('div', 'rf-map-tint-overlay', panes.mapPane)
+        Object.assign(tintEl.style, {
+          position:   'absolute',
+          inset:      '0',
+          zIndex:     '350',
+          background: 'rgba(0,0,0,0.25)',
+          pointerEvents: 'none',
+        })
+
         // Clicking the map background closes all selection panels (or samples coords in placement mode)
         map.on('click', (e: any) => {
           if (poiPlacementModeRef.current && onPoiPlacementSampleRef.current) {

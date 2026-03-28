@@ -555,11 +555,17 @@ export default function MapImageDisplay({
             mapHeight="min(72vh, 720px)"
           />
         ) : (
-          <img
-            src={fallbackSrc}
-            alt={fallbackAlt}
-            className="w-full object-contain max-h-[520px]"
-          />
+          <div className="relative w-full">
+            <img
+              src={fallbackSrc}
+              alt={fallbackAlt}
+              className="relative z-0 w-full object-contain max-h-[520px]"
+            />
+            <div
+              className="absolute inset-0 z-[1] bg-black/[0.25] pointer-events-none"
+              aria-hidden
+            />
+          </div>
         )}
 
         {/* Quest detail panel — animates in from right on marker click.
