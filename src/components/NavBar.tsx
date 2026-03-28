@@ -13,6 +13,7 @@ const navLinks: { href: string; label: string; badge?: 'beta' }[] = [
     { href: '/blueprints',   label: 'Blueprints'  },
     { href: '/marketplace',  label: 'Marketplace' },
     { href: '/maps',         label: 'Maps'        },
+    { href: '/trials',       label: 'Trials',      badge: 'beta' },
     { href: '/loadouts',     label: 'Loadouts',    badge: 'beta' },
     // /skill-trees route is in development; links to future page
     { href: '/skill-trees',  label: 'Skill Trees' },

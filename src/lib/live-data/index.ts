@@ -12,7 +12,12 @@ export {
     LIVE_DATA_MAP_ROTATION_HINT,
     type LiveDataChipKind,
 } from './messages'
-export { ARDB_ATTRIBUTION, METAFORGE_ATTRIBUTION, TCNO_ATTRIBUTION } from './attribution'
+export {
+    ARDB_ATTRIBUTION,
+    METAFORGE_ATTRIBUTION,
+    METAFORGE_GUIDES_ATTRIBUTION,
+    TCNO_ATTRIBUTION,
+} from './attribution'
 export {
     buildLiveScheduleBatch,
     scheduleSliceByMapId,
