@@ -31,6 +31,13 @@ export type MfEvent = {
   [key: string]: unknown
 }
 
+/** Milliseconds remaining in the current UTC hour (shared schedule window tick). */
+export function msLeftInUtcHour(now: Date): number {
+  return (
+    (60 - now.getUTCMinutes()) * 60 * 1000 - now.getUTCSeconds() * 1000 - now.getUTCMilliseconds()
+  )
+}
+
 export type MapConditions = {
   minor: string | null
   major: string | null
@@ -104,7 +111,7 @@ export function getActiveConditionsForMap(
   apiEvents?: MfEvent[]
 ): MapConditions {
   const utcHour = now.getUTCHours()
-  const msLeftInHour = (60 - now.getUTCMinutes()) * 60 * 1000 - now.getUTCSeconds() * 1000 - now.getUTCMilliseconds()
+  const msLeftInHour = msLeftInUtcHour(now)
 
   // ── Try MetaForge API events first ────────────────────────────────────────
   if (apiEvents && apiEvents.length > 0) {

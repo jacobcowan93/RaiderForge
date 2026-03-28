@@ -23,7 +23,6 @@ import { deriveLiveDataChipKind } from '@/lib/live-data/feedState'
 import { formatLocalTimestampFull } from '@/lib/live-data/formatTimestamp'
 import { METAFORGE_ATTRIBUTION } from '@/lib/live-data/attribution'
 import { getEventStyle, EVENT_ICONS, getEventDescription } from '../lib/events/eventsConfig'
-import { fmtCountdown } from '../lib/events/rotationTable'
 import { MAPS } from '../data/maps'
 import { getZoneThumbnailUrlOrFallback } from '@/lib/maps/mapCovers'
 import { MapCoverImage } from '@/components/maps/MapCoverImage'
@@ -96,13 +95,10 @@ function MapConditionCard({
       </Link>
 
       <div className="px-2.5 py-2 border-t border-white/[0.04]">
-        <div className="flex items-center justify-between gap-2 mb-1.5">
+        <div className="flex items-center gap-2 mb-1.5">
           <Link href={hubHref} className="text-[11px] font-semibold text-white/85 hover:text-white truncate min-w-0">
             {map.displayName}
           </Link>
-          <span className="text-[10px] text-white/30 tabular-nums shrink-0" title="Time in current schedule window">
-            {fmtCountdown(conditions.msLeftInHour)}
-          </span>
         </div>
 
         {hasLiveEvent ? (
@@ -113,16 +109,6 @@ function MapConditionCard({
         ) : (
           <span className="text-[10px] text-white/25">No active events</span>
         )}
-
-        {conditions.source === 'api' && conditions.eventEndsAtMs != null ? (
-          <p className="text-[9px] text-white/35 tabular-nums mt-1.5">
-            Modifier window{' '}
-            <span className="text-amber-200/90 font-semibold">
-              {fmtCountdown(Math.max(0, conditions.eventEndsAtMs - now.getTime()))}
-            </span>{' '}
-            remaining
-          </p>
-        ) : null}
 
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
           {hasLiveEvent && (

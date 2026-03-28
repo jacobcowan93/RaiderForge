@@ -1,8 +1,6 @@
-import arcBg from '@/assets/images/ARC_Blueprint_Background.jpg'
-
 /**
- * Maps section layout — full-bleed background plus a light uniform tint (~20% black)
- * so copy and cards stay readable without hiding the image.
+ * Maps section layout — full-viewport skill tree art (`public/images/ARC_Raiders_Main_SkillTree.png`)
+ * plus a light uniform tint (~20% black) so copy and cards stay readable.
  *
  * Stacking context notes:
  *   - Site layout watermark: fixed, z-0 in root stacking context
@@ -16,7 +14,7 @@ export default function MapsLayout({ children }: { children: React.ReactNode }) 
         <div className="relative">
             <div
                 className="pointer-events-none fixed inset-0 z-[5] bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: `url(${arcBg.src})` }}
+                style={{ backgroundImage: "url('/images/ARC_Raiders_Main_SkillTree.png')" }}
                 aria-hidden="true"
             />
             <div

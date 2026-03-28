@@ -35,6 +35,8 @@ export function buildTcnoZoneVMs(
             hasEvents: conditions.activeConditions.length > 0,
             conditionBadges,
             fromMetaforge: slice.fromMetaforge,
+            eventEndsAtMs: conditions.eventEndsAtMs,
+            conditionsSource: conditions.source,
         }
     })
 }

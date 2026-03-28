@@ -74,14 +74,6 @@ export default function MarketplacePage() {
 
     return (
         <div className="relative max-w-7xl mx-auto py-8 md:py-10 px-4 sm:px-5">
-            <div
-                className="pointer-events-none absolute inset-x-0 -top-24 h-[28rem] -z-10"
-                aria-hidden
-                style={{
-                    background:
-                        'radial-gradient(ellipse 70% 40% at 50% 0%, rgba(239,68,68,0.06) 0%, transparent 70%)',
-                }}
-            />
             <div className="space-y-4 md:space-y-5">
                 <MarketplaceHeader />
 

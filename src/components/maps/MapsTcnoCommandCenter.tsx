@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { getEventDescription, EVENT_ICONS } from '@/lib/events/eventsConfig'
+import { msLeftInUtcHour } from '@/lib/events/conditions'
+import { fmtCountdown } from '@/lib/events/rotationTable'
 import { LiveDataFeedStrip } from '@/components/live-data/LiveDataFeedStrip'
 import { LIVE_DATA_MAP_ROTATION_HINT } from '@/lib/live-data/messages'
 import { MapsHubLegend } from '@/components/maps/MapsHubLegend'
@@ -21,6 +23,9 @@ export type TcnoZoneVM = {
     conditionBadges: { name: string; bg: string; border: string; text: string }[]
     /** Zone modifiers matched live MetaForge rows (else rotation table). */
     fromMetaforge: boolean
+    /** Earliest MetaForge endTime among active rows for this zone (epoch ms), else null. */
+    eventEndsAtMs: number | null
+    conditionsSource: 'api' | 'rotation-fallback'
 }
 
 type Props = {
@@ -69,6 +74,12 @@ export function MapsTcnoCommandCenter({
 
     const [query, setQuery] = useState('')
     const [modifiersOnly, setModifiersOnly] = useState(false)
+    const [now, setNow] = useState(() => new Date())
+
+    useEffect(() => {
+        const id = setInterval(() => setNow(new Date()), 1000)
+        return () => clearInterval(id)
+    }, [])
 
     const selectZone = (id: string) => {
         setSelectedId(id)
@@ -172,6 +183,19 @@ export function MapsTcnoCommandCenter({
                                             title="Active modifiers"
                                         />
                                     )}
+                                    <div
+                                        className="absolute top-2 right-2 flex flex-col items-end gap-0.5 rounded-md bg-black/55 px-1.5 py-1 border border-white/10"
+                                        title="Schedule window / modifier timing"
+                                    >
+                                        <span className="text-[10px] font-bold tabular-nums text-white/95 leading-none">
+                                            {fmtCountdown(msLeftInUtcHour(now))}
+                                        </span>
+                                        {z.conditionsSource === 'api' && z.eventEndsAtMs != null ? (
+                                            <span className="text-[9px] font-semibold tabular-nums text-amber-200/95 leading-none">
+                                                {fmtCountdown(Math.max(0, z.eventEndsAtMs - now.getTime()))}
+                                            </span>
+                                        ) : null}
+                                    </div>
                                     <div className="absolute bottom-0 left-0 right-0 px-2.5 pb-2 pt-6">
                                         <p className="text-[9px] uppercase tracking-wider text-white/45 truncate">{z.subtitle}</p>
                                         <p className="text-sm font-bold text-white truncate leading-tight">{z.displayName}</p>
