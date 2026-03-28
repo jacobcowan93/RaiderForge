@@ -17,8 +17,20 @@ import {
     type MapProgressSaveV1,
 } from '@/lib/maps/mapProgressSave'
 import { loadMapProgressSave, saveMapProgressSave } from '@/lib/maps/mapProgressSaveStorage'
+import {
+    getPoisForMap,
+    filterPoisByCategories,
+    filterPoisForFloor,
+    POI_MVP_CATEGORIES,
+    type MapPoi,
+} from '@/lib/maps/pois'
+import type { PoiCategory } from '@/lib/maps/poi-types'
+import { PoiPlacementReadout, type PoiPlacementSample } from '@/components/maps/MapPoiLayer'
+import { POI_CATEGORY_META } from '@/components/maps/MapPoiMarker'
 import MapQuestFilter from './MapQuestFilter'
 import QuestDetailPanel from './QuestDetailPanel'
+
+const SHOW_POI_PLACEMENT = process.env.NEXT_PUBLIC_RF_POI_PLACEMENT === '1'
 
 const MapTileViewer = dynamic(() => import('./MapTileViewer'), {
   ssr: false,
@@ -70,10 +82,23 @@ export default function MapImageDisplay({
     () => new Set(mapQuests.map(q => q.traderId)),
   )
   const [activeLayers, setActiveLayers]       = useState<Set<MapLayerType>>(
-    () => new Set<MapLayerType>(['quests', 'containers', 'loot_areas']),
+    () => new Set<MapLayerType>(['quests', 'containers', 'loot_areas', 'pois']),
   )
+  const [selectedPoi, setSelectedPoi]         = useState<MapPoi | null>(null)
+  const [activePoiCategories, setActivePoiCategories] = useState<Set<PoiCategory>>(
+    () => new Set(POI_MVP_CATEGORIES),
+  )
+  const [poiPlacementMode, setPoiPlacementMode] = useState(false)
+  const [poiPlacementSample, setPoiPlacementSample] = useState<PoiPlacementSample | null>(null)
 
   const handleTileFallback = useCallback(() => setTileFallback(true), [])
+
+  useEffect(() => {
+    setActivePoiCategories(new Set(POI_MVP_CATEGORIES))
+    setSelectedPoi(null)
+    setPoiPlacementSample(null)
+    setPoiPlacementMode(false)
+  }, [map.id])
 
   useEffect(() => {
     setMapProgress(loadMapProgressSave())
@@ -239,19 +264,53 @@ export default function MapImageDisplay({
   // Selecting a quest clears container + loot area selection (mutual exclusion keeps UI clean)
   const handleQuestSelect = useCallback((q: MergedQuest | null) => {
     setSelectedQuest(q)
-    if (q !== null) { setSelectedContainer(null); setSelectedLootArea(null) }
+    if (q !== null) {
+      setSelectedContainer(null)
+      setSelectedLootArea(null)
+      setSelectedPoi(null)
+    }
   }, [])
 
   // Selecting a container clears quest panel + loot area selection
   const handleContainerSelect = useCallback((c: ContainerMarker | null) => {
     setSelectedContainer(c)
-    if (c !== null) { setSelectedQuest(null); setSelectedLootArea(null) }
+    if (c !== null) {
+      setSelectedQuest(null)
+      setSelectedLootArea(null)
+      setSelectedPoi(null)
+    }
   }, [])
 
   // Selecting a loot area clears quest + container selections
   const handleLootAreaSelect = useCallback((a: LootAreaMarker | null) => {
     setSelectedLootArea(a)
-    if (a !== null) { setSelectedQuest(null); setSelectedContainer(null) }
+    if (a !== null) {
+      setSelectedQuest(null)
+      setSelectedContainer(null)
+      setSelectedPoi(null)
+    }
+  }, [])
+
+  const handlePoiSelect = useCallback((p: MapPoi | null) => {
+    setSelectedPoi(p)
+    if (p !== null) {
+      setSelectedQuest(null)
+      setSelectedContainer(null)
+      setSelectedLootArea(null)
+    }
+  }, [])
+
+  const togglePoiCategory = useCallback((c: PoiCategory) => {
+    setActivePoiCategories(prev => {
+      const next = new Set(prev)
+      if (next.has(c)) next.delete(c)
+      else next.add(c)
+      return next
+    })
+  }, [])
+
+  const showAllPoiCategories = useCallback(() => {
+    setActivePoiCategories(new Set(POI_MVP_CATEGORIES))
   }, [])
 
   const toggleTrader = useCallback((traderId: string) => {
@@ -289,21 +348,23 @@ export default function MapImageDisplay({
     if (selectedQuest     && !activeLayers.has('quests'))      setSelectedQuest(null)
     if (selectedContainer && !activeLayers.has('containers'))  setSelectedContainer(null)
     if (selectedLootArea  && !activeLayers.has('loot_areas'))  setSelectedLootArea(null)
-  }, [activeLayers, selectedQuest, selectedContainer, selectedLootArea])
+    if (selectedPoi       && !activeLayers.has('pois'))        setSelectedPoi(null)
+  }, [activeLayers, selectedQuest, selectedContainer, selectedLootArea, selectedPoi])
 
   // ESC closes whichever overlay is open
   useEffect(() => {
-    if (!selectedQuest && !selectedContainer && !selectedLootArea) return
+    if (!selectedQuest && !selectedContainer && !selectedLootArea && !selectedPoi) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSelectedQuest(null)
         setSelectedContainer(null)
         setSelectedLootArea(null)
+        setSelectedPoi(null)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selectedQuest, selectedContainer, selectedLootArea])
+  }, [selectedQuest, selectedContainer, selectedLootArea, selectedPoi])
 
   /**
    * Quests for active traders — drives MapTileViewer quest marker re-render.
@@ -337,6 +398,17 @@ export default function MapImageDisplay({
     ? mfLootAreas
     : []
 
+  const mapPois = useMemo(() => getPoisForMap(map.id), [map.id])
+  const poisForFloor = useMemo(
+    () => filterPoisForFloor(mapPois, activeFloor),
+    [mapPois, activeFloor],
+  )
+  const visiblePoisFiltered = useMemo(
+    () => filterPoisByCategories(poisForFloor, activePoiCategories),
+    [poisForFloor, activePoiCategories],
+  )
+  const visiblePoisOnMap = activeLayers.has('pois') ? visiblePoisFiltered : []
+
   /** Unique tiers present in the visible loot area set — used for legend. */
   const activeLootAreaTiers = useMemo<LootAreaTier[]>(() => {
     if (visibleLootAreas.length === 0) return []
@@ -348,6 +420,9 @@ export default function MapImageDisplay({
   const hasTiles      = !!map.tileConfig && !tileFallback
   const isMultiFloor  = map.mapType === 'multi-floor' && Array.isArray(map.floors) && map.floors.length > 0
   const hasQuests     = mapQuests.length > 0
+  const showMapFilters =
+    hasTiles &&
+    (hasQuests || mapPois.length > 0 || ALL_CONTAINERS.length > 0 || mfLootAreas.length > 0)
   const { status: calibrationStatus } = getCalibrationForMap(map.id)
 
   const fallbackSrc = isMultiFloor
@@ -362,6 +437,7 @@ export default function MapImageDisplay({
   const visibleQuestMarkerCount     = filteredQuests.filter(q => q.position !== null).length
   const visibleContainerMarkerCount = visibleContainers.length
   const visibleLootAreaMarkerCount  = visibleLootAreas.length
+  const visiblePoiMarkerCount       = visiblePoisOnMap.length
 
   return (
     <div
@@ -411,7 +487,7 @@ export default function MapImageDisplay({
       )}
 
       {/* Filter bar — layer toggles + trader toggles */}
-      {hasTiles && hasQuests && (
+      {showMapFilters && (
         <div className={enableFullscreen && isFullscreen ? 'shrink-0' : undefined}>
           <MapQuestFilter
             quests={mapQuests}
@@ -423,6 +499,11 @@ export default function MapImageDisplay({
             onLayerToggle={toggleLayer}
             containerCount={ALL_CONTAINERS.length}
             lootAreaCount={mfLootAreas.length}
+            poiCount={mapPois.length}
+            visiblePoiCount={visiblePoiMarkerCount}
+            activePoiCategories={activePoiCategories}
+            onTogglePoiCategory={togglePoiCategory}
+            onPoiCategoriesShowAll={showAllPoiCategories}
           />
         </div>
       )}
@@ -449,6 +530,11 @@ export default function MapImageDisplay({
             lootAreas={visibleLootAreas}
             selectedLootAreaId={selectedLootArea?.id ?? null}
             onLootAreaSelect={handleLootAreaSelect}
+            pois={visiblePoisOnMap}
+            selectedPoiId={selectedPoi?.id ?? null}
+            onPoiSelect={handlePoiSelect}
+            poiPlacementMode={SHOW_POI_PLACEMENT && poiPlacementMode}
+            onPoiPlacementSample={setPoiPlacementSample}
             fillContainer={enableFullscreen && isFullscreen}
             mapHeight="min(72vh, 720px)"
           />
@@ -498,6 +584,23 @@ export default function MapImageDisplay({
           />
         )}
 
+        {selectedPoi && (
+          <PoiInfoBadge
+            key={selectedPoi.id}
+            poi={selectedPoi}
+            onClose={() => setSelectedPoi(null)}
+          />
+        )}
+
+        {SHOW_POI_PLACEMENT && hasTiles && (
+          <PoiPlacementReadout
+            sample={poiPlacementSample}
+            placementMode={poiPlacementMode}
+            onToggleMode={() => setPoiPlacementMode(v => !v)}
+            onClear={() => setPoiPlacementSample(null)}
+          />
+        )}
+
         {/* Combined marker legend — bottom-left, shows active container types + loot tiers */}
         {hasTiles && (
           <MapMarkerLegend
@@ -512,6 +615,7 @@ export default function MapImageDisplay({
           questMarkerCount={visibleQuestMarkerCount}
           containerMarkerCount={visibleContainerMarkerCount}
           lootAreaMarkerCount={visibleLootAreaMarkerCount}
+          poiMarkerCount={visiblePoiMarkerCount}
         />
 
         {hasTiles && (
@@ -526,6 +630,67 @@ export default function MapImageDisplay({
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// ── Curated POI info badge ─────────────────────────────────────────────────────
+
+function PoiInfoBadge({ poi, onClose }: { poi: MapPoi; onClose: () => void }) {
+  const meta = POI_CATEGORY_META[poi.category]
+
+  return (
+    <div
+      className="rf-badge-enter absolute top-3 left-1/2 -translate-x-1/2 z-[999] flex flex-wrap items-start gap-2.5 bg-black/88 backdrop-blur-sm rounded-lg border border-white/[0.08] px-3 py-2 shadow-xl shadow-black/50 pointer-events-auto max-w-[min(100vw-1.5rem,22rem)]"
+      onClick={e => e.stopPropagation()}
+    >
+      <span
+        className="w-3 h-3 flex-shrink-0 rounded-sm mt-0.5 border border-white/25"
+        style={{ background: meta.color, boxShadow: `0 0 8px ${meta.color}80` }}
+        aria-hidden
+      />
+      <div className="flex flex-col min-w-0 gap-1">
+        <span
+          className="text-[9px] uppercase tracking-widest leading-none font-semibold"
+          style={{ color: meta.color }}
+        >
+          {meta.label} pin
+        </span>
+        <span className="text-[11px] font-medium text-white/85 leading-tight">{poi.name}</span>
+        {poi.description && (
+          <span className="text-[10px] text-white/45 leading-snug">{poi.description}</span>
+        )}
+        {(poi.questIds?.length || poi.itemIds?.length) ? (
+          <div className="text-[9px] text-white/30 font-mono leading-snug space-y-0.5">
+            {poi.questIds && poi.questIds.length > 0 && (
+              <p>
+                <span className="text-white/40">Quests:</span> {poi.questIds.join(', ')}
+              </p>
+            )}
+            {poi.itemIds && poi.itemIds.length > 0 && (
+              <p>
+                <span className="text-white/40">Items:</span> {poi.itemIds.join(', ')}
+              </p>
+            )}
+          </div>
+        ) : null}
+      </div>
+      <button
+        onClick={onClose}
+        aria-label="Dismiss"
+        className="flex-shrink-0 text-white/25 hover:text-white/70 transition-colors ml-0.5"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2.5}
+          stroke="currentColor"
+          className="w-3 h-3"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
   )
 }
@@ -759,12 +924,14 @@ function MapStatusBadge({
   questMarkerCount,
   containerMarkerCount,
   lootAreaMarkerCount,
+  poiMarkerCount,
 }: {
   hasTiles: boolean
   tileFallback: boolean
   questMarkerCount: number
   containerMarkerCount: number
   lootAreaMarkerCount: number
+  poiMarkerCount: number
 }) {
   if (tileFallback) {
     return (
@@ -780,7 +947,8 @@ function MapStatusBadge({
   }
 
   if (hasTiles) {
-    const totalMarkers = questMarkerCount + containerMarkerCount + lootAreaMarkerCount
+    const totalMarkers =
+      questMarkerCount + containerMarkerCount + lootAreaMarkerCount + poiMarkerCount
     const label = totalMarkers > 0
       ? `${totalMarkers} marker${totalMarkers !== 1 ? 's' : ''}`
       : 'No markers'

@@ -52,6 +52,9 @@ import type { MapTileConfig } from '../data/maps'
 import type { MergedQuest } from '../types/quests'
 import type { ContainerMarker, LootAreaMarker } from '../types/mapLayers'
 import { CONTAINER_TYPE_META, LOOT_AREA_TIER_META } from '../types/mapLayers'
+import type { MapPoi } from '@/lib/maps/poi-types'
+import { buildPoiMarkerHtml, POI_CATEGORY_META } from '@/components/maps/MapPoiMarker'
+import type { PoiPlacementSample } from '@/components/maps/MapPoiLayer'
 import { mfPositionToPixels } from '../lib/quests/questUtils'
 import { getCalibrationForMap, type WorldBounds } from '../data/mapCalibration'
 
@@ -104,6 +107,13 @@ interface Props {
   mapHeight?: string
   /** When true, map stretches to fill a flex parent (fullscreen shell). */
   fillContainer?: boolean
+  /** Curated Pins layer (percent coordinates on full map image). */
+  pois?: MapPoi[]
+  selectedPoiId?: string | null
+  onPoiSelect?: (poi: MapPoi | null) => void
+  /** When true, map clicks emit placement samples instead of clearing selection. */
+  poiPlacementMode?: boolean
+  onPoiPlacementSample?: (sample: PoiPlacementSample) => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -125,6 +135,11 @@ export default function MapTileViewer({
   onLootAreaSelect,
   mapHeight = 'min(72vh, 720px)',
   fillContainer = false,
+  pois = [],
+  selectedPoiId = null,
+  onPoiSelect,
+  poiPlacementMode = false,
+  onPoiPlacementSample,
 }: Props) {
   const containerRef       = useRef<HTMLDivElement>(null)
   const mapRef             = useRef<any>(null)
@@ -133,6 +148,20 @@ export default function MapTileViewer({
   const markerLayerRef     = useRef<any>(null)
   const containerLayerRef  = useRef<any>(null)
   const lootAreaLayerRef   = useRef<any>(null)
+  const poiLayerRef        = useRef<any>(null)
+
+  const tileConfigRef = useRef(tileConfig)
+  tileConfigRef.current = tileConfig
+  const activeLayerIndexRef = useRef(activeLayerIndex)
+  activeLayerIndexRef.current = activeLayerIndex
+  const rfMapIdRef = useRef(rfMapId)
+  rfMapIdRef.current = rfMapId
+  const poiPlacementModeRef = useRef(poiPlacementMode)
+  poiPlacementModeRef.current = poiPlacementMode
+  const onPoiPlacementSampleRef = useRef(onPoiPlacementSample)
+  onPoiPlacementSampleRef.current = onPoiPlacementSample
+  const onPoiSelectRef = useRef(onPoiSelect)
+  onPoiSelectRef.current = onPoiSelect
 
   // Keep stable refs so marker click closures always call latest callbacks
   // without re-creating all markers on every render.
@@ -194,11 +223,29 @@ export default function MapTileViewer({
         layerRef.current = tileLayer
         LRef.current    = L
 
-        // Clicking the map background closes all selection panels
-        map.on('click', () => {
+        // Clicking the map background closes all selection panels (or samples coords in placement mode)
+        map.on('click', (e: any) => {
+          if (poiPlacementModeRef.current && onPoiPlacementSampleRef.current) {
+            const tc = tileConfigRef.current
+            const idx = activeLayerIndexRef.current
+            const layerDef = tc.layers[idx] ?? tc.layers[0]
+            const z = layerDef.maxNativeZoom
+            const pt = map.project(e.latlng, z)
+            const w = tc.mapPixelSize
+            const x = Math.round(Math.min(100, Math.max(0, (pt.x / w) * 100)) * 100) / 100
+            const y = Math.round(Math.min(100, Math.max(0, (pt.y / w) * 100)) * 100) / 100
+            onPoiPlacementSampleRef.current({
+              mapId: rfMapIdRef.current,
+              x,
+              y,
+              floorIndex: activeLayerIndexRef.current,
+            })
+            return
+          }
           onQuestSelectRef.current(null)
           onContainerSelectRef.current?.(null)
           onLootAreaSelectRef.current?.(null)
+          onPoiSelectRef.current?.(null)
         })
 
         const { worldBounds } = getCalibrationForMap(rfMapId)
@@ -224,6 +271,11 @@ export default function MapTileViewer({
           selectedLootAreaId, onLootAreaSelectRef,
         )
 
+        renderPoiMarkers(
+          L, map, poiLayerRef,
+          pois, tileConfig, activeLayerIndex, selectedPoiId, onPoiSelectRef,
+        )
+
       } catch {
         if (!cancelled) onFallback()
       }
@@ -238,6 +290,7 @@ export default function MapTileViewer({
       markerLayerRef.current    = null
       containerLayerRef.current = null
       lootAreaLayerRef.current  = null
+      poiLayerRef.current       = null
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -296,6 +349,15 @@ export default function MapTileViewer({
       selectedLootAreaId, onLootAreaSelectRef,
     )
   }, [lootAreas, selectedLootAreaId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // --- Re-render curated POI markers ---
+  useEffect(() => {
+    if (!mapRef.current || !LRef.current) return
+    renderPoiMarkers(
+      LRef.current, mapRef.current, poiLayerRef,
+      pois, tileConfig, activeLayerIndex, selectedPoiId, onPoiSelectRef,
+    )
+  }, [pois, selectedPoiId, activeLayerIndex]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Leaflet needs invalidateSize when the container is resized (e.g. fullscreen).
   useEffect(() => {
@@ -655,6 +717,69 @@ function buildLootAreaMarkerHtml(color: string, selected: boolean): string {
     cursor:pointer;
     transition:transform 0.1s;
   " onmouseenter="this.style.transform='scale(1.5)'" onmouseleave="this.style.transform='scale(1)'"></div>`
+}
+
+// ── Curated POI markers (percent of full map image, top-left origin) ───────────
+
+function renderPoiMarkers(
+  L: any,
+  map: any,
+  poiLayerRef: React.MutableRefObject<any>,
+  pois: MapPoi[],
+  tileConfig: MapTileConfig,
+  activeLayerIndex: number,
+  selectedPoiId: string | null,
+  onPoiSelectRef: React.MutableRefObject<((p: MapPoi | null) => void) | undefined>,
+) {
+  if (!poiLayerRef.current) {
+    poiLayerRef.current = L.layerGroup().addTo(map)
+  } else {
+    poiLayerRef.current.clearLayers()
+  }
+
+  if (pois.length === 0) return
+
+  const layerDef = tileConfig.layers[activeLayerIndex] ?? tileConfig.layers[0]
+  const maxNativeZoom = layerDef.maxNativeZoom
+  const w = tileConfig.mapPixelSize
+
+  for (const poi of pois) {
+    const pixels: [number, number] = [(poi.x / 100) * w, (poi.y / 100) * w]
+    const latlng = map.unproject(pixels, maxNativeZoom)
+    const meta = POI_CATEGORY_META[poi.category]
+    const isSelected = poi.id === selectedPoiId
+
+    const markerSize = isSelected ? 15 : 12
+    const anchor = markerSize / 2
+
+    const icon = L.divIcon({
+      className: '',
+      html: buildPoiMarkerHtml(poi.category, isSelected),
+      iconSize: [markerSize, markerSize],
+      iconAnchor: [anchor, anchor],
+      tooltipAnchor: [anchor + 4, 0],
+    })
+
+    const marker = L.marker(latlng, { icon })
+
+    marker.bindTooltip(`${poi.name} · ${meta.label}`, {
+      direction: 'right',
+      offset: [6, 0],
+      opacity: 0.9,
+      className: 'rf-map-tooltip',
+    })
+
+    marker.on('click', (ev: any) => {
+      L.DomEvent.stopPropagation(ev)
+      if (isSelected) {
+        onPoiSelectRef.current?.(null)
+      } else {
+        onPoiSelectRef.current?.(poi)
+      }
+    })
+
+    poiLayerRef.current.addLayer(marker)
+  }
 }
 
 function buildContainerMarkerHtml(color: string, selected: boolean): string {

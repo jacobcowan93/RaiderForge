@@ -14,12 +14,17 @@
  *   One button per trader who has quests on the current map.
  *   Active traders shown with rf-red accent. "Show all" clear button
  *   appears when any trader is hidden.
+ *
+ * Row 3 — Pin categories (only when Pins layer is on and the map has MapPoi data):
+ *   Toggle quest / container / key / extract curated pins.
  */
 
 import type { MergedQuest } from '../types/quests'
 import type { CalibrationStatus } from '../data/mapCalibration'
 import type { MapLayerType } from '../types/mapLayers'
 import { MAP_LAYER_DEFS } from '../types/mapLayers'
+import type { PoiCategory } from '@/lib/maps/poi-types'
+import { MapPoiCategoryRow } from '@/components/maps/MapPoiLayer'
 
 interface Props {
   /** All quests for this map — used to build the trader list + counts. */
@@ -51,6 +56,13 @@ interface Props {
    * 0 when the API is unavailable (HTTP 500 as of 2026-03) — shows "—" badge.
    */
   lootAreaCount: number
+  /** Curated Pins (MapPoi) count for this map — 0 when none. */
+  poiCount: number
+  /** Pins currently visible after category filter (layer must be on). */
+  visiblePoiCount: number
+  activePoiCategories: ReadonlySet<PoiCategory>
+  onTogglePoiCategory: (c: PoiCategory) => void
+  onPoiCategoriesShowAll: () => void
 }
 
 export default function MapQuestFilter({
@@ -63,6 +75,11 @@ export default function MapQuestFilter({
   onLayerToggle,
   containerCount,
   lootAreaCount,
+  poiCount,
+  visiblePoiCount,
+  activePoiCategories,
+  onTogglePoiCategory,
+  onPoiCategoriesShowAll,
 }: Props) {
   // Build unique trader list from quests on this map, preserving insertion order
   const traders = Array.from(
@@ -84,11 +101,13 @@ export default function MapQuestFilter({
   const visibleCount = quests.filter(q => activeTraders.has(q.traderId) && activeLayers.has('quests')).length
     + (activeLayers.has('containers') ? containerCount   : 0)
     + (activeLayers.has('loot_areas') ? lootAreaCount    : 0)
+    + (activeLayers.has('pois') ? visiblePoiCount : 0)
 
   const layerCountFor = (type: MapLayerType): number | null => {
     if (type === 'quests')     return quests.length
     if (type === 'containers') return containerCount
     if (type === 'loot_areas') return lootAreaCount
+    if (type === 'pois') return poiCount
     return null
   }
 
@@ -218,6 +237,14 @@ export default function MapQuestFilter({
             </button>
           )}
         </div>
+      )}
+
+      {activeLayers.has('pois') && poiCount > 0 && (
+        <MapPoiCategoryRow
+          activePoiCategories={activePoiCategories}
+          onToggleCategory={onTogglePoiCategory}
+          onShowAll={onPoiCategoriesShowAll}
+        />
       )}
 
     </div>
