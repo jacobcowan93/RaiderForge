@@ -87,7 +87,8 @@ export function buildPoiMarkerHtml(category: PoiCategory, selected: boolean): st
     const imgHtml = `<img src="${iconSrc}" width="${innerSize}" height="${innerSize}" style="width:${innerSize}px;height:${innerSize}px;object-fit:contain;filter:brightness(0) invert(1);pointer-events:none;display:block;" onerror="this.style.display='none'" />`
 
     if (selected) {
-        return `<div style="box-sizing:border-box;width:22px;height:22px;background:${color};border:3px solid rgba(255,255,255,0.95);border-radius:6px;box-shadow:0 0 0 2px rgba(0,0,0,0.55),0 0 14px ${color},0 0 28px ${color}55,0 2px 8px rgba(0,0,0,0.85);cursor:pointer;display:flex;align-items:center;justify-content:center;">${imgHtml}</div>`
+        // White inner border → dark edge → crimson ring → red outer halo → category glow
+        return `<div style="box-sizing:border-box;width:22px;height:22px;background:${color};border:2.5px solid #fff;border-radius:6px;box-shadow:0 0 0 1.5px rgba(0,0,0,0.75),0 0 0 3.5px #b3202a,0 0 0 5.5px rgba(179,32,42,0.38),0 0 14px ${color},0 2px 10px rgba(0,0,0,0.9);cursor:pointer;display:flex;align-items:center;justify-content:center;">${imgHtml}</div>`
     }
 
     return `<div style="box-sizing:border-box;width:18px;height:18px;background:${color};border:2.5px solid rgba(255,255,255,0.80);border-radius:5px;box-shadow:0 0 0 1px rgba(0,0,0,0.5),0 0 9px ${color}b0,0 2px 6px rgba(0,0,0,0.75);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.1s;" onmouseenter="this.style.transform='scale(1.22)'" onmouseleave="this.style.transform='scale(1)'">${imgHtml}</div>`

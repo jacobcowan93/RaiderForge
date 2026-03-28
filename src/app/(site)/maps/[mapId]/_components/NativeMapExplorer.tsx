@@ -36,7 +36,7 @@ const MapTileViewer = dynamic(() => import('@/components/MapTileViewer'), {
     loading: () => (
         <div className="w-full h-full bg-rf-bg flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
-                <div className="w-5 h-5 border-2 border-rf-orange/30 border-t-rf-orange rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-rf-red/20 border-t-rf-red rounded-full animate-spin" />
                 <span className="text-[10px] text-white/20 uppercase tracking-widest font-medium">
                     Loading map…
                 </span>
@@ -204,7 +204,7 @@ export default function NativeMapExplorer({
                         href={tcnoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-white/32 hover:text-rf-blue/65 transition-colors underline underline-offset-2"
+                        className="text-white/32 hover:text-white/55 transition-colors underline underline-offset-2"
                     >
                         maps.tcno.co
                     </a>
@@ -247,9 +247,9 @@ export default function NativeMapExplorer({
                                                     backgroundColor: d.color + '16',
                                                 }
                                                 : {
-                                                    color:           'rgba(249,250,251,0.88)',
-                                                    borderColor:     'rgba(249,250,251,0.28)',
-                                                    backgroundColor: 'rgba(249,250,251,0.07)',
+                                                    color:           '#f5f7fa',
+                                                    borderColor:     'rgba(179,32,42,0.45)',
+                                                    backgroundColor: 'rgba(179,32,42,0.13)',
                                                 }
                                             : {}
                                     }
@@ -282,7 +282,7 @@ export default function NativeMapExplorer({
                             className="w-36 pl-7 pr-7 py-[5px] text-[11px]
                                        bg-white/[0.04] border border-white/8 rounded-full
                                        text-white/85 placeholder-white/20
-                                       focus:outline-none focus:border-white/18 focus:bg-white/[0.06]
+                                       focus:outline-none focus:border-rf-red/30 focus:ring-1 focus:ring-rf-red/15 focus:bg-white/[0.05]
                                        transition-all [&::-webkit-search-cancel-button]:hidden"
                         />
                         {search && (
@@ -311,7 +311,7 @@ export default function NativeMapExplorer({
                                     tracking-wider rounded-full px-2.5 py-[5px] border
                                     transition-all whitespace-nowrap ${
                             showPanel
-                                ? 'border-rf-orange/40 bg-rf-orange/12 text-rf-orange'
+                                ? 'border-rf-red/40 bg-rf-red/12 text-rf-red'
                                 : 'border-white/10 text-white/32 hover:text-white/55 hover:border-white/18'
                         }`}
                     >
@@ -326,7 +326,7 @@ export default function NativeMapExplorer({
                                           min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold
                                           transition-colors ${
                             showPanel
-                                ? 'bg-rf-orange/20 text-rf-orange'
+                                ? 'bg-rf-red/20 text-rf-red'
                                 : 'bg-white/10 text-white/45'
                         }`}>
                             {activeCategories.size}
@@ -349,7 +349,7 @@ export default function NativeMapExplorer({
                             onClick={() => setActiveFloor(i)}
                             className={`text-[10px] font-medium rounded-md px-2 py-0.5 border transition-all ${
                                 activeFloor === i
-                                    ? 'border-rf-orange/40 bg-rf-orange/12 text-rf-orange'
+                                    ? 'border-rf-red/45 bg-rf-red/14 text-rf-red font-semibold'
                                     : 'border-white/8 text-white/28 hover:text-white/55 hover:border-white/18'
                             }`}
                         >
@@ -628,7 +628,7 @@ export default function NativeMapExplorer({
                 <div className="flex items-center gap-2">
                     {difficulty !== 'Normal' && (
                         <span className="text-[9px] font-semibold uppercase tracking-wider
-                                         border border-white/10 rounded-full px-2 py-px text-white/30">
+                                         border border-white/12 rounded-full px-2 py-px text-white/35">
                             {difficulty}
                         </span>
                     )}

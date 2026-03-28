@@ -509,7 +509,7 @@ export default function MapImageDisplay({
               onClick={() => setActiveFloor(i)}
               className={`text-xs font-medium rounded-lg px-3 py-1.5 transition-all ${
                 activeFloor === i
-                  ? 'bg-rf-red/20 text-rf-red border border-rf-red/30 shadow-sm shadow-rf-red/10'
+                  ? 'bg-rf-red/15 text-rf-red border border-rf-borderActive/70 shadow-sm shadow-rf-red/20 font-semibold'
                   : 'text-white/35 hover:text-white/70 hover:bg-white/5 border border-transparent'
               }`}
             >

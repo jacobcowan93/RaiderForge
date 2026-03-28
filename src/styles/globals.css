@@ -2,13 +2,18 @@
 @import "leaflet/dist/leaflet.css";
 
 @theme {
-    --color-rf-bg: #05060a;
-    --color-rf-bgSoft: #0b0f19;
-    --color-rf-border: #232734;
-    --color-rf-text: #f9fafb;
-    --color-rf-textSoft: #9ca3af;
-    --color-rf-red: #ff4040;
-    --color-rf-redSoft: #b91c1c;
+    --color-rf-bg: #07090d;
+    --color-rf-bgSoft: #0f141b;
+    --color-rf-border: #2a2f38;
+    --color-rf-text: #f5f7fa;
+    --color-rf-textSoft: #c8ced8;
+    --color-rf-textMuted: #8b93a1;
+    /* ── Red family — ARC Raiders identity ── */
+    --color-rf-red: #b3202a;         /* primary crimson */
+    --color-rf-redSoft: #d12b36;     /* hover / active brightening */
+    --color-rf-redDeep: #7e1820;     /* pressed / deep shadow */
+    --color-rf-borderActive: #8f1d24; /* active border ring */
+    /* ── Supporting accents ── */
     --color-rf-orange: #f97316;
     --color-rf-blue: #38bdf8;
     --color-rf-yellow: #facc15;
@@ -39,22 +44,22 @@ body {
 
 /* Glassmorphism panel used in the map section tactical UI */
 .rf-glass {
-    background: rgba(5, 6, 10, 0.55);
+    background: rgba(7, 9, 13, 0.58);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .rf-card {
-    background: rgba(11, 15, 25, 0.6);
-    border: 1px solid rgba(35, 39, 52, 0.5);
+    background: rgba(15, 20, 27, 0.65);
+    border: 1px solid rgba(42, 47, 56, 0.55);
     backdrop-filter: blur(6px);
 }
 
 /* ── Leaflet dark theme overrides ─────────────────────────────────────────── */
 /* Tiles render over rf-bg (#05060a) so the container background matches      */
 .leaflet-container {
-    background: #05060a;
+    background: #07090d;
     font-family: inherit;
 }
 
@@ -65,7 +70,7 @@ body {
     overflow: hidden;
 }
 .leaflet-control-zoom a {
-    background: rgba(5, 6, 10, 0.92) !important;
+    background: rgba(7, 9, 13, 0.94) !important;
     color: rgba(255, 255, 255, 0.55) !important;
     border-bottom-color: rgba(255, 255, 255, 0.06) !important;
     width: 28px !important;
@@ -121,7 +126,7 @@ body {
 
 /* ── Quest marker hover tooltip ─────────────────────────────────────────────── */
 .rf-map-tooltip.leaflet-tooltip {
-    background: rgba(5, 6, 12, 0.92);
+    background: rgba(7, 9, 13, 0.94);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
