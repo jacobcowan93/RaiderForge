@@ -11,7 +11,7 @@ export async function withGameDataProvider<T>(
         return NextResponse.json({
             ok: true,
             meta: { provider: provider.id, fetchedAt: new Date().toISOString() },
-            data,
+            data: data ?? null,
         })
     } catch (e) {
         console.error('[api/game]', e)

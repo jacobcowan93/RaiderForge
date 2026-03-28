@@ -1,15 +1,23 @@
 import type { GameMapEvent, GameMapEventsBundle } from '../types'
 import { asBoolean, asString } from './common'
+import { resolveGameDataImageUrl } from './imageUrl'
 
 function normalizeEventTypeEntry(key: string, raw: unknown): GameMapEvent | null {
     if (!raw || typeof raw !== 'object') return null
     const r = raw as Record<string, unknown>
     const displayName = asString(r.displayName ?? r.display_name) ?? key
+    const iconUrl = resolveGameDataImageUrl([
+        asString(r.iconUrl),
+        asString(r.icon_url),
+        asString(r.icon),
+        asString(r.imageUrl),
+        asString(r.image_url),
+    ])
     return {
         id: key,
         displayName,
         category: asString(r.category),
-        iconUrl: asString(r.icon ?? r.iconUrl),
+        iconUrl,
         disabled: asBoolean(r.disabled, false),
     }
 }
