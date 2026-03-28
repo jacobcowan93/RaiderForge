@@ -32,11 +32,21 @@ function BlueprintInspectPanel({
 }) {
     const panelRef = useRef<HTMLDivElement>(null)
     const [mounted, setMounted] = useState(false)
+    const [entered, setEntered] = useState(false)
     const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
 
     useEffect(() => {
         setMounted(true)
     }, [])
+
+    useEffect(() => {
+        if (!open) {
+            setEntered(false)
+            return
+        }
+        const id = requestAnimationFrame(() => requestAnimationFrame(() => setEntered(true)))
+        return () => cancelAnimationFrame(id)
+    }, [open])
 
     useLayoutEffect(() => {
         if (!open || !mounted) return
@@ -102,25 +112,29 @@ function BlueprintInspectPanel({
             ref={panelRef}
             role="tooltip"
             id={`bp-inspect-${b.id}`}
-            className="rf-glass pointer-events-none fixed z-[200] w-72 max-w-[min(18rem,calc(100vw-20px))] overflow-y-auto overscroll-contain rounded-xl border border-white/12 px-3.5 py-3 shadow-[0_16px_48px_rgba(0,0,0,0.55)]"
+            className="pointer-events-none fixed z-[200] w-72 max-w-[min(18rem,calc(100vw-20px))] overflow-y-auto overscroll-contain rounded-lg border border-white/[0.12] bg-[rgba(8,10,16,0.94)] px-3.5 py-3 shadow-[0_20px_50px_rgba(0,0,0,0.65),inset_0_0_0_1px_rgba(255,255,255,0.05)] backdrop-blur-md transition-[opacity,transform] duration-200 ease-out will-change-transform"
             style={{
                 top: pos.top,
                 left: pos.left,
-                maxHeight: 'min(40vh, 16rem)',
+                maxHeight: 'min(42vh, 17rem)',
+                opacity: entered ? 1 : 0,
+                transform: entered ? 'translateY(0) scale(1)' : 'translateY(6px) scale(0.97)',
             }}
         >
-            <p className="text-[11px] font-bold uppercase tracking-wide text-white leading-snug border-b border-white/10 pb-2 mb-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/95 leading-snug border-b border-white/10 pb-2 mb-2">
                 {b.name}
             </p>
-            {desc ? <p className="text-[11px] leading-relaxed text-rf-textSoft mb-3">{desc}</p> : null}
+            {desc ? (
+                <p className="text-[11px] leading-relaxed text-rf-textSoft/95 mb-3">{desc}</p>
+            ) : null}
             {hasFound ? (
                 <div>
-                    <p className="text-[9px] font-semibold uppercase tracking-widest text-rf-red/90 mb-1.5">Found in</p>
+                    <p className="text-[9px] font-semibold uppercase tracking-widest text-rf-red/85 mb-1.5">Found in</p>
                     <div className="flex flex-wrap gap-1">
                         {b.foundIn.map((t) => (
                             <span
                                 key={t}
-                                className="text-[9px] uppercase tracking-wide px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-rf-textSoft"
+                                className="text-[9px] uppercase tracking-wide px-2 py-0.5 rounded bg-white/[0.05] border border-white/10 text-rf-textSoft"
                             >
                                 {t}
                             </span>
@@ -129,8 +143,8 @@ function BlueprintInspectPanel({
                 </div>
             ) : null}
             {b.rarity ? (
-                <p className="text-[9px] uppercase tracking-wider text-rf-textSoft/80 mt-2 pt-2 border-t border-white/[0.06]">
-                    Rarity: <span className="text-rf-text/90">{formatRarityLabel(b.rarity)}</span>
+                <p className="text-[9px] uppercase tracking-wider text-rf-textSoft/75 mt-2.5 pt-2 border-t border-white/[0.06]">
+                    Rarity: <span className="text-rf-text">{formatRarityLabel(b.rarity)}</span>
                 </p>
             ) : null}
         </div>
@@ -180,7 +194,7 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
         >
             <article
                 aria-describedby={inspectOpen ? `bp-inspect-${b.id}` : undefined}
-                className={`group ${rarityCardContainerClasses(tier)} ${quickToggleMode ? 'cursor-pointer' : ''}`}
+                className={`group ${rarityCardContainerClasses(tier, 'compact')} ${quickToggleMode ? 'cursor-pointer' : ''}`}
                 onClick={handleCardClick}
                 onKeyDown={
                     quickToggleMode
@@ -198,8 +212,8 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                 role={quickToggleMode ? 'button' : undefined}
                 aria-pressed={quickToggleMode ? owned : undefined}
             >
-                <div className="px-2 pt-1.5 pb-1 flex items-start justify-between gap-1.5 min-w-0">
-                    <h2 className="min-w-0 flex-1 text-left text-[10px] sm:text-[11px] font-bold uppercase tracking-wide text-rf-text leading-tight truncate group-hover:text-white transition-colors">
+                <div className="px-1.5 pt-1 pb-0.5 flex items-start justify-between gap-1 min-w-0">
+                    <h2 className="min-w-0 flex-1 text-left text-[9px] sm:text-[10px] font-bold uppercase tracking-wide text-rf-text/95 leading-tight truncate group-hover:text-white transition-colors">
                         {b.name}
                     </h2>
                     <label className="shrink-0 flex items-center justify-center cursor-pointer touch-manipulation p-0.5 -mr-0.5 -mt-0.5 rounded hover:bg-white/5 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-rf-red/40 z-[2]">
@@ -214,16 +228,16 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                 </div>
 
                 <div
-                    className="relative mx-1.5 mb-1.5 h-[7.5rem] sm:h-[8rem] rounded-lg border border-sky-500/15 bg-[#070b14] flex items-center justify-center overflow-hidden"
+                    className="relative mx-1 mb-1 aspect-[5/4] max-h-[6.75rem] sm:max-h-[7.25rem] rounded-md border border-sky-500/20 bg-[#050810] flex items-center justify-center overflow-hidden"
                     style={blueprintGridStyle}
                 >
-                    <div className={`${rarityImageBackdropClass(tier)} rounded-lg`} aria-hidden />
+                    <div className={`${rarityImageBackdropClass(tier)} rounded-md`} aria-hidden />
                     {img ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                             src={img}
                             alt=""
-                            className="relative z-[1] max-h-[90%] max-w-[94%] object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.65)] group-hover:scale-[1.02] transition-transform duration-300 ease-out"
+                            className="relative z-[1] max-h-[92%] max-w-[96%] object-contain drop-shadow-[0_6px_24px_rgba(0,0,0,0.75)] group-hover:scale-[1.03] transition-transform duration-200 ease-out"
                         />
                     ) : (
                         <span className="relative z-[1] text-rf-textSoft/70 text-[9px] uppercase tracking-widest">No image</span>

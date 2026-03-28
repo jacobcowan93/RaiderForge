@@ -150,32 +150,49 @@ export default function BlueprintsPage() {
     }, [missingBlueprints])
 
     return (
-        <div className="max-w-7xl mx-auto py-12 px-6">
-            <div className="print:hidden space-y-8">
-                <div className="rf-card rounded-2xl px-6 py-5">
-                    <span className="text-xs uppercase tracking-widest text-rf-red font-semibold">Loadout</span>
-                    <h1 className="mt-2 text-3xl font-bold text-white">Blueprint tracker</h1>
-                    <p className="mt-3 text-rf-textSoft text-sm max-w-2xl">
-                        Blueprints come from synced ARDB catalog rows where{' '}
-                        <code className="text-rf-text/90 bg-white/5 px-1 rounded">{`itemType.trim().toLowerCase() === "blueprint"`}</code>
-                        . No account needed — progress is saved locally on this device (this browser only).
-                    </p>
-                    {syncedAt && (
-                        <p className="mt-2 text-xs text-rf-textSoft">
-                            Catalog synced <time dateTime={syncedAt}>{new Date(syncedAt).toLocaleString()}</time>
-                        </p>
-                    )}
-                </div>
+        <div className="max-w-[90rem] mx-auto py-8 md:py-10 px-4 sm:px-5">
+            <div className="print:hidden space-y-4 md:space-y-5">
+                <header className="rf-card rounded-xl px-4 py-4 sm:px-5 border border-white/[0.06]">
+                    <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 lg:gap-6">
+                        <div className="min-w-0">
+                            <span className="text-[10px] uppercase tracking-[0.22em] text-rf-textSoft font-semibold">
+                                Loadout
+                            </span>
+                            <h1 className="mt-1.5 text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                Blueprint <span className="text-rf-yellow">tracker</span>
+                            </h1>
+                            <p className="mt-2 text-xs text-rf-textSoft max-w-2xl leading-relaxed">
+                                Collection view — ARDB catalog rows where{' '}
+                                <code className="text-rf-text/90 bg-white/5 px-1 rounded text-[10px]">{`itemType.trim().toLowerCase() === "blueprint"`}</code>
+                                . Saved locally on this device; no sign-in.
+                            </p>
+                            {syncedAt && (
+                                <p className="mt-1.5 text-[10px] text-rf-textSoft/80">
+                                    Catalog synced{' '}
+                                    <time dateTime={syncedAt}>{new Date(syncedAt).toLocaleString()}</time>
+                                </p>
+                            )}
+                        </div>
+                        {!catalogLoading && !catalogError && blueprints.length > 0 ? (
+                            <p className="shrink-0 text-sm font-semibold tabular-nums tracking-tight lg:text-right">
+                                <span className="text-rf-yellow/90 uppercase text-[10px] tracking-widest block sm:inline sm:mr-2">
+                                    Missing
+                                </span>
+                                <span className="text-white text-lg">{missingBlueprints.length}</span>
+                                <span className="text-rf-textSoft text-xs font-normal ml-1">/ {total}</span>
+                            </p>
+                        ) : null}
+                    </div>
+                </header>
 
                 {catalogLoading && (
-                    <div className="rf-card rounded-xl px-6 py-10 overflow-hidden" aria-busy="true">
-                        <div className="animate-pulse space-y-4">
-                            <div className="h-8 bg-white/10 rounded-lg w-48" />
-                            <div className="h-4 bg-white/[0.06] rounded w-full max-w-md" />
-                            <div className="h-4 bg-white/[0.06] rounded w-full max-w-sm" />
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pt-4">
-                                {Array.from({ length: 10 }).map((_, i) => (
-                                    <div key={i} className="rf-card rounded-2xl h-64 border border-white/5" />
+                    <div className="rf-card rounded-xl px-4 py-8 overflow-hidden border border-white/[0.06]" aria-busy="true">
+                        <div className="animate-pulse space-y-3">
+                            <div className="h-6 bg-white/10 rounded w-40" />
+                            <div className="h-3 bg-white/[0.06] rounded w-full max-w-sm" />
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pt-3">
+                                {Array.from({ length: 12 }).map((_, i) => (
+                                    <div key={i} className="rf-card rounded-lg aspect-[5/6] border border-white/5" />
                                 ))}
                             </div>
                         </div>
@@ -202,29 +219,28 @@ export default function BlueprintsPage() {
                 {!catalogLoading && !catalogError && blueprints.length > 0 && (
                     <>
                         <div className="sticky top-16 z-40 print:hidden">
-                            <div className="rf-card rounded-xl px-4 py-3 border border-white/12 bg-rf-bg/95 backdrop-blur-md shadow-lg shadow-black/30">
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div className="rf-card rounded-lg px-3 py-2.5 sm:px-4 border border-white/[0.08] bg-rf-bg/96 backdrop-blur-md shadow-md shadow-black/40">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                                     <div>
-                                        <p className="text-[10px] uppercase tracking-widest text-rf-textSoft font-semibold">
-                                            Collection
+                                        <p className="text-[9px] uppercase tracking-[0.18em] text-rf-textSoft font-semibold">
+                                            Collection progress
                                         </p>
-                                        <p className="text-lg font-bold text-white tabular-nums">
-                                            You own{' '}
+                                        <p className="text-base font-bold text-white tabular-nums mt-0.5">
                                             <span className="text-rf-green">{ownedCount}</span>
                                             <span className="text-rf-textSoft font-medium"> / </span>
                                             <span>{total}</span>
-                                            <span className="text-rf-textSoft text-sm font-medium ml-2">({pct}%)</span>
+                                            <span className="text-rf-textSoft text-xs font-medium ml-1.5">({pct}%)</span>
                                         </p>
                                     </div>
                                     <div
-                                        className="h-2 w-full sm:max-w-xs rounded-full bg-white/10 overflow-hidden"
+                                        className="h-1.5 w-full sm:max-w-[14rem] rounded-full bg-black/40 border border-white/5 overflow-hidden"
                                         role="progressbar"
                                         aria-valuenow={ownedCount}
                                         aria-valuemin={0}
                                         aria-valuemax={total}
                                     >
                                         <div
-                                            className="h-full rounded-full bg-gradient-to-r from-rf-green/80 to-emerald-400/90 transition-[width] duration-500 ease-out"
+                                            className="h-full rounded-full bg-gradient-to-r from-rf-green/85 to-emerald-400/90 transition-[width] duration-500 ease-out"
                                             style={{ width: `${pct}%` }}
                                         />
                                     </div>
@@ -233,25 +249,25 @@ export default function BlueprintsPage() {
                         </div>
 
                         {missingByTier.length > 0 && (
-                            <div className="rf-card rounded-xl px-4 py-3 border border-white/8">
-                                <p className="text-[10px] uppercase tracking-widest text-rf-textSoft font-semibold mb-2">
+                            <div className="rf-card rounded-lg px-3 py-2.5 sm:px-4 border border-white/[0.06]">
+                                <p className="text-[9px] uppercase tracking-[0.18em] text-rf-textSoft font-semibold mb-1.5">
                                     Missing by rarity
                                 </p>
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap gap-1.5">
                                     {missingByTier.map(({ tier, label, items }) => (
                                         <span
                                             key={tier}
-                                            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium ${tierChipClass[tier]}`}
+                                            className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-medium ${tierChipClass[tier]}`}
                                         >
                                             <span>{label}</span>
-                                            <span className="tabular-nums opacity-90">{items.length} missing</span>
+                                            <span className="tabular-nums opacity-90">{items.length}</span>
                                         </span>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        <div className="rf-card rounded-xl px-4 py-4 sm:px-5 space-y-4">
+                        <div className="rf-card rounded-lg px-3 py-3 sm:px-4 border border-white/[0.06] space-y-3">
                             <div className="flex flex-col xl:flex-row xl:items-end gap-4 xl:justify-between">
                                 <div className="flex flex-wrap gap-2">
                                     <button type="button" className={btnExport} onClick={() => window.print()}>
@@ -268,7 +284,7 @@ export default function BlueprintsPage() {
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/5 pt-4">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/[0.05] pt-3">
                                 <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-rf-text">
                                     <input
                                         type="checkbox"
@@ -289,7 +305,7 @@ export default function BlueprintsPage() {
                                 </label>
                             </div>
 
-                            <div className="flex flex-col lg:flex-row lg:items-end gap-4 lg:justify-between border-t border-white/5 pt-4">
+                            <div className="flex flex-col lg:flex-row lg:items-end gap-3 lg:justify-between border-t border-white/[0.05] pt-3">
                                 <div className="flex-1 min-w-0">
                                     <label
                                         htmlFor="bp-search"
@@ -353,7 +369,7 @@ export default function BlueprintsPage() {
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-rf-textSoft border-t border-white/5 pt-3">
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-rf-textSoft border-t border-white/[0.05] pt-2.5">
                                 <span>
                                     Showing <strong className="text-rf-text">{filtered.length}</strong> of{' '}
                                     <strong className="text-rf-text">{blueprints.length}</strong>
@@ -373,7 +389,7 @@ export default function BlueprintsPage() {
                                 No blueprints match your filters.
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 justify-items-stretch">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-3 justify-items-stretch">
                                 {filtered.map((b) => (
                                     <BlueprintCard
                                         key={b.id}
@@ -388,13 +404,27 @@ export default function BlueprintsPage() {
                     </>
                 )}
 
-                <p className="text-center text-xs text-rf-textSoft max-w-xl mx-auto leading-relaxed pt-4">
-                    {ARDB_CATALOG_ATTRIBUTION.providerName} item metadata —{' '}
-                    <Link href={ARDB_CATALOG_ATTRIBUTION.providerUrl} className="text-rf-blue hover:underline">
-                        {ARDB_CATALOG_ATTRIBUTION.providerUrl.replace(/^https?:\/\//, '')}
-                    </Link>
-                    . {ARDB_CATALOG_ATTRIBUTION.disclaimer}
-                </p>
+                <footer className="pt-6 pb-2 space-y-3 border-t border-white/[0.05] mt-6">
+                    <p className="text-center text-[11px] text-rf-textSoft max-w-xl mx-auto leading-relaxed">
+                        {ARDB_CATALOG_ATTRIBUTION.providerName} item metadata —{' '}
+                        <Link href={ARDB_CATALOG_ATTRIBUTION.providerUrl} className="text-rf-blue hover:underline">
+                            {ARDB_CATALOG_ATTRIBUTION.providerUrl.replace(/^https?:\/\//, '')}
+                        </Link>
+                        . {ARDB_CATALOG_ATTRIBUTION.disclaimer}
+                    </p>
+                    <p className="text-center text-[10px] text-rf-textSoft/65 leading-relaxed">
+                        Tracker design inspiration courtesy of{' '}
+                        <Link
+                            href="https://speranzaintel.com/blueprint-tracker/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-rf-textSoft/80 hover:text-rf-blue underline-offset-2 hover:underline transition-colors"
+                        >
+                            Speranza Intel
+                        </Link>
+                        .
+                    </p>
+                </footer>
             </div>
 
             {/* Print-only: missing blueprints grouped by rarity */}

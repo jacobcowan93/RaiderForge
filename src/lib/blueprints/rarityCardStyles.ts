@@ -15,10 +15,14 @@ export function getRarityVisualTier(rarity: string | null): RarityVisualTier {
     return 'unknown'
 }
 
-/** Card shell: border, shadow/glow, hover lift — pairs with rf-card rounded-2xl. */
-export function rarityCardContainerClasses(tier: RarityVisualTier): string {
+type CardDensity = 'default' | 'compact'
+
+/** Card shell: border, shadow/glow, hover lift — `compact` = denser grid (Speranza-style tracker). */
+export function rarityCardContainerClasses(tier: RarityVisualTier, density: CardDensity = 'default'): string {
     const base =
-        'w-full flex flex-col rf-card rounded-2xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5'
+        density === 'compact'
+            ? 'w-full flex flex-col rf-card rounded-lg overflow-hidden border transition-all duration-200 hover:-translate-y-px'
+            : 'w-full flex flex-col rf-card rounded-2xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5'
     switch (tier) {
         case 'legendary':
             return `${base} border-rf-orange/45 shadow-[0_0_28px_-6px_rgba(249,115,22,0.35)] hover:border-rf-orange/70 hover:shadow-[0_0_40px_-4px_rgba(251,191,36,0.45)]`
