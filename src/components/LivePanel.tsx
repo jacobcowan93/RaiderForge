@@ -24,9 +24,8 @@ import { formatLocalTimestampFull } from '@/lib/live-data/formatTimestamp'
 import { METAFORGE_ATTRIBUTION } from '@/lib/live-data/attribution'
 import { getEventStyle, EVENT_ICONS, getEventDescription } from '../lib/events/eventsConfig'
 import { fmtCountdown } from '../lib/events/rotationTable'
-import { MAPS, getMapThumbnail } from '../data/maps'
-import type { GameMap } from '@/lib/game-data/types'
-import { buildRfThumbnailOverrideUrls } from '@/lib/maps/rfGameMapBridge'
+import { MAPS } from '../data/maps'
+import { getZoneThumbnailUrlOrFallback } from '@/lib/maps/mapCovers'
 import { MapCoverImage } from '@/components/maps/MapCoverImage'
 import { hubUrlForMapId } from '@/lib/maps/maps-hub-zone'
 
@@ -62,16 +61,15 @@ function MapConditionCard({
   now,
   events,
   upstreamOk,
-  thumbByRfId,
 }: {
   map: (typeof MAPS)[number]
   now: Date
   events: import('../lib/events/conditions').MfEvent[]
   upstreamOk: boolean | null
-  thumbByRfId: Record<string, string>
 }) {
   const conditions = getLiveMapConditions(map.id, now, events, upstreamOk)
-  const thumb = thumbByRfId[map.id] ?? getMapThumbnail(map)
+  /** Same shipped thumbnails as Maps command center (`buildTcnoZoneVMs` / `mapZoneThumbnails`). */
+  const thumb = getZoneThumbnailUrlOrFallback(map.id)
   const risk = RISK_STYLE[map.risk] ?? RISK_STYLE.Medium
   const hasLiveEvent = conditions.minor || conditions.major
 
@@ -152,13 +150,11 @@ function LivePanelMapList({
   events,
   now,
   upstreamOk,
-  thumbByRfId,
 }: {
   loading: boolean
   events: import('../lib/events/conditions').MfEvent[]
   now: Date
   upstreamOk: boolean | null
-  thumbByRfId: Record<string, string>
 }) {
   return (
     <>
@@ -186,7 +182,6 @@ function LivePanelMapList({
             now={now}
             events={events}
             upstreamOk={upstreamOk}
-            thumbByRfId={thumbByRfId}
           />
         ))
       )}
@@ -270,28 +265,11 @@ function LivePanelChrome({
 export default function LivePanel() {
   const { events, loading, fetchedAt, upstreamOk } = useEventsSchedule()
   const [now, setNow] = useState(() => new Date())
-  const [thumbByRfId, setThumbByRfId] = useState<Record<string, string>>({})
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    fetch('/api/game/maps', { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((body: unknown) => {
-        if (cancelled || !body || typeof body !== 'object') return
-        const o = body as { ok?: boolean; data?: { maps?: unknown } }
-        if (!o.ok || !Array.isArray(o.data?.maps)) return
-        setThumbByRfId(buildRfThumbnailOverrideUrls(o.data.maps as GameMap[]))
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
   }, [])
 
   const list = (
@@ -300,7 +278,6 @@ export default function LivePanel() {
       events={events}
       now={now}
       upstreamOk={upstreamOk}
-      thumbByRfId={thumbByRfId}
     />
   )
 
