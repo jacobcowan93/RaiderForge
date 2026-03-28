@@ -764,7 +764,7 @@ function renderPoiMarkers(
     const meta = POI_CATEGORY_META[poi.category]
     const isSelected = poi.id === selectedPoiId
 
-    const markerSize = isSelected ? 15 : 12
+    const markerSize = isSelected ? 22 : 18
     const anchor = markerSize / 2
 
     const icon = L.divIcon({

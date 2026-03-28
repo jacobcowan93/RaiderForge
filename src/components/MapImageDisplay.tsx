@@ -32,6 +32,8 @@ import QuestDetailPanel from './QuestDetailPanel'
 
 const SHOW_POI_PLACEMENT = process.env.NEXT_PUBLIC_RF_POI_PLACEMENT === '1'
 
+const NO_VISIBLE_POIS: MapPoi[] = []
+
 const MapTileViewer = dynamic(() => import('./MapTileViewer'), {
   ssr: false,
   loading: () => <TileLoadingState />,
@@ -90,6 +92,8 @@ export default function MapImageDisplay({
   )
   const [poiPlacementMode, setPoiPlacementMode] = useState(false)
   const [poiPlacementSample, setPoiPlacementSample] = useState<PoiPlacementSample | null>(null)
+  /** Local UI: hide POI pins already marked visited for this map (`p` bucket). */
+  const [showOnlyUnvisitedPois, setShowOnlyUnvisitedPois] = useState(false)
 
   const handleTileFallback = useCallback(() => setTileFallback(true), [])
 
@@ -98,6 +102,7 @@ export default function MapImageDisplay({
     setSelectedPoi(null)
     setPoiPlacementSample(null)
     setPoiPlacementMode(false)
+    setShowOnlyUnvisitedPois(false)
   }, [map.id])
 
   useEffect(() => {
@@ -415,7 +420,19 @@ export default function MapImageDisplay({
     () => filterPoisByCategories(poisForFloor, activePoiCategories),
     [poisForFloor, activePoiCategories],
   )
-  const visiblePoisOnMap = activeLayers.has('pois') ? visiblePoisFiltered : []
+  const visiblePoisAfterUnvisitedFilter = useMemo(() => {
+    if (!showOnlyUnvisitedPois) return visiblePoisFiltered
+    return visiblePoisFiltered.filter(p => !isVisited(mapProgress, map.id, 'p', p.id))
+  }, [visiblePoisFiltered, showOnlyUnvisitedPois, mapProgress, map.id])
+  const visiblePoisOnMap = useMemo(
+    () => (activeLayers.has('pois') ? visiblePoisAfterUnvisitedFilter : NO_VISIBLE_POIS),
+    [activeLayers, visiblePoisAfterUnvisitedFilter],
+  )
+
+  useEffect(() => {
+    if (!selectedPoi) return
+    if (!visiblePoisOnMap.some(p => p.id === selectedPoi.id)) setSelectedPoi(null)
+  }, [selectedPoi, visiblePoisOnMap])
 
   /** Pin categories present in static data for this map — legend + consistent ordering. */
   const poiCategoriesOnMap = useMemo(() => {
@@ -520,6 +537,8 @@ export default function MapImageDisplay({
             activePoiCategories={activePoiCategories}
             onTogglePoiCategory={togglePoiCategory}
             onPoiCategoriesShowAll={showAllPoiCategories}
+            poiShowOnlyUnvisited={showOnlyUnvisitedPois}
+            onPoiShowOnlyUnvisitedChange={setShowOnlyUnvisitedPois}
           />
         </div>
       )}

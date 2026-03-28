@@ -16,7 +16,7 @@
  *   appears when any trader is hidden.
  *
  * Row 3 — Pin categories (only when Pins layer is on and the map has MapPoi data):
- *   Toggle quest / container / key / extract curated pins.
+ *   Toggle quest / container / key / extract curated pins; optional “Show only unvisited”.
  */
 
 import type { MergedQuest } from '../types/quests'
@@ -63,6 +63,9 @@ interface Props {
   activePoiCategories: ReadonlySet<PoiCategory>
   onTogglePoiCategory: (c: PoiCategory) => void
   onPoiCategoriesShowAll: () => void
+  /** When true, only POIs not marked visited (`p` bucket) pass to the map. */
+  poiShowOnlyUnvisited: boolean
+  onPoiShowOnlyUnvisitedChange: (value: boolean) => void
 }
 
 export default function MapQuestFilter({
@@ -80,6 +83,8 @@ export default function MapQuestFilter({
   activePoiCategories,
   onTogglePoiCategory,
   onPoiCategoriesShowAll,
+  poiShowOnlyUnvisited,
+  onPoiShowOnlyUnvisitedChange,
 }: Props) {
   // Build unique trader list from quests on this map, preserving insertion order
   const traders = Array.from(
@@ -244,6 +249,8 @@ export default function MapQuestFilter({
           activePoiCategories={activePoiCategories}
           onToggleCategory={onTogglePoiCategory}
           onShowAll={onPoiCategoriesShowAll}
+          showOnlyUnvisited={poiShowOnlyUnvisited}
+          onShowOnlyUnvisitedChange={onPoiShowOnlyUnvisitedChange}
         />
       )}
 

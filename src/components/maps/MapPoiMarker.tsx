@@ -10,34 +10,44 @@ export type PoiCategoryVisual = {
     color: string
 }
 
+/** Slightly lifted chroma for legibility on darkened map tiles (tint overlay). */
 export const POI_CATEGORY_META: Record<PoiCategory, PoiCategoryVisual> = {
-    quest: { label: 'Quest', color: '#818cf8' },
-    container: { label: 'Container', color: '#94a3b8' },
-    key: { label: 'Key', color: '#fbbf24' },
-    extract: { label: 'Extract', color: '#22c55e' },
+    quest: { label: 'Quest', color: '#8b95fa' },
+    container: { label: 'Container', color: '#a8b4c4' },
+    key: { label: 'Key', color: '#fcc535' },
+    extract: { label: 'Extract', color: '#34d399' },
 }
 
 export function buildPoiMarkerHtml(category: PoiCategory, selected: boolean): string {
     const { color } = POI_CATEGORY_META[category]
     if (selected) {
         return `<div style="
-      width:15px;
-      height:15px;
+      box-sizing:border-box;
+      width:22px;
+      height:22px;
       background:${color};
-      border:2.5px solid rgba(255,255,255,0.92);
-      border-radius:5px;
-      box-shadow:0 0 12px ${color}, 0 0 20px ${color}55, 0 1px 4px rgba(0,0,0,0.75);
+      border:3px solid rgba(255,255,255,0.96);
+      border-radius:6px;
+      box-shadow:
+        0 0 0 2px rgba(0,0,0,0.55),
+        0 0 14px ${color},
+        0 0 26px ${color}66,
+        0 2px 8px rgba(0,0,0,0.85);
       cursor:pointer;
     "></div>`
     }
     return `<div style="
-    width:12px;
-    height:12px;
+    box-sizing:border-box;
+    width:18px;
+    height:18px;
     background:${color};
-    border:2px solid rgba(255,255,255,0.5);
-    border-radius:4px;
-    box-shadow:0 0 8px ${color}90, 0 1px 3px rgba(0,0,0,0.65);
+    border:2.5px solid rgba(255,255,255,0.82);
+    border-radius:5px;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.5),
+      0 0 10px ${color}b3,
+      0 2px 7px rgba(0,0,0,0.78);
     cursor:pointer;
     transition:transform 0.1s;
-  " onmouseenter="this.style.transform='scale(1.35)'" onmouseleave="this.style.transform='scale(1)'"></div>`
+  " onmouseenter="this.style.transform='scale(1.22)'" onmouseleave="this.style.transform='scale(1)'"></div>`
 }

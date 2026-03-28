@@ -22,10 +22,14 @@ export function MapPoiCategoryRow({
     activePoiCategories,
     onToggleCategory,
     onShowAll,
+    showOnlyUnvisited,
+    onShowOnlyUnvisitedChange,
 }: {
     activePoiCategories: ReadonlySet<PoiCategory>
     onToggleCategory: (c: PoiCategory) => void
     onShowAll: () => void
+    showOnlyUnvisited: boolean
+    onShowOnlyUnvisitedChange: (value: boolean) => void
 }) {
     const categories = useMemo(() => Object.keys(POI_CATEGORY_META) as PoiCategory[], [])
     const allOn = categories.every(c => activePoiCategories.has(c))
@@ -59,15 +63,31 @@ export function MapPoiCategoryRow({
                     </button>
                 )
             })}
-            {!allOn && (
+            <div className="ml-auto flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                 <button
                     type="button"
-                    onClick={onShowAll}
-                    className="text-[9px] text-white/35 hover:text-white/70 border border-white/10 hover:border-white/25 rounded-full px-1.5 py-px transition-all ml-auto"
+                    role="switch"
+                    aria-checked={showOnlyUnvisited}
+                    title={showOnlyUnvisited ? 'Show all pins (including visited)' : 'Hide pins you marked visited'}
+                    onClick={() => onShowOnlyUnvisitedChange(!showOnlyUnvisited)}
+                    className={`text-[10px] font-medium rounded-full px-2.5 py-1 border transition-all ${
+                        showOnlyUnvisited
+                            ? 'bg-rf-red/12 text-rf-red/90 border-rf-red/25 hover:bg-rf-red/20'
+                            : 'text-white/35 hover:text-white/60 border-white/10 hover:border-white/20'
+                    }`}
                 >
-                    Show all
+                    Show only unvisited
                 </button>
-            )}
+                {!allOn && (
+                    <button
+                        type="button"
+                        onClick={onShowAll}
+                        className="text-[9px] text-white/35 hover:text-white/70 border border-white/10 hover:border-white/25 rounded-full px-1.5 py-px transition-all"
+                    >
+                        Show all
+                    </button>
+                )}
+            </div>
         </div>
     )
 }
