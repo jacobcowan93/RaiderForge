@@ -1,30 +1,28 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSession } from 'next-auth/react'
 
-import { useMarketplaceBrowse } from '@/hooks/useMarketplaceBrowse'
-import { getG2GOfferExternalUrl } from '@/lib/marketplace/g2g-offer-url'
 import {
-    createSellerOffer,
-    deleteSellerOffer,
+    fetchListings,
+    createListing,
+    updateListing,
+    deleteListing,
+    fetchCatalogItems,
+    type ListingRow,
+    type CatalogItemSummary,
+    type ListingsError,
+} from '@/lib/marketplace/listings-api'
+import {
     deliverOrderCodes,
     fetchOrder,
-    fetchSellerOffers,
     type MarketplaceResult,
     type MarketplaceRouteError,
 } from '@/lib/marketplace/browse-api'
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Tab = 'browse' | 'sell' | 'orders'
-
-function errMsg(r: MarketplaceResult<unknown>): string {
-    if (r.ok) return ''
-    const e = r as MarketplaceRouteError
-    if (e.error === 'g2g_not_configured') return `G2G not configured (${e.missingKeys?.join(', ') ?? '?'})`
-    if (e.error === 'missing_required_fields') return `Missing fields: ${e.fields?.join(', ') ?? '?'}`
-    return e.error || 'Request failed'
-}
 
 // ─── Shared design tokens ────────────────────────────────────────────────────
 
@@ -46,16 +44,6 @@ const btnGhost =
     'bg-transparent border border-rf-border text-rf-textSoft hover:text-rf-text hover:border-white/20 ' +
     'active:scale-[0.97] transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed'
 
-const btnGreen =
-    'inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold ' +
-    'bg-rf-green/10 border border-rf-green/35 text-rf-green hover:bg-rf-green/20 ' +
-    'active:scale-[0.97] transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed'
-
-const btnBlue =
-    'inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold ' +
-    'bg-rf-blue/10 border border-rf-blue/30 text-rf-blue hover:bg-rf-blue/20 ' +
-    'active:scale-[0.97] transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed'
-
 const btnDanger =
     'inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium ' +
     'bg-rf-red/10 border border-rf-red/25 text-rf-red/80 hover:bg-rf-red/20 hover:text-rf-red ' +
@@ -65,15 +53,44 @@ const sectionHeading = 'text-[10px] uppercase tracking-[0.2em] text-rf-textSoft 
 
 // ─── Shared UI atoms ──────────────────────────────────────────────────────────
 
+function RarityBadge({ rarity }: { rarity: string | null }) {
+    if (!rarity) return null
+    const r = rarity.toLowerCase()
+    const cls =
+        r === 'legendary'
+            ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
+            : r === 'epic'
+              ? 'border-purple-500/40 bg-purple-500/10 text-purple-300'
+              : r === 'rare'
+                ? 'border-sky-500/40 bg-sky-500/10 text-sky-300'
+                : r === 'uncommon'
+                  ? 'border-rf-green/40 bg-rf-green/10 text-rf-green'
+                  : 'border-white/15 bg-white/[0.05] text-rf-textSoft'
+    return (
+        <span className={`text-[8px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded border font-bold ${cls}`}>
+            {rarity}
+        </span>
+    )
+}
+
+function TypeBadge({ type }: { type: string | null }) {
+    if (!type) return null
+    return (
+        <span className="text-[8px] uppercase tracking-[0.15em] px-1.5 py-0.5 rounded border border-white/10 bg-white/[0.04] text-rf-textSoft font-semibold">
+            {type}
+        </span>
+    )
+}
+
 function StatusBadge({ status }: { status: string }) {
     const s = status.toLowerCase()
     const cls =
-        s === 'live' || s === 'active' || s === 'completed'
+        s === 'active'
             ? 'bg-rf-green/12 text-rf-green border-rf-green/25'
-            : s === 'cancelled' || s === 'unpaid' || s === 'inactive'
-              ? 'bg-white/[0.04] text-rf-textSoft border-white/10'
-              : s === 'confirmed' || s === 'verifying_payment'
-                ? 'bg-rf-blue/10 text-rf-blue border-rf-blue/25'
+            : s === 'sold'
+              ? 'bg-rf-blue/10 text-rf-blue border-rf-blue/25'
+              : s === 'cancelled'
+                ? 'bg-white/[0.04] text-rf-textSoft border-white/10'
                 : 'bg-rf-orange/10 text-rf-orange border-rf-orange/25'
     return (
         <span className={`text-[9px] uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border font-bold ${cls}`}>
@@ -82,820 +99,904 @@ function StatusBadge({ status }: { status: string }) {
     )
 }
 
-function Divider({ label }: { label: string }) {
+function Spinner({ size = 16 }: { size?: number }) {
     return (
-        <div className="flex items-center gap-3 py-1">
-            <div className="flex-1 h-px bg-white/[0.06]" />
-            <span className={sectionHeading}>{label}</span>
-            <div className="flex-1 h-px bg-white/[0.06]" />
-        </div>
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            className="animate-spin"
+            aria-hidden
+        >
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.2" />
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+        </svg>
     )
 }
 
-function ErrorMsg({ msg }: { msg: string }) {
+function ErrorMsg({ msg }: { msg: string | null }) {
+    if (!msg) return null
     return (
-        <p className="flex items-center gap-1.5 text-xs text-rf-red/90">
-            <span aria-hidden>⚠</span> {msg}
+        <p className="text-xs text-rf-red/80 flex items-center gap-1.5">
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden className="shrink-0">
+                <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm0 4a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3A.75.75 0 0 1 8 5Zm0 6.5a.875.875 0 1 1 0-1.75.875.875 0 0 1 0 1.75Z" />
+            </svg>
+            {msg}
         </p>
     )
 }
 
-/** Auto-dismissing toast — call setToast(null) to hide manually. */
-function Toast({ message, onDone }: { message: string; onDone: () => void }) {
+function Divider({ label }: { label?: string }) {
+    if (!label) return <hr className="border-white/[0.06] my-5" />
+    return (
+        <div className="flex items-center gap-3 my-5">
+            <hr className="flex-1 border-white/[0.06]" />
+            <span className={sectionHeading}>{label}</span>
+            <hr className="flex-1 border-white/[0.06]" />
+        </div>
+    )
+}
+
+function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
     useEffect(() => {
         const t = setTimeout(onDone, 3200)
         return () => clearTimeout(t)
     }, [onDone])
-
     return (
-        <div
-            aria-live="polite"
-            className="fixed top-5 left-1/2 -translate-x-1/2 z-[300] flex items-center gap-2 px-4 py-2.5 rounded-xl border bg-rf-bgSoft/98 border-rf-green/30 text-rf-green text-sm font-medium shadow-2xl shadow-black/50 backdrop-blur-md"
-            style={{ animation: 'rf-hero-enter 0.2s ease-out both' }}
-        >
-            <svg className="w-4 h-4 shrink-0" viewBox="0 0 16 16" fill="none">
-                <polyline points="2,8 6,12 14,4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-rf-bgSoft border border-rf-green/35 shadow-xl shadow-black/40 text-sm text-rf-green font-medium pointer-events-none">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden>
+                <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm3.25 4.72a.75.75 0 0 1 0 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-1.5-1.5a.75.75 0 1 1 1.06-1.06l.97.97 2.97-2.97a.75.75 0 0 1 1.06 0Z" />
             </svg>
-            {message}
+            {msg}
         </div>
     )
 }
 
-// ─── Browse tab ───────────────────────────────────────────────────────────────
+// ─── Item image with ARDB fallback ────────────────────────────────────────────
 
-type OfferRow = {
-    offer_id: string
-    seller_id?: string
-    title?: string
-    currency?: string
-    unit_price?: number
-    available_qty?: number
-    status?: string
+function ItemIcon({ url, name, size = 48 }: { url: string | null; name: string; size?: number }) {
+    const [err, setErr] = useState(false)
+    if (!url || err) {
+        return (
+            <div
+                style={{ width: size, height: size }}
+                className="shrink-0 rounded-md bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-rf-textSoft/40"
+            >
+                <svg viewBox="0 0 24 24" width={size * 0.5} height={size * 0.5} fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <path d="m21 15-5-5L5 21" />
+                </svg>
+            </div>
+        )
+    }
+    return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+            src={url}
+            alt={name}
+            width={size}
+            height={size}
+            onError={() => setErr(true)}
+            className="shrink-0 rounded-md object-contain bg-black/40"
+            style={{ width: size, height: size }}
+        />
+    )
 }
 
-function OfferCard({ offer: o }: { offer: OfferRow }) {
-    const priceStr =
-        o.unit_price !== undefined
-            ? `${o.unit_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${o.currency ? ` ${o.currency}` : ''}`
-            : null
+// ─── Listing Card (Browse tab) ────────────────────────────────────────────────
+
+function ListingCard({ listing }: { listing: ListingRow }) {
+    const priceStr = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: listing.currency,
+        minimumFractionDigits: 2,
+    }).format(listing.price)
 
     return (
-        <div className="group relative rf-card rounded-xl border border-white/[0.08] overflow-hidden flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-500/25 hover:shadow-[0_0_28px_-6px_rgba(56,189,248,0.18)]">
-            {/* Top accent */}
-            <div className="h-0.5 w-full bg-gradient-to-r from-rf-blue/70 via-rf-blue/30 to-transparent shrink-0" />
+        <div className="group relative rf-card rounded-xl border border-white/[0.08] overflow-hidden flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-500/25 hover:shadow-[0_0_28px_-6px_rgba(56,189,248,0.16)]">
+            {/* Top accent line */}
+            <div className="h-0.5 w-full bg-gradient-to-r from-rf-blue/60 via-rf-blue/25 to-transparent shrink-0" />
 
-            <div className="flex flex-col flex-1 p-4 gap-3">
-                {/* Title row */}
-                <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-bold uppercase tracking-wide text-rf-text leading-snug line-clamp-2 group-hover:text-white transition-colors">
-                        {o.title ?? o.offer_id}
-                    </h3>
-                    {o.status && <StatusBadge status={o.status} />}
+            <div className="flex flex-col flex-1 p-3.5 gap-3">
+                {/* Header: icon + name + badges */}
+                <div className="flex gap-3 items-start min-w-0">
+                    <ItemIcon url={listing.itemIconUrl} name={listing.itemName} size={44} />
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-rf-text leading-tight line-clamp-2 group-hover:text-white transition-colors">
+                            {listing.itemName}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                            <TypeBadge type={listing.itemType} />
+                            <RarityBadge rarity={listing.itemRarity} />
+                        </div>
+                    </div>
                 </div>
 
-                {/* Price */}
-                {priceStr && (
-                    <p className="text-xl font-bold text-rf-orange leading-none">
-                        {priceStr}
+                {/* Description */}
+                {listing.itemDescription && (
+                    <p className="text-[11px] text-rf-textSoft/75 leading-relaxed line-clamp-2">
+                        {listing.itemDescription}
+                    </p>
+                )}
+                {listing.notes && (
+                    <p className="text-[11px] text-rf-textSoft/60 italic leading-relaxed line-clamp-2">
+                        &ldquo;{listing.notes}&rdquo;
                     </p>
                 )}
 
-                {/* Meta */}
-                <div className="text-[11px] text-rf-textSoft space-y-0.5 mt-auto">
-                    {o.seller_id && <p>Seller · {o.seller_id}</p>}
-                    {o.available_qty !== undefined && <p>Stock · {o.available_qty}</p>}
-                </div>
-            </div>
-
-            {/* CTA */}
-            <div className="px-4 pb-4">
-                <a
-                    href={getG2GOfferExternalUrl(o.offer_id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-lg bg-rf-orange text-black text-xs font-bold uppercase tracking-wide hover:bg-amber-400 active:scale-[0.97] transition-all duration-150"
-                >
-                    Buy on G2G
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none">
-                        <path d="M6 4h6v6M12 4L4 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                </a>
-            </div>
-        </div>
-    )
-}
-
-function BrowseTab() {
-    const b = useMarketplaceBrowse()
-
-    return (
-        <div className="space-y-4">
-            {/* Filter bar */}
-            <div className="rf-card rounded-xl p-4 border border-white/[0.06]">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                        <label className={sectionHeading}>Service</label>
-                        <select
-                            value={b.serviceId}
-                            onChange={(e) => b.setServiceId(e.target.value)}
-                            className={selectCls}
-                            disabled={b.loadingServices}
-                        >
-                            <option value="">Select service…</option>
-                            {b.services.map((s) => (
-                                <option key={s.service_id} value={s.service_id}>
-                                    {s.service_name}
-                                </option>
-                            ))}
-                        </select>
-                        {b.loadingServices && <p className="text-[10px] text-rf-textSoft">Loading…</p>}
-                        {b.servicesError && <ErrorMsg msg={b.servicesError} />}
+                {/* Price row */}
+                <div className="mt-auto pt-2 border-t border-white/[0.06] flex items-end justify-between gap-2">
+                    <div>
+                        <p className="text-xl font-bold text-rf-orange leading-none">{priceStr}</p>
+                        {listing.quantity > 1 && (
+                            <p className="text-[10px] text-rf-textSoft/60 mt-0.5">Qty: {listing.quantity}</p>
+                        )}
                     </div>
-
-                    <div className="space-y-1">
-                        <label className={sectionHeading}>Brand</label>
-                        <select
-                            value={b.brandId}
-                            onChange={(e) => b.setBrandId(e.target.value)}
-                            className={selectCls}
-                            disabled={!b.serviceId || b.loadingBrands}
-                        >
-                            <option value="">{b.serviceId ? 'All brands…' : 'Select service first'}</option>
-                            {b.brands.map((x) => (
-                                <option key={x.brand_id} value={x.brand_id}>
-                                    {x.brand_name}
-                                </option>
-                            ))}
-                        </select>
-                        {b.loadingBrands && <p className="text-[10px] text-rf-textSoft">Loading…</p>}
-                        {b.brandsError && <ErrorMsg msg={b.brandsError} />}
+                    <div className="text-right">
+                        <p className="text-[10px] text-rf-textSoft/50">Seller</p>
+                        <p className="text-[11px] text-rf-textSoft font-medium truncate max-w-[120px]">
+                            {listing.sellerName ?? 'Anonymous'}
+                        </p>
                     </div>
-
-                    <div className="space-y-1">
-                        <label className={sectionHeading}>Product</label>
-                        <select
-                            value={b.productId}
-                            onChange={(e) => b.setProductId(e.target.value)}
-                            className={selectCls}
-                            disabled={!b.serviceId || b.loadingProducts}
-                        >
-                            <option value="">All products</option>
-                            {b.products.map((p) => (
-                                <option key={p.product_id} value={p.product_id}>
-                                    {p.product_name}
-                                </option>
-                            ))}
-                        </select>
-                        {b.loadingProducts && <p className="text-[10px] text-rf-textSoft">Loading…</p>}
-                        {b.productsError && <ErrorMsg msg={b.productsError} />}
-                    </div>
-                </div>
-            </div>
-
-            {/* Offers */}
-            <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                    <span className={sectionHeading}>
-                        {b.loadingOffers
-                            ? 'Loading offers…'
-                            : b.offers.length > 0
-                              ? `${b.offers.length} offer${b.offers.length !== 1 ? 's' : ''}`
-                              : b.brandId
-                                ? 'No offers found'
-                                : 'Live offers'}
-                    </span>
-                    {b.brandId && (
-                        <button
-                            type="button"
-                            onClick={() => void b.refreshOffers()}
-                            disabled={b.loadingOffers}
-                            className={btnGhost}
-                        >
-                            Refresh
-                        </button>
-                    )}
-                </div>
-
-                {b.offersError && <ErrorMsg msg={b.offersError} />}
-
-                {!b.brandId && !b.loadingOffers && (
-                    <div className="rf-card rounded-xl border border-white/[0.06] p-10 flex flex-col items-center text-center gap-3">
-                        <svg className="w-8 h-8 text-rf-textSoft/30" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
-                            <path d="M9 9h.01M15 9h.01M9 13s1 2 3 2 3-2 3-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        <p className="text-sm text-rf-textSoft">Select a brand to load live G2G listings.</p>
-                        <p className="text-xs text-rf-textSoft/60">Purchases complete on G2G — no checkout data passes through RaiderForge.</p>
-                    </div>
-                )}
-
-                {b.brandId && !b.loadingOffers && !b.offersError && b.offers.length === 0 && (
-                    <p className="text-sm text-rf-textSoft py-4 text-center">No live offers for this selection.</p>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {(b.offers as OfferRow[]).map((o) => (
-                        <OfferCard key={o.offer_id} offer={o} />
-                    ))}
                 </div>
             </div>
         </div>
     )
 }
 
-// ─── Sell tab ─────────────────────────────────────────────────────────────────
+// ─── My Listing Row (Sell tab) ────────────────────────────────────────────────
 
-type SellerOffer = {
-    offer_id: string
-    title?: string
-    status?: string
-    unit_price?: number
-    currency?: string
-    available_qty?: number
-    product_id?: string
-}
-
-function pickSellerOffers(payload: unknown): SellerOffer[] {
-    if (!payload || typeof payload !== 'object') return []
-    const list = (payload as { results?: unknown }).results
-    if (!Array.isArray(list)) return []
-    return list.filter(
-        (x): x is SellerOffer => !!x && typeof x === 'object' && typeof (x as SellerOffer).offer_id === 'string'
-    )
-}
-
-const BLANK_FORM = {
-    service_id: '',
-    brand_id: '',
-    product_id: '',
-    title: '',
-    description: '',
-    unit_price: '',
-    currency: 'USD',
-    available_qty: '',
-    status: 'live',
-}
-
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'SGD', 'MYR', 'AUD', 'CAD']
-const OFFER_STATUSES = ['live', 'inactive']
-
-function SellerOfferRow({
-    offer: o,
-    deleting,
+function MyListingCard({
+    listing,
     onDelete,
+    onStatusChange,
 }: {
-    offer: SellerOffer
-    deleting: boolean
-    onDelete: () => void
+    listing: ListingRow
+    onDelete: (id: string) => void
+    onStatusChange: (id: string, status: 'active' | 'sold' | 'cancelled') => void
 }) {
-    const priceStr =
-        o.unit_price !== undefined
-            ? `${o.unit_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${o.currency ?? ''}`
-            : null
+    const [deleting, setDeleting] = useState(false)
+    const [updating, setUpdating] = useState(false)
+
+    const priceStr = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: listing.currency,
+        minimumFractionDigits: 2,
+    }).format(listing.price)
+
+    async function handleDelete() {
+        if (!confirm(`Remove listing for "${listing.itemName}"?`)) return
+        setDeleting(true)
+        const r = await deleteListing(listing.id)
+        setDeleting(false)
+        if (r.ok) onDelete(listing.id)
+    }
+
+    async function handleMark(status: 'active' | 'sold' | 'cancelled') {
+        setUpdating(true)
+        const r = await updateListing(listing.id, { status })
+        setUpdating(false)
+        if (r.ok) onStatusChange(listing.id, status)
+    }
 
     return (
-        <div className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3.5 rounded-lg bg-black/25 border border-white/[0.06] hover:border-white/10 transition-colors">
-            <div className="min-w-0 space-y-1">
-                <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-rf-text truncate">{o.title ?? o.offer_id}</p>
-                    {o.status && <StatusBadge status={o.status} />}
-                </div>
-                <p className="text-[11px] text-rf-textSoft font-mono truncate">{o.offer_id}</p>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-rf-textSoft">
-                    {priceStr && <span className="text-rf-orange font-semibold">{priceStr}</span>}
-                    {o.available_qty !== undefined && <span>Stock · {o.available_qty}</span>}
+        <div className="rf-card rounded-lg border border-white/[0.08] p-3 flex gap-3 items-center transition-all duration-200 hover:border-white/[0.14]">
+            <ItemIcon url={listing.itemIconUrl} name={listing.itemName} size={36} />
+            <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-rf-text truncate">{listing.itemName}</p>
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="text-xs text-rf-orange font-bold">{priceStr}</span>
+                    {listing.quantity > 1 && (
+                        <span className="text-[10px] text-rf-textSoft/60">× {listing.quantity}</span>
+                    )}
+                    <StatusBadge status={listing.status} />
+                    <TypeBadge type={listing.itemType} />
                 </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-                <a
-                    href={getG2GOfferExternalUrl(o.offer_id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={btnGhost}
-                >
-                    View ↗
-                </a>
+            <div className="flex items-center gap-1.5 shrink-0">
+                {listing.status === 'active' && (
+                    <button
+                        className={btnGhost + ' text-xs py-1.5 px-2.5'}
+                        onClick={() => handleMark('sold')}
+                        disabled={updating || deleting}
+                        title="Mark as sold"
+                    >
+                        {updating ? <Spinner size={12} /> : 'Sold'}
+                    </button>
+                )}
+                {listing.status !== 'active' && (
+                    <button
+                        className={btnGhost + ' text-xs py-1.5 px-2.5'}
+                        onClick={() => handleMark('active')}
+                        disabled={updating || deleting}
+                        title="Reactivate"
+                    >
+                        {updating ? <Spinner size={12} /> : 'Relist'}
+                    </button>
+                )}
                 <button
-                    type="button"
-                    onClick={onDelete}
-                    disabled={deleting}
-                    className={btnDanger}
+                    className={btnDanger + ' py-1.5 px-2'}
+                    onClick={handleDelete}
+                    disabled={deleting || updating}
+                    title="Delete listing"
                 >
-                    {deleting ? 'Removing…' : 'Remove'}
+                    {deleting ? <Spinner size={12} /> : (
+                        <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden>
+                            <path d="M6.5 1.75a.25.25 0 0 1 .25-.25h2.5a.25.25 0 0 1 .25.25V3h-3Zm4.5 0V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15H5.405a1.748 1.748 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15Z" />
+                        </svg>
+                    )}
                 </button>
             </div>
         </div>
     )
 }
 
-function SellTab() {
-    const [offers, setOffers] = useState<SellerOffer[]>([])
-    const [loading, setLoading] = useState(false)
-    const [loadError, setLoadError] = useState<string | null>(null)
+// ─── Item Picker (Sell tab) ───────────────────────────────────────────────────
 
-    const [showForm, setShowForm] = useState(false)
-    const [form, setForm] = useState(BLANK_FORM)
-    const [submitBusy, setSubmitBusy] = useState(false)
+function ItemPicker({
+    items,
+    value,
+    onChange,
+    disabled,
+}: {
+    items: CatalogItemSummary[]
+    value: CatalogItemSummary | null
+    onChange: (item: CatalogItemSummary | null) => void
+    disabled?: boolean
+}) {
+    const [q, setQ] = useState('')
+    const [open, setOpen] = useState(false)
+    const containerRef = useRef<HTMLDivElement>(null)
+
+    const results = useMemo(() => {
+        if (!q.trim()) return items.slice(0, 80)
+        const lower = q.toLowerCase()
+        return items.filter((it) =>
+            it.name.toLowerCase().includes(lower) ||
+            (it.itemType ?? '').toLowerCase().includes(lower)
+        ).slice(0, 60)
+    }, [q, items])
+
+    // Close on outside click
+    useEffect(() => {
+        function handler(e: MouseEvent) {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [])
+
+    function selectItem(item: CatalogItemSummary) {
+        onChange(item)
+        setQ('')
+        setOpen(false)
+    }
+
+    function clearItem() {
+        onChange(null)
+        setQ('')
+    }
+
+    if (value) {
+        return (
+            <div className="flex gap-3 items-center p-3 bg-black/40 border border-rf-border rounded-lg">
+                <ItemIcon url={value.iconUrl} name={value.name} size={40} />
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-rf-text truncate">{value.name}</p>
+                    <div className="flex gap-1.5 mt-0.5 flex-wrap">
+                        <TypeBadge type={value.itemType} />
+                        <RarityBadge rarity={value.rarity} />
+                    </div>
+                    {value.description && (
+                        <p className="text-[10px] text-rf-textSoft/60 mt-1 line-clamp-2">{value.description}</p>
+                    )}
+                </div>
+                <button
+                    onClick={clearItem}
+                    disabled={disabled}
+                    className="shrink-0 p-1.5 rounded-md text-rf-textSoft/50 hover:text-rf-textSoft hover:bg-white/[0.06] transition-colors"
+                    title="Change item"
+                >
+                    <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden>
+                        <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+                    </svg>
+                </button>
+            </div>
+        )
+    }
+
+    return (
+        <div ref={containerRef} className="relative">
+            <input
+                className={inputCls}
+                placeholder="Search items by name or type…"
+                value={q}
+                onChange={(e) => {
+                    setQ(e.target.value)
+                    setOpen(true)
+                }}
+                onFocus={() => setOpen(true)}
+                disabled={disabled}
+            />
+            {open && results.length > 0 && (
+                <div className="absolute z-50 top-full mt-1 w-full max-h-64 overflow-y-auto rounded-lg border border-white/[0.12] bg-[#0b0f19] shadow-2xl shadow-black/60">
+                    {results.map((item) => (
+                        <button
+                            key={item.ardbId}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => selectItem(item)}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-white/[0.05] transition-colors border-b border-white/[0.04] last:border-0"
+                        >
+                            <ItemIcon url={item.iconUrl} name={item.name} size={28} />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm text-rf-text font-medium truncate">{item.name}</p>
+                                {item.itemType && (
+                                    <p className="text-[9px] uppercase tracking-wide text-rf-textSoft/60 mt-0.5">{item.itemType}</p>
+                                )}
+                            </div>
+                            {item.rarity && (
+                                <RarityBadge rarity={item.rarity} />
+                            )}
+                        </button>
+                    ))}
+                </div>
+            )}
+            {open && q.trim() && results.length === 0 && (
+                <div className="absolute z-50 top-full mt-1 w-full rounded-lg border border-white/[0.08] bg-[#0b0f19] px-4 py-3 text-sm text-rf-textSoft/60 shadow-xl shadow-black/40">
+                    No items match &ldquo;{q}&rdquo;
+                </div>
+            )}
+        </div>
+    )
+}
+
+// ─── Browse Tab ───────────────────────────────────────────────────────────────
+
+function BrowseTab() {
+    const [listings, setListings] = useState<ListingRow[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const [search, setSearch] = useState('')
+    const [typeFilter, setTypeFilter] = useState<string>('all')
+
+    useEffect(() => {
+        let cancelled = false
+        ;(async () => {
+            setLoading(true)
+            setError(null)
+            const r = await fetchListings({ status: 'active', limit: 200 })
+            if (cancelled) return
+            if (!r.ok) {
+                const e = r as ListingsError
+                setError(e.message ?? e.error)
+            } else {
+                setListings(r.listings)
+            }
+            setLoading(false)
+        })()
+        return () => { cancelled = true }
+    }, [])
+
+    // Collect unique item types for filter chips
+    const itemTypes = useMemo(() => {
+        const types = new Set<string>()
+        for (const l of listings) {
+            if (l.itemType) types.add(l.itemType.toLowerCase())
+        }
+        return Array.from(types).sort()
+    }, [listings])
+
+    const filtered = useMemo(() => {
+        let list = listings
+        if (search.trim()) {
+            const q = search.toLowerCase()
+            list = list.filter(
+                (l) =>
+                    l.itemName.toLowerCase().includes(q) ||
+                    (l.itemDescription ?? '').toLowerCase().includes(q) ||
+                    (l.sellerName ?? '').toLowerCase().includes(q)
+            )
+        }
+        if (typeFilter !== 'all') {
+            list = list.filter((l) => (l.itemType ?? '').toLowerCase() === typeFilter)
+        }
+        return list
+    }, [listings, search, typeFilter])
+
+    return (
+        <div className="space-y-5">
+            {/* Search + filter */}
+            <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                    <svg
+                        viewBox="0 0 16 16"
+                        width="14"
+                        height="14"
+                        fill="currentColor"
+                        aria-hidden
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-rf-textSoft/40 pointer-events-none"
+                    >
+                        <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z" />
+                    </svg>
+                    <input
+                        className={inputCls + ' pl-9'}
+                        placeholder="Search items, sellers…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+            </div>
+
+            {/* Type filter chips */}
+            {itemTypes.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                    {(['all', ...itemTypes] as string[]).map((t) => (
+                        <button
+                            key={t}
+                            onClick={() => setTypeFilter(t)}
+                            className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.15em] font-semibold border transition-all duration-150 ${
+                                typeFilter === t
+                                    ? 'bg-rf-orange/15 border-rf-orange/40 text-rf-orange'
+                                    : 'bg-white/[0.03] border-white/[0.08] text-rf-textSoft/70 hover:border-white/15 hover:text-rf-textSoft'
+                            }`}
+                        >
+                            {t}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* Listings grid */}
+            {loading ? (
+                <div className="flex items-center justify-center py-16 gap-2.5 text-rf-textSoft">
+                    <Spinner size={20} />
+                    <span className="text-sm">Loading listings…</span>
+                </div>
+            ) : error ? (
+                <div className="text-center py-12">
+                    <ErrorMsg msg={error} />
+                </div>
+            ) : filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3 text-rf-textSoft/50">
+                    <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden>
+                        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm-8 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
+                    </svg>
+                    <p className="text-sm font-medium">No listings yet</p>
+                    <p className="text-xs text-center max-w-xs">
+                        {search || typeFilter !== 'all'
+                            ? 'No listings match your current filters.'
+                            : 'Be the first to post an item for sale in the Sell tab.'}
+                    </p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filtered.map((l) => (
+                        <ListingCard key={l.id} listing={l} />
+                    ))}
+                </div>
+            )}
+
+            {/* Attribution */}
+            <p className="text-[10px] text-rf-textSoft/40 text-center pt-4 border-t border-white/[0.04]">
+                Item data provided by{' '}
+                <a
+                    href="https://ardb.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:text-rf-textSoft/70 transition-colors"
+                >
+                    ardb.app
+                </a>
+            </p>
+        </div>
+    )
+}
+
+// ─── Sell Tab ─────────────────────────────────────────────────────────────────
+
+function SellTab({ userId }: { userId: string | undefined }) {
+    const [myListings, setMyListings] = useState<ListingRow[]>([])
+    const [loadingMyListings, setLoadingMyListings] = useState(false)
+    const [myListingsError, setMyListingsError] = useState<string | null>(null)
+
+    const [catalogItems, setCatalogItems] = useState<CatalogItemSummary[]>([])
+    const [catalogLoading, setCatalogLoading] = useState(false)
+    const [catalogError, setCatalogError] = useState<string | null>(null)
+    const [catalogSyncedAt, setCatalogSyncedAt] = useState<string | null>(null)
+
+    const [selectedItem, setSelectedItem] = useState<CatalogItemSummary | null>(null)
+    const [price, setPrice] = useState('')
+    const [currency, setCurrency] = useState('USD')
+    const [quantity, setQuantity] = useState('1')
+    const [notes, setNotes] = useState('')
+    const [submitting, setSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [toast, setToast] = useState<string | null>(null)
 
-    const [deletingId, setDeletingId] = useState<string | null>(null)
-
-    const loadOffers = useCallback(async () => {
-        setLoading(true)
-        setLoadError(null)
-        const r = await fetchSellerOffers({ page_size: 50 })
-        if (!r.ok) setLoadError(errMsg(r))
-        else setOffers(pickSellerOffers(r.payload))
-        setLoading(false)
-    }, [])
-
+    // Load my listings
     useEffect(() => {
-        void loadOffers()
-    }, [loadOffers])
+        if (!userId) return
+        let cancelled = false
+        ;(async () => {
+            setLoadingMyListings(true)
+            setMyListingsError(null)
+            const r = await fetchListings({ sellerId: userId, status: 'all', limit: 200 })
+            if (cancelled) return
+            if (!r.ok) setMyListingsError((r as ListingsError).message ?? (r as ListingsError).error)
+            else setMyListings(r.listings)
+            setLoadingMyListings(false)
+        })()
+        return () => { cancelled = true }
+    }, [userId])
 
-    function setField(key: keyof typeof BLANK_FORM, value: string) {
-        setForm((f) => ({ ...f, [key]: value }))
-    }
+    // Load catalog on mount (needed for item picker)
+    useEffect(() => {
+        if (!userId) return
+        let cancelled = false
+        ;(async () => {
+            setCatalogLoading(true)
+            setCatalogError(null)
+            const r = await fetchCatalogItems()
+            if (cancelled) return
+            if (!r.ok) {
+                setCatalogError('Could not load item catalog. Ensure a catalog sync has been run.')
+            } else {
+                setCatalogItems(r.items)
+                setCatalogSyncedAt(r.syncedAt)
+            }
+            setCatalogLoading(false)
+        })()
+        return () => { cancelled = true }
+    }, [userId])
 
-    async function handleCreate(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-        setSubmitBusy(true)
+        if (!selectedItem) { setSubmitError('Select an item first.'); return }
+        const priceVal = parseFloat(price)
+        if (!Number.isFinite(priceVal) || priceVal <= 0) { setSubmitError('Enter a valid price.'); return }
+        const qtyVal = Math.max(1, parseInt(quantity, 10) || 1)
+
+        setSubmitting(true)
         setSubmitError(null)
-
-        const body: Record<string, unknown> = {
-            service_id: form.service_id,
-            brand_id: form.brand_id,
-            product_id: form.product_id,
-            unit_price: parseFloat(form.unit_price),
-            currency: form.currency,
-            status: form.status,
-        }
-        if (form.title) body.title = form.title
-        if (form.description) body.description = form.description
-        if (form.available_qty) body.available_qty = parseInt(form.available_qty, 10)
-
-        const r = await createSellerOffer(body)
+        const r = await createListing({
+            ardbItemId: selectedItem.ardbId,
+            price: priceVal,
+            currency,
+            quantity: qtyVal,
+            notes: notes.trim() || undefined,
+        })
+        setSubmitting(false)
         if (!r.ok) {
-            setSubmitError(errMsg(r))
-        } else {
-            setForm(BLANK_FORM)
-            setShowForm(false)
-            setToast('Offer created successfully.')
-            await loadOffers()
+            const e = r as ListingsError
+            setSubmitError(e.message ?? e.error)
+            return
         }
-        setSubmitBusy(false)
+        setMyListings((prev) => [r.listing, ...prev])
+        setSelectedItem(null)
+        setPrice('')
+        setQuantity('1')
+        setNotes('')
+        setToast('Listing posted!')
     }
 
-    async function handleDelete(offerId: string) {
-        if (!confirm(`Remove offer ${offerId}? This cannot be undone.`)) return
-        setDeletingId(offerId)
-        await deleteSellerOffer(offerId)
-        setDeletingId(null)
-        await loadOffers()
+    function handleDelete(id: string) {
+        setMyListings((prev) => prev.filter((l) => l.id !== id))
+    }
+
+    function handleStatusChange(id: string, status: 'active' | 'sold' | 'cancelled') {
+        setMyListings((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)))
+    }
+
+    if (!userId) {
+        return (
+            <div className="flex flex-col items-center justify-center py-24 gap-4 text-rf-textSoft/60">
+                <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden>
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+                </svg>
+                <p className="text-sm font-medium text-rf-textSoft">Sign in to post listings</p>
+                <p className="text-xs text-center max-w-xs text-rf-textSoft/50">
+                    Create a RaiderForge account to list ARC Raiders items for sale.
+                </p>
+                <a href="/auth/signin" className={btnPrimary}>
+                    Sign in
+                </a>
+            </div>
+        )
     }
 
     return (
-        <div className="space-y-4">
-            {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+        <div className="space-y-6">
+            {toast && <Toast msg={toast} onDone={() => setToast(null)} />}
 
-            {/* My offers panel */}
-            <div className="rf-card rounded-xl border border-white/[0.06] overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
-                    <div>
-                        <h3 className="text-sm font-semibold text-rf-text">My listings</h3>
-                        {!loading && !loadError && (
-                            <p className="text-[11px] text-rf-textSoft mt-0.5">
-                                {offers.length} active offer{offers.length !== 1 ? 's' : ''}
+            {/* My Listings */}
+            <section>
+                <p className={sectionHeading + ' mb-3'}>My Listings</p>
+                {loadingMyListings ? (
+                    <div className="flex items-center gap-2 py-6 text-rf-textSoft/60">
+                        <Spinner size={16} />
+                        <span className="text-sm">Loading…</span>
+                    </div>
+                ) : myListingsError ? (
+                    <ErrorMsg msg={myListingsError} />
+                ) : myListings.length === 0 ? (
+                    <p className="text-sm text-rf-textSoft/50 py-4">You have no listings yet.</p>
+                ) : (
+                    <div className="space-y-2">
+                        {myListings.map((l) => (
+                            <MyListingCard
+                                key={l.id}
+                                listing={l}
+                                onDelete={handleDelete}
+                                onStatusChange={handleStatusChange}
+                            />
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            <Divider label="Create Listing" />
+
+            {/* Create form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Item picker */}
+                <div className="space-y-1.5">
+                    <label className={sectionHeading}>Item</label>
+                    {catalogLoading ? (
+                        <div className="flex items-center gap-2 py-3 text-rf-textSoft/50">
+                            <Spinner size={14} />
+                            <span className="text-xs">Loading item catalog…</span>
+                        </div>
+                    ) : catalogError ? (
+                        <div className="space-y-1">
+                            <ErrorMsg msg={catalogError} />
+                            <p className="text-[10px] text-rf-textSoft/40">
+                                An admin may need to run a catalog sync at{' '}
+                                <code className="bg-white/[0.06] px-1 rounded">/api/marketplace/catalog/sync</code>
                             </p>
-                        )}
-                    </div>
-                    <div className="flex gap-2">
-                        <button
-                            type="button"
-                            onClick={() => void loadOffers()}
-                            disabled={loading}
-                            className={btnGhost}
-                        >
-                            Refresh
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => { setShowForm((v) => !v); setSubmitError(null) }}
-                            className={showForm ? btnGhost : btnGreen}
-                        >
-                            {showForm ? 'Cancel' : '+ New offer'}
-                        </button>
-                    </div>
-                </div>
-
-                <div className="p-4 space-y-2">
-                    {loading && <p className="text-sm text-rf-textSoft py-2">Loading your listings…</p>}
-                    {loadError && <ErrorMsg msg={loadError} />}
-                    {!loading && !loadError && offers.length === 0 && (
-                        <p className="text-sm text-rf-textSoft text-center py-6">No offers found for your account.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <ItemPicker
+                                items={catalogItems}
+                                value={selectedItem}
+                                onChange={setSelectedItem}
+                                disabled={submitting}
+                            />
+                            {catalogSyncedAt && (
+                                <p className="text-[9px] text-rf-textSoft/35">
+                                    Catalog synced {new Date(catalogSyncedAt).toLocaleDateString()}
+                                    {' · '}
+                                    <a
+                                        href="https://ardb.app"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="underline underline-offset-1 hover:text-rf-textSoft/60"
+                                    >
+                                        ardb.app
+                                    </a>
+                                </p>
+                            )}
+                        </>
                     )}
-                    {offers.map((o) => (
-                        <SellerOfferRow
-                            key={o.offer_id}
-                            offer={o}
-                            deleting={deletingId === o.offer_id}
-                            onDelete={() => void handleDelete(o.offer_id)}
-                        />
-                    ))}
                 </div>
-            </div>
 
-            {/* Create offer form */}
-            {showForm && (
-                <div className="rf-card rounded-xl border border-white/[0.06] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-white/[0.06]">
-                        <h3 className="text-sm font-semibold text-rf-text">Create new offer</h3>
-                        <p className="text-[11px] text-rf-textSoft mt-0.5">
-                            Copy Service, Brand, and Product IDs from the Browse tab or your G2G seller dashboard.
-                            Delivery methods are configured in G2G directly.
-                        </p>
-                    </div>
+                <Divider />
 
-                    <form onSubmit={(e) => void handleCreate(e)} className="p-5 space-y-5">
-                        {/* Section: Listing */}
-                        <div className="space-y-3">
-                            <Divider label="Listing" />
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {(
-                                    [
-                                        ['service_id', 'Service ID', true],
-                                        ['brand_id', 'Brand ID', true],
-                                        ['product_id', 'Product ID', true],
-                                        ['title', 'Title (optional)', false],
-                                    ] as const
-                                ).map(([key, label, required]) => (
-                                    <div key={key} className="space-y-1">
-                                        <label className={sectionHeading}>
-                                            {label}
-                                            {required && <span className="text-rf-orange ml-0.5">*</span>}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={form[key]}
-                                            onChange={(e) => setField(key, e.target.value)}
-                                            className={inputCls}
-                                            required={required}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
+                {/* Pricing */}
+                <div className="space-y-1.5">
+                    <label className={sectionHeading}>Pricing</label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                            <label className="text-xs text-rf-textSoft/70">Price</label>
+                            <input
+                                className={inputCls}
+                                type="number"
+                                min="0.01"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
+                                disabled={submitting}
+                            />
                         </div>
-
-                        {/* Section: Pricing */}
-                        <div className="space-y-3">
-                            <Divider label="Pricing" />
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                <div className="col-span-2 space-y-1">
-                                    <label className={sectionHeading}>
-                                        Unit price <span className="text-rf-orange">*</span>
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={form.unit_price}
-                                        onChange={(e) => setField('unit_price', e.target.value)}
-                                        className={inputCls}
-                                        placeholder="0.00"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className={sectionHeading}>Currency</label>
-                                    <select
-                                        value={form.currency}
-                                        onChange={(e) => setField('currency', e.target.value)}
-                                        className={selectCls}
-                                    >
-                                        {CURRENCIES.map((c) => (
-                                            <option key={c} value={c}>{c}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className={sectionHeading}>Qty available</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="1"
-                                        value={form.available_qty}
-                                        onChange={(e) => setField('available_qty', e.target.value)}
-                                        className={inputCls}
-                                        placeholder="∞"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Section: Details */}
-                        <div className="space-y-3">
-                            <Divider label="Details" />
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div className="sm:col-span-2 space-y-1">
-                                    <label className={sectionHeading}>Description</label>
-                                    <textarea
-                                        value={form.description}
-                                        onChange={(e) => setField('description', e.target.value)}
-                                        rows={3}
-                                        className={`${inputCls} resize-none`}
-                                        placeholder="Describe what the buyer will receive…"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className={sectionHeading}>Status</label>
-                                    <select
-                                        value={form.status}
-                                        onChange={(e) => setField('status', e.target.value)}
-                                        className={selectCls}
-                                    >
-                                        {OFFER_STATUSES.map((s) => (
-                                            <option key={s} value={s}>{s}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        {submitError && <ErrorMsg msg={submitError} />}
-
-                        <div className="flex items-center justify-end gap-3 pt-1">
-                            <button
-                                type="button"
-                                onClick={() => setShowForm(false)}
-                                className={btnGhost}
+                        <div className="space-y-1">
+                            <label className="text-xs text-rf-textSoft/70">Currency</label>
+                            <select
+                                className={selectCls}
+                                value={currency}
+                                onChange={(e) => setCurrency(e.target.value)}
+                                disabled={submitting}
                             >
-                                Cancel
-                            </button>
-                            <button type="submit" disabled={submitBusy} className={btnGreen}>
-                                {submitBusy && (
-                                    <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                    </svg>
-                                )}
-                                {submitBusy ? 'Creating…' : 'Create offer'}
-                            </button>
+                                {['USD', 'EUR', 'GBP', 'AUD', 'CAD', 'SGD'].map((c) => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
                         </div>
-                    </form>
+                    </div>
                 </div>
-            )}
+
+                {/* Details */}
+                <div className="space-y-3">
+                    <div className="space-y-1">
+                        <label className="text-xs text-rf-textSoft/70">Quantity</label>
+                        <input
+                            className={inputCls}
+                            type="number"
+                            min="1"
+                            step="1"
+                            placeholder="1"
+                            value={quantity}
+                            onChange={(e) => setQuantity(e.target.value)}
+                            disabled={submitting}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs text-rf-textSoft/70">Notes <span className="opacity-50">(optional)</span></label>
+                        <textarea
+                            className={inputCls + ' resize-none h-20'}
+                            placeholder="Condition, trade details, or other notes…"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            disabled={submitting}
+                            maxLength={500}
+                        />
+                    </div>
+                </div>
+
+                {submitError && <ErrorMsg msg={submitError} />}
+
+                <button type="submit" className={btnPrimary + ' w-full py-2.5'} disabled={submitting || !selectedItem}>
+                    {submitting ? <><Spinner size={14} /> Posting…</> : 'Post Listing'}
+                </button>
+            </form>
         </div>
     )
 }
 
-// ─── Orders tab ───────────────────────────────────────────────────────────────
+// ─── Orders Tab (G2G seller tooling) ─────────────────────────────────────────
 
-type OrderPayload = Record<string, unknown>
-
-/** Extracts known G2G order fields and returns the rest as generic entries. */
-function parseOrderDisplay(data: OrderPayload): {
-    orderId: string
-    status: string | null
-    amount: string | null
-    buyerId: string | null
-    sellerId: string | null
-    rest: [string, string][]
-} {
-    const known = ['order_id', 'status', 'amount', 'buyer_id', 'seller_id']
-    const orderId = typeof data.order_id === 'string' ? data.order_id : '—'
-    const status = typeof data.status === 'string' ? data.status : null
-    const amount = data.amount != null ? String(data.amount) : null
-    const buyerId = typeof data.buyer_id === 'string' ? data.buyer_id : null
-    const sellerId = typeof data.seller_id === 'string' ? data.seller_id : null
-    const rest = Object.entries(data)
-        .filter(([k]) => !known.includes(k))
-        .map(([k, v]): [string, string] => [k, typeof v === 'object' ? JSON.stringify(v) : String(v)])
-    return { orderId, status, amount, buyerId, sellerId, rest }
-}
-
-function OrderDetailCard({ data, onDeliver }: { data: OrderPayload; onDeliver: () => void }) {
-    const { orderId, status, amount, buyerId, sellerId, rest } = parseOrderDisplay(data)
-    const needsDelivery = status?.toLowerCase().includes('delivery') ?? false
-
-    return (
-        <div className="rf-card rounded-xl border border-white/[0.08] overflow-hidden">
-            <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-white/[0.06]">
-                <div>
-                    <p className={sectionHeading}>Order ID</p>
-                    <p className="mt-1 text-sm font-mono text-rf-text">{orderId}</p>
-                </div>
-                {status && <StatusBadge status={status} />}
-            </div>
-
-            <div className="p-5 grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {amount && (
-                    <div>
-                        <p className={sectionHeading}>Amount</p>
-                        <p className="mt-1 text-sm font-semibold text-rf-orange">{amount}</p>
-                    </div>
-                )}
-                {buyerId && (
-                    <div>
-                        <p className={sectionHeading}>Buyer</p>
-                        <p className="mt-1 text-sm text-rf-text font-mono">{buyerId}</p>
-                    </div>
-                )}
-                {sellerId && (
-                    <div>
-                        <p className={sectionHeading}>Seller</p>
-                        <p className="mt-1 text-sm text-rf-text font-mono">{sellerId}</p>
-                    </div>
-                )}
-                {rest.map(([k, v]) => (
-                    <div key={k}>
-                        <p className={sectionHeading}>{k.replace(/_/g, ' ')}</p>
-                        <p className="mt-1 text-xs text-rf-textSoft font-mono truncate">{v}</p>
-                    </div>
-                ))}
-            </div>
-
-            {needsDelivery && (
-                <div className="px-5 pb-5">
-                    <button type="button" onClick={onDeliver} className={btnPrimary}>
-                        Deliver codes for this order
-                    </button>
-                </div>
-            )}
-        </div>
-    )
+function errMsg(r: MarketplaceResult<unknown>): string {
+    if (r.ok) return ''
+    const e = r as MarketplaceRouteError
+    if (e.error === 'g2g_not_configured') return `G2G not configured`
+    return e.error || 'Request failed'
 }
 
 function OrdersTab() {
-    const [orderIdInput, setOrderIdInput] = useState('')
-    const [orderData, setOrderData] = useState<OrderPayload | null>(null)
+    const [orderId, setOrderId] = useState('')
+    const [orderData, setOrderData] = useState<unknown>(null)
     const [orderLoading, setOrderLoading] = useState(false)
     const [orderError, setOrderError] = useState<string | null>(null)
 
-    const [showDelivery, setShowDelivery] = useState(false)
     const [codesInput, setCodesInput] = useState('')
-    const [deliveryBusy, setDeliveryBusy] = useState(false)
-    const [deliveryError, setDeliveryError] = useState<string | null>(null)
-    const [deliveryToast, setDeliveryToast] = useState<string | null>(null)
-
-    const inputRef = useRef<HTMLInputElement>(null)
+    const [delivering, setDelivering] = useState(false)
+    const [deliverError, setDeliverError] = useState<string | null>(null)
+    const [deliverSuccess, setDeliverSuccess] = useState(false)
+    const [showDeliver, setShowDeliver] = useState(false)
 
     async function handleLookup(e: React.FormEvent) {
         e.preventDefault()
-        const id = orderIdInput.trim()
-        if (!id) return
+        if (!orderId.trim()) return
         setOrderLoading(true)
         setOrderError(null)
         setOrderData(null)
-        setShowDelivery(false)
-        setDeliveryError(null)
-        const r = await fetchOrder(id)
-        if (!r.ok) setOrderError(errMsg(r))
-        else setOrderData(r.payload as OrderPayload)
+        setDeliverSuccess(false)
+        const r = await fetchOrder(orderId.trim())
         setOrderLoading(false)
+        if (!r.ok) { setOrderError(errMsg(r)); return }
+        setOrderData(r.payload)
     }
 
     async function handleDeliver(e: React.FormEvent) {
         e.preventDefault()
-        const codes = codesInput
-            .split('\n')
-            .map((l) => l.trim())
-            .filter(Boolean)
-        if (!codes.length) {
-            setDeliveryError('Enter at least one code.')
-            return
+        const codes = codesInput.split('\n').map((c) => c.trim()).filter(Boolean)
+        if (codes.length === 0) { setDeliverError('Enter at least one code.'); return }
+        setDelivering(true)
+        setDeliverError(null)
+        const r = await deliverOrderCodes(orderId.trim(), codes)
+        setDelivering(false)
+        if (!r.ok) { setDeliverError(errMsg(r)); return }
+        setDeliverSuccess(true)
+        setCodesInput('')
+    }
+
+    type OrderField = { label: string; value: string }
+
+    function parseOrderDisplay(payload: unknown): OrderField[] {
+        if (!payload || typeof payload !== 'object') return []
+        const p = payload as Record<string, unknown>
+        const known: OrderField[] = []
+        const add = (label: string, key: string) => {
+            const v = p[key]
+            if (v !== undefined && v !== null && v !== '') known.push({ label, value: String(v) })
         }
-        setDeliveryBusy(true)
-        setDeliveryError(null)
-        const r = await deliverOrderCodes(orderIdInput.trim(), codes)
-        if (!r.ok) setDeliveryError(errMsg(r))
-        else {
-            setDeliveryToast('Codes delivered successfully.')
-            setCodesInput('')
-            setShowDelivery(false)
+        add('Order ID', 'order_id')
+        add('Status', 'status')
+        add('Amount', 'amount')
+        add('Currency', 'currency')
+        add('Buyer ID', 'buyer_id')
+        add('Seller ID', 'seller_id')
+        add('Created', 'created_at')
+        add('Updated', 'updated_at')
+        const usedKeys = new Set(['order_id', 'status', 'amount', 'currency', 'buyer_id', 'seller_id', 'created_at', 'updated_at'])
+        for (const [k, v] of Object.entries(p)) {
+            if (!usedKeys.has(k) && v !== undefined && v !== null && v !== '') {
+                known.push({ label: k.replace(/_/g, ' '), value: typeof v === 'object' ? JSON.stringify(v) : String(v) })
+            }
         }
-        setDeliveryBusy(false)
+        return known
     }
 
     return (
-        <div className="space-y-4">
-            {deliveryToast && <Toast message={deliveryToast} onDone={() => setDeliveryToast(null)} />}
+        <div className="space-y-5">
+            <p className="text-xs text-rf-textSoft/60 leading-relaxed">
+                G2G order management tools for sellers. Look up orders and deliver digital codes.
+            </p>
 
-            {/* Lookup */}
-            <div className="rf-card rounded-xl border border-white/[0.06] overflow-hidden">
-                <div className="px-5 py-4 border-b border-white/[0.06]">
-                    <h3 className="text-sm font-semibold text-rf-text">Order lookup</h3>
-                    <p className="text-[11px] text-rf-textSoft mt-0.5">Enter a G2G order ID to view status and delivery options.</p>
-                </div>
-                <div className="p-5">
-                    <form onSubmit={(e) => void handleLookup(e)} className="flex gap-2">
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            placeholder="e.g. 1659694996896NH0Y-1"
-                            value={orderIdInput}
-                            onChange={(e) => setOrderIdInput(e.target.value)}
-                            className={`${inputCls} flex-1`}
-                        />
-                        <button
-                            type="submit"
-                            disabled={!orderIdInput.trim() || orderLoading}
-                            className={btnBlue}
-                        >
-                            {orderLoading ? (
-                                <>
-                                    <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                    </svg>
-                                    Looking up…
-                                </>
-                            ) : (
-                                'Look up'
-                            )}
-                        </button>
-                    </form>
-                    {orderError && <div className="mt-3"><ErrorMsg msg={orderError} /></div>}
-                </div>
-            </div>
-
-            {/* Order detail */}
-            {orderData && (
-                <OrderDetailCard
-                    data={orderData}
-                    onDeliver={() => setShowDelivery(true)}
+            {/* Order lookup */}
+            <form onSubmit={handleLookup} className="flex gap-2">
+                <input
+                    className={inputCls}
+                    placeholder="G2G Order ID"
+                    value={orderId}
+                    onChange={(e) => setOrderId(e.target.value)}
+                    disabled={orderLoading}
                 />
-            )}
-
-            {/* Deliver codes */}
-            <div className="rf-card rounded-xl border border-white/[0.06] overflow-hidden">
-                <button
-                    type="button"
-                    onClick={() => setShowDelivery((v) => !v)}
-                    className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.02] transition-colors"
-                >
-                    <div>
-                        <h3 className="text-sm font-semibold text-rf-text">Deliver codes</h3>
-                        <p className="text-[11px] text-rf-textSoft mt-0.5">
-                            Upload codes for an order after receiving{' '}
-                            <code className="text-rf-blue">order.api_delivery</code>
-                        </p>
-                    </div>
-                    <svg
-                        className={`w-4 h-4 text-rf-textSoft transition-transform ${showDelivery ? 'rotate-180' : ''}`}
-                        viewBox="0 0 16 16"
-                        fill="none"
-                    >
-                        <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                <button type="submit" className={btnGhost + ' shrink-0'} disabled={orderLoading || !orderId.trim()}>
+                    {orderLoading ? <Spinner size={14} /> : 'Look up'}
                 </button>
+            </form>
 
-                {showDelivery && (
-                    <form onSubmit={(e) => void handleDeliver(e)} className="border-t border-white/[0.06] p-5 space-y-4">
-                        <div className="space-y-1">
-                            <label className={sectionHeading}>
-                                Target order ID
-                            </label>
-                            <p className="text-sm font-mono text-rf-text py-1.5 px-3 bg-black/30 rounded-lg border border-white/[0.06]">
-                                {orderIdInput.trim() || <span className="text-rf-textSoft/50 italic">—</span>}
-                            </p>
-                            {!orderIdInput.trim() && (
-                                <p className="text-[10px] text-rf-textSoft">Look up an order above first.</p>
-                            )}
-                        </div>
+            <ErrorMsg msg={orderError} />
 
-                        <div className="space-y-1">
-                            <label className={sectionHeading}>Codes — one per line</label>
+            {orderData && (
+                <div className="rf-card rounded-lg border border-white/[0.08] p-4 space-y-3">
+                    <p className={sectionHeading}>Order Details</p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                        {parseOrderDisplay(orderData).map(({ label, value }) => (
+                            <div key={label} className="min-w-0">
+                                <p className="text-[9px] uppercase tracking-wider text-rf-textSoft/50 font-semibold">{label}</p>
+                                <p className="text-xs text-rf-text font-medium truncate mt-0.5">{value}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="pt-2 border-t border-white/[0.06]">
+                        <button
+                            className={btnGhost + ' text-xs'}
+                            onClick={() => setShowDeliver((v) => !v)}
+                        >
+                            {showDeliver ? '▲ Hide' : '▼ Deliver Codes'}
+                        </button>
+                    </div>
+
+                    {showDeliver && (
+                        <form onSubmit={handleDeliver} className="space-y-3 pt-1">
                             <textarea
+                                className={inputCls + ' resize-none h-28 font-mono text-xs'}
+                                placeholder="One code per line…"
                                 value={codesInput}
                                 onChange={(e) => setCodesInput(e.target.value)}
-                                placeholder={'CODE-AAAA-1234\nCODE-BBBB-5678'}
-                                rows={6}
-                                className={`${inputCls} resize-none font-mono text-[12px]`}
+                                disabled={delivering}
                             />
-                            <p className="text-[10px] text-rf-textSoft">
-                                {codesInput.split('\n').filter((l) => l.trim()).length} code(s) entered
+                            <p className="text-[10px] text-rf-textSoft/40">
+                                {codesInput.split('\n').filter((c) => c.trim()).length} code(s) to deliver
                             </p>
-                        </div>
-
-                        {deliveryError && <ErrorMsg msg={deliveryError} />}
-
-                        <button
-                            type="submit"
-                            disabled={!orderIdInput.trim() || !codesInput.trim() || deliveryBusy}
-                            className={btnPrimary}
-                        >
-                            {deliveryBusy && (
-                                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                </svg>
+                            <ErrorMsg msg={deliverError} />
+                            {deliverSuccess && (
+                                <p className="text-xs text-rf-green font-medium">Codes delivered successfully.</p>
                             )}
-                            {deliveryBusy ? 'Delivering…' : 'Deliver codes'}
-                        </button>
-                    </form>
-                )}
-            </div>
+                            <button type="submit" className={btnPrimary} disabled={delivering}>
+                                {delivering ? <><Spinner size={14} /> Delivering…</> : 'Deliver Codes'}
+                            </button>
+                        </form>
+                    )}
+                </div>
+            )}
         </div>
     )
 }
@@ -905,48 +1006,64 @@ function OrdersTab() {
 const TABS: { id: Tab; label: string }[] = [
     { id: 'browse', label: 'Browse' },
     { id: 'sell', label: 'Sell' },
-    { id: 'orders', label: 'Orders' },
+    { id: 'orders', label: 'G2G Orders' },
 ]
 
 export default function MarketplacePage() {
     const [tab, setTab] = useState<Tab>('browse')
+    const { data: session, status: sessionStatus } = useSession()
+    const userId = (session?.user as { id?: string } | undefined)?.id
 
     return (
-        <div className="py-8 space-y-6">
-            {/* Header */}
-            <div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                    Market<span className="text-rf-orange">place</span>
-                </h1>
-                <p className="mt-2 text-xs text-rf-textSoft max-w-2xl leading-relaxed">
-                    Browse G2G listings for ARC Raiders items. Purchases complete on G2G — no checkout
-                    data passes through RaiderForge. Seller flows run through server-side G2G API routes only.
-                </p>
-            </div>
+        <main className="min-h-screen bg-rf-bg text-rf-text px-4 pt-8 pb-20">
+            <div className="max-w-4xl mx-auto space-y-8">
 
-            {/* Tab nav — underline style */}
-            <div className="flex border-b border-white/[0.07]">
-                {TABS.map(({ id, label }) => (
-                    <button
-                        key={id}
-                        type="button"
-                        onClick={() => setTab(id)}
-                        className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
-                            tab === id ? 'text-rf-text' : 'text-rf-textSoft hover:text-rf-text'
-                        }`}
-                    >
-                        {label}
-                        {tab === id && (
-                            <span className="absolute bottom-0 inset-x-0 h-[2px] bg-rf-orange rounded-t-full" />
-                        )}
-                    </button>
-                ))}
-            </div>
+                {/* Header */}
+                <div className="space-y-1">
+                    <h1 className="text-3xl font-extrabold tracking-tight">
+                        Market<span className="text-rf-orange">place</span>
+                    </h1>
+                    <p className="text-sm text-rf-textSoft/70">
+                        Player-to-player listings for ARC Raiders items
+                    </p>
+                </div>
 
-            {/* Tab content */}
-            {tab === 'browse' && <BrowseTab />}
-            {tab === 'sell' && <SellTab />}
-            {tab === 'orders' && <OrdersTab />}
-        </div>
+                {/* Tab navigation */}
+                <div className="flex border-b border-white/[0.08] gap-1">
+                    {TABS.map(({ id, label }) => (
+                        <button
+                            key={id}
+                            onClick={() => setTab(id)}
+                            className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
+                                tab === id
+                                    ? 'text-rf-text'
+                                    : 'text-rf-textSoft/60 hover:text-rf-textSoft'
+                            }`}
+                        >
+                            {label}
+                            {tab === id && (
+                                <span className="absolute bottom-0 inset-x-0 h-[2px] bg-rf-orange rounded-t-full" />
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Tab content */}
+                <div>
+                    {tab === 'browse' && <BrowseTab />}
+                    {tab === 'sell' && (
+                        sessionStatus === 'loading' ? (
+                            <div className="flex items-center justify-center py-20 gap-2.5 text-rf-textSoft/60">
+                                <Spinner size={20} />
+                                <span className="text-sm">Loading…</span>
+                            </div>
+                        ) : (
+                            <SellTab userId={userId} />
+                        )
+                    )}
+                    {tab === 'orders' && <OrdersTab />}
+                </div>
+            </div>
+        </main>
     )
 }
