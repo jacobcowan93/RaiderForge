@@ -172,7 +172,7 @@ export default function BlueprintsPage() {
 
     return (
         <div className="max-w-7xl mx-auto py-8 md:py-10 px-4 sm:px-5">
-            <div className="print:hidden space-y-6 md:space-y-7">
+            <div className="print:hidden space-y-4 md:space-y-5">
                 <header className="rf-card rounded-xl px-4 py-4 sm:px-5 border border-white/[0.06]">
                     <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 lg:gap-6">
                         <div className="min-w-0">
@@ -182,9 +182,8 @@ export default function BlueprintsPage() {
                             <h1 className="mt-1.5 text-2xl sm:text-3xl font-bold tracking-tight text-white">Blueprint tracker</h1>
                             <p className="mt-2 text-xs text-rf-textSoft max-w-2xl leading-relaxed">
                                 List and type labels follow the ARC Raiders Blueprints spreadsheet (exported into this app).
-                                Card artwork uses item tiles sliced from the reference tracker image (same grid embedded in
-                                the xlsx); ARDB URLs fill in only when no tile exists (e.g. Compensator III). Descriptions
-                                and locations come from ARDB. Saved locally on this device; no sign-in.
+                                Tiles use the reference tracker grid where available; ARDB URLs fill gaps. Hover or focus a
+                                tile for description and found-in tags from ARDB. Saved locally on this device; no sign-in.
                             </p>
                             {allowlistStats && allowlistStats.unmatchedSheetNames.length > 0 ? (
                                 <p className="mt-2 text-[10px] text-rf-orange/90 leading-relaxed max-w-2xl">
@@ -218,7 +217,7 @@ export default function BlueprintsPage() {
                         <div className="animate-pulse space-y-3">
                             <div className="h-6 bg-white/10 rounded w-40" />
                             <div className="h-3 bg-white/[0.06] rounded w-full max-w-sm" />
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pt-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-3.5 pt-3">
                                 {Array.from({ length: 12 }).map((_, i) => (
                                     <div key={i} className="rf-card rounded-lg aspect-[5/6] border border-white/5" />
                                 ))}
@@ -418,7 +417,7 @@ export default function BlueprintsPage() {
                                 No blueprints match your filters.
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 justify-items-stretch">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-3.5 justify-items-stretch">
                                 {filtered.map((b) => (
                                     <BlueprintCard
                                         key={b.id}
