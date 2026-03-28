@@ -1,7 +1,14 @@
 import type { NormalizedBlueprint } from '@/lib/blueprints/normalizeBlueprints'
 import { raritySortKey } from '@/lib/blueprints/normalizeBlueprints'
+import { blueprintGameOrderIndex } from '@/lib/blueprints/blueprintInGameOrder'
 
-export type SortMode = 'sheet_asc' | 'name_asc' | 'name_desc' | 'rarity_asc' | 'rarity_desc'
+export type SortMode =
+    | 'ingame_asc'
+    | 'sheet_asc'
+    | 'name_asc'
+    | 'name_desc'
+    | 'rarity_asc'
+    | 'rarity_desc'
 
 export function blueprintDisplayName(b: NormalizedBlueprint): string {
     return b.trackerDisplayName ?? b.name
@@ -14,6 +21,13 @@ function displayName(b: NormalizedBlueprint): string {
 export function applyBlueprintSort(list: NormalizedBlueprint[], mode: SortMode): NormalizedBlueprint[] {
     const next = [...list]
     switch (mode) {
+        case 'ingame_asc':
+            return next.sort((a, b) => {
+                const ia = blueprintGameOrderIndex(blueprintDisplayName(a))
+                const ib = blueprintGameOrderIndex(blueprintDisplayName(b))
+                if (ia !== ib) return ia - ib
+                return displayName(a).localeCompare(displayName(b))
+            })
         case 'sheet_asc':
             return next.sort((a, b) => {
                 const ao = a.spreadsheetOrder ?? 99999

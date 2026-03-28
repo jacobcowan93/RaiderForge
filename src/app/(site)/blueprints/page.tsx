@@ -22,7 +22,9 @@ import {
     blueprintDisplayName,
     type SortMode,
 } from '@/lib/blueprints/sortBlueprints'
+import { warnIfAllowlistDriftFromGameOrder } from '@/lib/blueprints/blueprintInGameOrder'
 import {
+    getBlueprintAllowlistEntries,
     logSpreadsheetMatchStats,
     matchBlueprintsToAllowlist,
     type SpreadsheetMatchStats,
@@ -40,6 +42,7 @@ type CatalogResponse = {
 }
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+    { value: 'ingame_asc', label: 'In-game order' },
     { value: 'sheet_asc', label: 'Spreadsheet order' },
     { value: 'rarity_desc', label: 'Rarity (high → low)' },
     { value: 'rarity_asc', label: 'Rarity (low → high)' },
@@ -69,7 +72,7 @@ export default function BlueprintsPage() {
 
     const [query, setQuery] = useState('')
     const [foundInFilter, setFoundInFilter] = useState<string>('__all__')
-    const [sortMode, setSortMode] = useState<SortMode>('sheet_asc')
+    const [sortMode, setSortMode] = useState<SortMode>('ingame_asc')
     const [onlyMissing, setOnlyMissing] = useState(false)
     const [quickToggleMode, setQuickToggleMode] = useState(false)
 
@@ -102,6 +105,7 @@ export default function BlueprintsPage() {
                     const raw = blueprintsFromCatalogItems(data.items)
                     const { blueprints: matched, stats } = matchBlueprintsToAllowlist(raw)
                     logSpreadsheetMatchStats(stats)
+                    warnIfAllowlistDriftFromGameOrder(getBlueprintAllowlistEntries().map((e) => e.name))
                     setAllowlistStats(stats)
                     setBlueprints(matched)
                 }
