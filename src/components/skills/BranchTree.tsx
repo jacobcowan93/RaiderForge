@@ -135,6 +135,13 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
     const nodes  = useMemo(() => getPlannedNodes(branch), [branch])
     const bpts   = useMemo(() => branchPoints(allocs, branch), [allocs, branch])
 
+    // Fast id → node lookup for lock reason text
+    const nodeById = useMemo(() => {
+        const m = new Map<string, PlannedNode>()
+        for (const n of nodes) m.set(n.id, n)
+        return m
+    }, [nodes])
+
     return (
         <div className="flex flex-col gap-3">
             {/* Branch header */}
@@ -176,7 +183,7 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
             {/* Tree canvas */}
             <div
                 className="relative w-full"
-                style={{ aspectRatio: '3 / 4.5', maxWidth: 260, margin: '0 auto' }}
+                style={{ aspectRatio: '1 / 2.2', maxWidth: 280, margin: '0 auto' }}
             >
                 {/* SVG connector lines (behind nodes) */}
                 <ConnectorLayer nodes={nodes} allocs={allocs} color={meta.hex} />
@@ -190,13 +197,16 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
                     const state  = getNodeState(node, allocs, bpts)
                     const ranks  = allocs[node.uid] ?? 0
 
-                    // Compute lock reason for tooltip
+                    // Compute lock reason for tooltip — name specific missing prerequisites
                     let lockReason: string | null = null
                     if (state === 'locked') {
                         const missingPrereqs = node.prerequisites
                             .filter((pid) => !((allocs[`${branch}_${pid}`] ?? 0) >= 1))
                         if (missingPrereqs.length > 0) {
-                            lockReason = `Requires prerequisite skill`
+                            const names = missingPrereqs
+                                .map((pid) => nodeById.get(pid)?.name ?? pid)
+                                .join(' & ')
+                            lockReason = `Requires: ${names}`
                         }
                     }
 
@@ -220,7 +230,8 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
                                 state={state}
                                 lockReason={lockReason}
                                 onClick={() => onChange(cycleNode(allocs, node.uid))}
-                                onRightClick={() => onChange(decrementNode(allocs, node.uid))}
+                                onDecrement={() => onChange(decrementNode(allocs, node.uid))}
+                                tooltipSide={node.row === 0 ? 'below' : 'above'}
                             />
                         </div>
                     )

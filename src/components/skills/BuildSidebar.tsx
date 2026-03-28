@@ -11,12 +11,16 @@ import {
     resetAll,
     resetBranch,
     encodeBuildToUrl,
+    decodeBuildFromUrl,
+    sanitizeBuild,
 } from '@/lib/skills/planner'
 
 interface Props {
     allocs:   BuildAllocations
     onChange: (next: BuildAllocations) => void
 }
+
+// ── Branch breakdown row ───────────────────────────────────────────────────────
 
 function BranchRow({ row }: { row: BuildSummaryRow }) {
     const [open, setOpen] = useState(false)
@@ -98,6 +102,146 @@ function BranchRow({ row }: { row: BuildSummaryRow }) {
     )
 }
 
+// ── Import panel ───────────────────────────────────────────────────────────────
+// Accepts a full URL (extracts ?b=…) or a raw compact code (e.g. "C1:3|M2l:1").
+// Validates, applies, then collapses.
+
+interface ImportPanelProps {
+    onImport: (allocs: BuildAllocations) => void
+}
+
+function ImportPanel({ onImport }: ImportPanelProps) {
+    const [open,    setOpen]    = useState(false)
+    const [value,   setValue]   = useState('')
+    const [status,  setStatus]  = useState<'idle' | 'ok' | 'error'>('idle')
+    const [errMsg,  setErrMsg]  = useState('')
+
+    const handleApply = () => {
+        const raw = value.trim()
+        if (!raw) return
+
+        // Try extracting ?b= from a full URL first
+        let code = raw
+        try {
+            const url = new URL(raw)
+            const b   = url.searchParams.get('b')
+            if (b) code = b
+        } catch {
+            // Not a valid URL — treat as raw code
+        }
+
+        const decoded = decodeBuildFromUrl(code)
+        if (Object.keys(decoded).length === 0) {
+            setStatus('error')
+            setErrMsg('Could not parse build code. Check the link and try again.')
+            return
+        }
+
+        onImport(sanitizeBuild(decoded))
+        setStatus('ok')
+        setValue('')
+        // Collapse after a short delay so user sees the success flash
+        setTimeout(() => { setOpen(false); setStatus('idle') }, 1200)
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            handleApply()
+        }
+        if (e.key === 'Escape') {
+            setOpen(false)
+            setStatus('idle')
+            setValue('')
+        }
+    }
+
+    return (
+        <div className="rounded-xl border border-white/[0.07] overflow-hidden"
+             style={{ background: 'rgba(15,20,27,0.65)' }}>
+            {/* Toggle header */}
+            <button
+                type="button"
+                onClick={() => { setOpen((v) => !v); setStatus('idle') }}
+                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-white/[0.03] transition-colors"
+            >
+                <div className="flex items-center gap-2">
+                    <svg width={12} height={12} viewBox="0 0 24 24" fill="none"
+                         stroke="rgba(255,255,255,0.35)" strokeWidth={2}
+                         strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span className="text-[11px] font-semibold text-white/40">Import build</span>
+                </div>
+                <svg
+                    className="transition-transform duration-200"
+                    style={{ transform: open ? 'rotate(180deg)' : 'rotate(0)' }}
+                    width={11} height={11} viewBox="0 0 24 24" fill="none"
+                    stroke="rgba(255,255,255,0.25)" strokeWidth={2.5}
+                    strokeLinecap="round" strokeLinejoin="round"
+                >
+                    <polyline points="6 9 12 15 18 9"/>
+                </svg>
+            </button>
+
+            {/* Expandable body */}
+            {open && (
+                <div className="px-3 pb-3 flex flex-col gap-2">
+                    <p className="text-[10px] text-white/30 leading-relaxed">
+                        Paste a share link or compact build code (e.g.&nbsp;
+                        <code className="text-white/45 font-mono">C1:3,C2l:1|M1:5</code>)
+                    </p>
+                    <textarea
+                        rows={2}
+                        value={value}
+                        onChange={(e) => { setValue(e.target.value); setStatus('idle') }}
+                        onKeyDown={handleKeyDown}
+                        placeholder="https://raiderforge.com/skill-trees?b=…"
+                        className="w-full resize-none rounded-lg px-2.5 py-2 text-[11px] font-mono
+                                   text-white/70 placeholder-white/18 border border-white/[0.08]
+                                   focus:outline-none focus:border-white/20 transition-colors"
+                        style={{ background: 'rgba(7,9,13,0.85)' }}
+                        spellCheck={false}
+                        autoComplete="off"
+                    />
+
+                    {/* Status feedback */}
+                    {status === 'error' && (
+                        <p className="text-[10px] text-red-400/85 leading-snug">{errMsg}</p>
+                    )}
+                    {status === 'ok' && (
+                        <p className="text-[10px] text-emerald-400/85 leading-snug flex items-center gap-1.5">
+                            <svg width={10} height={10} viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" strokeWidth={2.5}
+                                 strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Build imported!
+                        </p>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={handleApply}
+                        disabled={!value.trim()}
+                        className="self-end text-[11px] font-semibold rounded-lg px-3 py-1.5
+                                   border border-white/12 text-white/50
+                                   hover:border-white/22 hover:text-white/70 transition-colors
+                                   disabled:opacity-30 disabled:cursor-not-allowed"
+                        style={{ background: 'rgba(255,255,255,0.04)' }}
+                    >
+                        Apply
+                    </button>
+                </div>
+            )}
+        </div>
+    )
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────────
+
 export function BuildSidebar({ allocs, onChange }: Props) {
     const [copied, setCopied] = useState(false)
     const summary = useMemo(() => buildSummary(allocs), [allocs])
@@ -161,6 +305,7 @@ export function BuildSidebar({ allocs, onChange }: Props) {
 
             {/* Actions */}
             <div className="flex flex-col gap-2">
+                {/* Share */}
                 <button
                     type="button"
                     onClick={handleShare}
@@ -186,6 +331,10 @@ export function BuildSidebar({ allocs, onChange }: Props) {
                     )}
                 </button>
 
+                {/* Import */}
+                <ImportPanel onImport={onChange} />
+
+                {/* Reset all */}
                 <button
                     type="button"
                     onClick={() => onChange(resetAll())}

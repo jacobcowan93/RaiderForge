@@ -101,7 +101,7 @@ export function SkillTreePlanner() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 overflow-x-hidden">
 
             {/* ── Mobile branch tabs + sidebar toggle ─────────────────────── */}
             <div className="flex items-center gap-3 lg:hidden">
