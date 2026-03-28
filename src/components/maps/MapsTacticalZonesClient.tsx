@@ -103,9 +103,15 @@ export function MapsTacticalZonesClient({ zones }: Props) {
                                     </div>
                                 )}
 
-                                <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-10 bg-gradient-to-t from-black/70 to-transparent">
-                                    <h2 className="font-bold text-white text-[17px] leading-tight">{map.displayName}</h2>
-                                    <p className="text-[11px] text-white/50 mt-0.5 tracking-wide">{map.subtitle}</p>
+                                <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-10 bg-gradient-to-t from-black/80 via-black/35 to-transparent">
+                                    <div className="border-l-2 border-rf-red pl-2.5">
+                                        <h2 className="font-bold text-white text-[17px] leading-tight tracking-tight drop-shadow-md">
+                                            {map.displayName}
+                                        </h2>
+                                        <p className="text-[11px] text-white font-medium mt-1 tracking-wide leading-snug">
+                                            {map.subtitle}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -197,7 +203,9 @@ export function MapsTacticalZonesClient({ zones }: Props) {
                                 )}
 
                                 <div className="mt-auto flex items-center justify-between pt-3 border-t border-white/[0.06]">
-                                    <span className="text-[10px] text-white/28 truncate pr-3">{map.featuresLine}</span>
+                                    <span className="text-[10px] text-white/55 truncate pr-3 leading-snug">
+                                        {map.featuresLine}
+                                    </span>
                                     <span
                                         className="text-xs font-medium text-rf-red
                                                      inline-flex items-center gap-1

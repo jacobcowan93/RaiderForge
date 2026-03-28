@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { MAPS, PRACTICE_RANGE_OVERVIEW } from '@/data/maps'
 import { CONTAINERS_BY_MAP } from '@/data/containers'
 import { fetchMfEventsSchedule } from '@/api/metaforgeService'
@@ -58,14 +57,17 @@ export default async function MapsPage() {
         <div className="py-14 px-6 max-w-6xl mx-auto">
 
             {/* ── Header ─────────────────────────────────────────────────────────
-                Left-border accent with text-shadow lets the full-bleed background
-                remain visible. No card overlay needed — rf-card on each map card
-                handles per-item readability.  */}
+                Red rail + text-shadow; body copy stays white for contrast on tinted bg. */}
             <div className="mb-10 pl-1">
                 <div className="border-l-2 border-rf-red pl-5">
-                    <span className="text-xs uppercase tracking-widest text-rf-red font-semibold">Operations</span>
-                    <h1 className="mt-2 text-3xl font-bold text-white text-shadow-hero">ARC Raiders Interactive Maps</h1>
-                    <p className="mt-2.5 text-rf-textSoft text-sm max-w-xl text-shadow-hero leading-relaxed">
+                    <span className="text-xs uppercase tracking-widest text-rf-red font-semibold drop-shadow-sm">
+                        Operations
+                    </span>
+                    <h1 className="mt-2 text-3xl font-bold tracking-tight text-white text-shadow-hero">
+                        ARC Raiders{' '}
+                        <span className="text-rf-red">Interactive Maps</span>
+                    </h1>
+                    <p className="mt-2.5 text-sm max-w-xl text-white text-shadow-hero leading-relaxed">
                         Browse all ARC Raiders zones in one place, complete with lore snippets and embedded interactive
                         maps. The in&#x2011;game layouts and POIs are powered by Wesley&apos;s excellent work at{' '}
                         <a
@@ -82,7 +84,7 @@ export default async function MapsPage() {
             </div>
 
             <div className="rf-card rounded-xl px-4 py-3.5 mb-8 border border-white/[0.06] bg-white/[0.02]">
-                <p className="text-[11px] text-rf-textSoft leading-relaxed">
+                <p className="text-[11px] text-white/85 leading-relaxed">
                     Community-run reference maps with extra POIs and keys are available at{' '}
                     <a
                         href="https://maps.tcno.co/arc"
@@ -106,23 +108,23 @@ export default async function MapsPage() {
                 className="mt-16 border-t border-white/[0.06] pt-12 max-w-3xl"
                 aria-label="Zone field notes"
             >
-                <p className="text-xs uppercase tracking-widest text-white/40 font-semibold mb-8">
+                <p className="text-xs uppercase tracking-widest text-rf-red/90 font-semibold mb-8 drop-shadow-sm">
                     Zone field notes
                 </p>
                 <div className="space-y-10">
                     {MAPS.map((m) => (
                         <article key={m.id}>
-                            <h2 className="text-xl font-bold text-white tracking-tight text-shadow-hero">
+                            <h2 className="text-xl font-bold tracking-tight text-white text-shadow-hero border-l-2 border-rf-red pl-3">
                                 {m.displayName}
                             </h2>
-                            <p className="mt-3 text-sm text-rf-textSoft leading-relaxed">{m.description}</p>
+                            <p className="mt-3 text-sm text-white font-normal leading-[1.65]">{m.description}</p>
                         </article>
                     ))}
                     <article>
-                        <h2 className="text-xl font-bold text-white tracking-tight text-shadow-hero">
+                        <h2 className="text-xl font-bold tracking-tight text-white text-shadow-hero border-l-2 border-rf-red pl-3">
                             {PRACTICE_RANGE_OVERVIEW.displayName}
                         </h2>
-                        <p className="mt-3 text-sm text-rf-textSoft leading-relaxed">
+                        <p className="mt-3 text-sm text-white font-normal leading-[1.65]">
                             {PRACTICE_RANGE_OVERVIEW.description}
                         </p>
                     </article>
