@@ -1,21 +1,25 @@
 'use client'
 
-import type { KeyboardEvent, MouseEvent } from 'react'
+import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react'
 import type { NormalizedBlueprint } from '@/lib/blueprints/normalizeBlueprints'
 import {
     formatRarityLabel,
     getRarityVisualTier,
-    rarityBadgeClasses,
     rarityCardContainerClasses,
     rarityCardTopBarClass,
     rarityImageBackdropClass,
 } from '@/lib/blueprints/rarityCardStyles'
 
+const blueprintGridStyle: CSSProperties = {
+    backgroundImage: `linear-gradient(rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.07) 1px, transparent 1px)`,
+    backgroundSize: '12px 12px',
+}
+
 export type BlueprintCardProps = {
     blueprint: NormalizedBlueprint
     owned: boolean
     onOwnedChange: (owned: boolean) => void
-    /** When true, clicking the card (outside the checkbox) toggles owned. */
     quickToggleMode?: boolean
 }
 
@@ -53,57 +57,65 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
         >
             <div className={rarityCardTopBarClass(tier)} aria-hidden />
 
-            <div className="p-4 flex flex-col flex-1 gap-3 min-h-0">
-                <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-semibold text-rf-text leading-snug group-hover:text-white transition-colors pr-1 min-w-0">
+            {/* Top: name + owned (checkbox only, unobtrusive) + description above image */}
+            <div className="px-2.5 pt-2 pb-1.5 flex flex-col gap-1 min-h-0">
+                <div className="flex items-start justify-between gap-2 min-w-0">
+                    <h2 className="min-w-0 flex-1 text-left text-[10px] sm:text-[11px] font-bold uppercase tracking-wide text-rf-text leading-tight truncate group-hover:text-white transition-colors">
                         {b.name}
                     </h2>
-                    <span className={rarityBadgeClasses(tier)}>{formatRarityLabel(b.rarity)}</span>
-                </div>
-
-                {desc ? (
-                    <p className="text-xs text-rf-textSoft leading-relaxed line-clamp-3 min-h-[2.75rem]">{desc}</p>
-                ) : (
-                    <div className="min-h-[2.75rem]" aria-hidden />
-                )}
-
-                <label className="flex items-center gap-2.5 cursor-pointer select-none touch-manipulation">
-                    <input
-                        type="checkbox"
-                        checked={owned}
-                        onChange={(e) => onOwnedChange(e.target.checked)}
-                        className="h-4 w-4 rounded border-white/25 bg-rf-bg/80 accent-rf-green focus:ring-2 focus:ring-rf-red/40 focus:ring-offset-0 focus:ring-offset-transparent"
-                    />
-                    <span className="text-sm text-rf-text">I have this blueprint</span>
-                </label>
-
-                <div className="relative h-40 bg-rf-bgSoft shrink-0 flex items-center justify-center p-3 rounded-xl border border-white/[0.06] overflow-hidden mt-1">
-                    <div className={rarityImageBackdropClass(tier)} aria-hidden />
-                    {img ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                            src={img}
-                            alt=""
-                            className="relative z-[1] max-h-full max-w-full object-contain drop-shadow-lg group-hover:scale-[1.04] transition-transform duration-500 ease-out"
+                    <label className="shrink-0 flex items-center justify-center cursor-pointer touch-manipulation p-0.5 -mr-0.5 -mt-0.5 rounded hover:bg-white/5 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-rf-red/40">
+                        <span className="sr-only">Owned</span>
+                        <input
+                            type="checkbox"
+                            checked={owned}
+                            onChange={(e) => onOwnedChange(e.target.checked)}
+                            className="h-3.5 w-3.5 rounded border-white/30 bg-rf-bg/90 accent-rf-green focus:ring-0 focus:ring-offset-0"
                         />
-                    ) : (
-                        <span className="relative z-[1] text-rf-textSoft text-[10px] uppercase tracking-widest">No image</span>
-                    )}
+                    </label>
                 </div>
+                {desc ? (
+                    <p className="text-[9px] sm:text-[10px] leading-snug text-rf-textSoft/90 line-clamp-2 pr-0.5">
+                        {desc}
+                    </p>
+                ) : null}
+            </div>
 
-                {b.foundIn.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                        {b.foundIn.map((t) => (
-                            <span
-                                key={t}
-                                className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-rf-textSoft"
-                            >
-                                {t}
-                            </span>
-                        ))}
-                    </div>
+            {/* Center: image-first tactical panel */}
+            <div
+                className="relative mx-2 mb-1.5 h-[7.25rem] sm:h-32 rounded-lg border border-sky-500/15 bg-[#070b14] flex items-center justify-center overflow-hidden"
+                style={blueprintGridStyle}
+            >
+                <div className={`${rarityImageBackdropClass(tier)} rounded-lg`} aria-hidden />
+                {img ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={img}
+                        alt=""
+                        className="relative z-[1] max-h-[88%] max-w-[92%] object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.65)] group-hover:scale-[1.03] transition-transform duration-300 ease-out"
+                    />
+                ) : (
+                    <span className="relative z-[1] text-rf-textSoft/70 text-[9px] uppercase tracking-widest">No image</span>
                 )}
             </div>
+
+            {/* Lower: minimal metadata */}
+            {(b.foundIn.length > 0 || b.rarity) && (
+                <div className="px-2.5 pb-2 pt-0 flex flex-wrap items-center gap-1.5">
+                    {b.rarity ? (
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-rf-textSoft/80">
+                            {formatRarityLabel(b.rarity)}
+                        </span>
+                    ) : null}
+                    {b.foundIn.map((t) => (
+                        <span
+                            key={t}
+                            className="text-[8px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/10 text-rf-textSoft/90"
+                        >
+                            {t}
+                        </span>
+                    ))}
+                </div>
+            )}
         </article>
     )
 }

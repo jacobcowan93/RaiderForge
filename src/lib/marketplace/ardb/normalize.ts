@@ -2,6 +2,15 @@ import { ARDB_STATIC_BASE } from './constants'
 import type { MarketplaceCatalogItem } from '@/lib/marketplace/catalog-types'
 import type { ArdbItemDetail, ArdbItemListEntry } from './types'
 
+/** Map ARDB `type` (or rare `itemType`) onto catalog `itemType` without changing blueprint detection semantics. */
+function resolveArdbItemType(merged: ArdbItemDetail | ArdbItemListEntry, listEntry: ArdbItemListEntry): string | null {
+    const m = merged as { type?: unknown; itemType?: unknown }
+    if (typeof m.type === 'string' && m.type.trim() !== '') return m.type
+    if (typeof m.itemType === 'string' && m.itemType.trim() !== '') return m.itemType
+    if (typeof listEntry.type === 'string' && listEntry.type.trim() !== '') return listEntry.type
+    return null
+}
+
 function absolutizeStaticPath(relativeOrAbsolute: string | undefined | null): string | null {
     if (relativeOrAbsolute == null || relativeOrAbsolute === '') return null
     const v = relativeOrAbsolute
@@ -32,6 +41,8 @@ export function normalizeArdbItemToCatalog(
     const iconUrl = absolutizeStaticPath(iconPath)
     const imageUrl = absolutizeStaticPath(imagePath)
 
+    const itemType = resolveArdbItemType(merged, listEntry)
+
     return {
         source: 'ardb',
         ardbId: listEntry.id,
@@ -43,7 +54,7 @@ export function normalizeArdbItemToCatalog(
                   ? listEntry.description
                   : null,
         rarity: merged.rarity ?? listEntry.rarity,
-        itemType: typeof merged.type === 'string' ? merged.type : listEntry.type,
+        itemType,
         value: typeof merged.value === 'number' ? merged.value : listEntry.value,
         foundIn: Array.isArray(merged.foundIn) ? merged.foundIn : listEntry.foundIn,
         iconUrl,

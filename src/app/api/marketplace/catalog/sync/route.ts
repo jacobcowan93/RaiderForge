@@ -44,10 +44,15 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 })
     }
 
-    const result = await syncMarketplaceCatalogFromArdb({
-        hydrateDetails: body.hydrateDetails !== false,
-        concurrency: typeof body.concurrency === 'number' ? body.concurrency : undefined,
-    })
-
-    return NextResponse.json({ ok: true, ...result })
+    try {
+        const result = await syncMarketplaceCatalogFromArdb({
+            hydrateDetails: body.hydrateDetails !== false,
+            concurrency: typeof body.concurrency === 'number' ? body.concurrency : undefined,
+        })
+        return NextResponse.json({ ok: true, ...result })
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        console.error('[marketplace/catalog/sync] Catalog sync failed:', msg)
+        return NextResponse.json({ ok: false, error: msg }, { status: 500 })
+    }
 }
