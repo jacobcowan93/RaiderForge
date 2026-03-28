@@ -3,7 +3,29 @@
  * Upstream APIs (ARDB, MetaForge) may enrich via questIds / itemIds; they do not own placement.
  */
 
-export type PoiCategory = 'quest' | 'container' | 'key' | 'extract'
+export type PoiCategory =
+    | 'extract'
+    | 'key'
+    | 'quest'
+    | 'container'
+    | 'loot'
+    | 'nature'
+    | 'arc'
+    | 'interaction'
+    | 'noise'
+    | 'area'
+
+/** Supported in-raid difficulty variants for ARC Raiders. */
+export type Difficulty =
+    | 'Normal'
+    | 'Night'
+    | 'Storm'
+    | 'Lush Blooms'
+    | 'Uncovered Caches'
+    | 'Cold Snap'
+    | 'Hurricane'
+    | 'Bird City'
+    | 'Tower Loot'
 
 export type MapPoi = {
     id: string
@@ -25,4 +47,9 @@ export type MapPoi = {
      * Omit to show on every floor.
      */
     floorIndex?: number
+    /**
+     * If set, this POI is only shown when one of these difficulties is active.
+     * Omit to show in all difficulties.
+     */
+    difficulties?: Difficulty[]
 }

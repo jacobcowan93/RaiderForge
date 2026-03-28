@@ -1,6 +1,9 @@
 /**
  * Visual tokens for curated map POIs (Leaflet divIcons).
  * Distinct from quest dots, container diamonds, and loot hollow circles — rounded square pin.
+ *
+ * Category palette is tuned for legibility on darkened map tiles (25% tint overlay).
+ * Orange (loot) and green (extract/nature) are kept distinct via saturation not just hue.
  */
 
 import type { PoiCategory } from '@/lib/maps/poi-types'
@@ -10,12 +13,22 @@ export type PoiCategoryVisual = {
     color: string
 }
 
-/** Slightly lifted chroma for legibility on darkened map tiles (tint overlay). */
 export const POI_CATEGORY_META: Record<PoiCategory, PoiCategoryVisual> = {
-    quest: { label: 'Quest', color: '#8b95fa' },
-    container: { label: 'Container', color: '#a8b4c4' },
-    key: { label: 'Key', color: '#fcc535' },
-    extract: { label: 'Extract', color: '#34d399' },
+    // Locations group
+    extract:     { label: 'Extract',     color: '#34d399' }, // emerald
+    key:         { label: 'Key',         color: '#fcc535' }, // amber
+    quest:       { label: 'Quest',       color: '#8b95fa' }, // indigo
+    area:        { label: 'Area',        color: '#94a3b8' }, // slate
+
+    // Loot group
+    container:   { label: 'Container',   color: '#fb923c' }, // orange
+    loot:        { label: 'Loot',        color: '#f472b6' }, // pink
+
+    // World group
+    arc:         { label: 'ARC',         color: '#f87171' }, // red
+    nature:      { label: 'Nature',      color: '#86efac' }, // light green
+    interaction: { label: 'Interact.',   color: '#60a5fa' }, // sky blue
+    noise:       { label: 'Noise',       color: '#c084fc' }, // purple
 }
 
 export function buildPoiMarkerHtml(category: PoiCategory, selected: boolean): string {
