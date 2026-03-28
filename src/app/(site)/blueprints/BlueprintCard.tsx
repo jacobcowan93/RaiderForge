@@ -391,8 +391,8 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                                 src={src}
                                 alt=""
                                 onError={() => setAttempt((a) => a + 1)}
-                                className={`relative z-[1] h-full w-full max-h-full max-w-full object-contain object-center drop-shadow-[0_4px_18px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
-                                    owned ? 'opacity-45' : 'opacity-100'
+                                className={`relative z-[1] h-full w-full max-h-full max-w-full object-contain object-center drop-shadow-[0_4px_18px_rgba(0,0,0,0.55)] transition-[opacity,filter] duration-200 ${
+                                    owned ? 'opacity-45' : 'opacity-100 group-hover:brightness-110'
                                 }`}
                             />
                         ) : (
@@ -402,9 +402,9 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
                         )}
                         {/* Gradient mask to conceal the name label baked into the reference art tiles */}
                         <div
-                            className="absolute inset-x-0 bottom-0 h-[50%] z-[2] pointer-events-none rounded-b-md"
+                            className="absolute inset-x-0 bottom-0 h-[28%] z-[2] pointer-events-none rounded-b-md"
                             aria-hidden
-                            style={{ background: 'linear-gradient(to bottom, transparent 0%, #050810 48%)' }}
+                            style={{ background: 'linear-gradient(to bottom, transparent 0%, rgba(5,8,16,0.88) 100%)' }}
                         />
                     </div>
                 </div>

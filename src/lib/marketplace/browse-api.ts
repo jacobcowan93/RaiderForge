@@ -1,8 +1,13 @@
 /**
- * Browser-side fetch helpers for RaiderForge → /api/marketplace/g2g/* (no G2G secrets).
+ * Browser-side fetch helpers for RaiderForge → /api/marketplace/g2g/*
+ *
+ * No G2G credentials ever appear here — all secrets stay server-only.
+ * These functions call internal Next.js API routes which proxy to G2G.
  */
 
 const BASE = '/api/marketplace/g2g'
+
+// ─── Shared result types ─────────────────────────────────────────────────────
 
 export type MarketplaceRouteError = {
     ok: false
@@ -11,6 +16,7 @@ export type MarketplaceRouteError = {
     status?: number
     code?: string
     request_id?: string
+    fields?: string[]
 }
 
 export type MarketplaceRouteOk<T> = {
@@ -27,6 +33,8 @@ export type MarketplaceResult<T> = MarketplaceRouteOk<T> | MarketplaceRouteError
 async function readJson<T>(res: Response): Promise<T> {
     return res.json() as Promise<T>
 }
+
+// ─── Browse / Buyer (read-only) ──────────────────────────────────────────────
 
 export async function fetchMarketplaceServices(language?: string): Promise<MarketplaceResult<unknown>> {
     const qs = new URLSearchParams()
@@ -64,6 +72,7 @@ export async function fetchMarketplaceProducts(query: {
     return readJson(res)
 }
 
+/** Search public offers — used in the buyer Browse tab. */
 export async function searchMarketplaceOffers(body: {
     filter: Record<string, unknown>
     page_size?: number
@@ -72,7 +81,100 @@ export async function searchMarketplaceOffers(body: {
     const res = await fetch(`${BASE}/offers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+    })
+    return readJson(res)
+}
+
+// ─── Seller / Inventory ──────────────────────────────────────────────────────
+
+/**
+ * Fetch the authenticated seller's own offers.
+ * Maps to GET /api/marketplace/g2g/inventory → POST /v2/offers/search (server-side).
+ */
+export async function fetchSellerOffers(opts?: {
+    page?: number
+    page_size?: number
+    status?: string
+}): Promise<MarketplaceResult<unknown>> {
+    const qs = new URLSearchParams()
+    if (opts?.page !== undefined) qs.set('page', String(opts.page))
+    if (opts?.page_size !== undefined) qs.set('page_size', String(opts.page_size))
+    if (opts?.status !== undefined && opts.status !== '') qs.set('status', opts.status)
+    const q = qs.toString()
+    const res = await fetch(`${BASE}/inventory${q ? `?${q}` : ''}`)
+    return readJson(res)
+}
+
+/**
+ * Create a new offer on G2G.
+ * Required fields: service_id, brand_id, product_id, unit_price, currency.
+ * Maps to POST /api/marketplace/g2g/inventory → POST /v2/offers.
+ */
+export async function createSellerOffer(body: Record<string, unknown>): Promise<MarketplaceResult<unknown>> {
+    const res = await fetch(`${BASE}/inventory`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    })
+    return readJson(res)
+}
+
+/**
+ * Partially update an existing offer.
+ * Maps to PATCH /api/marketplace/g2g/inventory?offer_id={id} → PATCH /v2/offers/{id}.
+ */
+export async function updateSellerOffer(
+    offerId: string,
+    body: Record<string, unknown>
+): Promise<MarketplaceResult<unknown>> {
+    const res = await fetch(`${BASE}/inventory?offer_id=${encodeURIComponent(offerId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    })
+    return readJson(res)
+}
+
+/**
+ * Remove an offer from G2G.
+ * Maps to DELETE /api/marketplace/g2g/inventory?offer_id={id} → DELETE /v2/offers/{id}.
+ */
+export async function deleteSellerOffer(offerId: string): Promise<MarketplaceResult<unknown>> {
+    const res = await fetch(`${BASE}/inventory?offer_id=${encodeURIComponent(offerId)}`, {
+        method: 'DELETE',
+    })
+    return readJson(res)
+}
+
+// ─── Orders ──────────────────────────────────────────────────────────────────
+
+/**
+ * Get order status by order ID.
+ * Maps to GET /api/marketplace/g2g/orders?order_id={id} → GET /v2/orders/{id}.
+ * Documented statuses include: unpaid, cancelled, confirmed, and delivery states.
+ */
+export async function fetchOrder(orderId: string): Promise<MarketplaceResult<unknown>> {
+    const res = await fetch(`${BASE}/orders?order_id=${encodeURIComponent(orderId)}`)
+    return readJson(res)
+}
+
+/**
+ * Deliver codes for an order (Order Delivery Flow / Upload Code Flow).
+ * Call this after receiving an `order.api_delivery` webhook event.
+ * Maps to POST /api/marketplace/g2g/orders → POST /v2/orders/{id}/delivery.
+ *
+ * @param orderId  G2G order ID
+ * @param codes    Array of delivery codes / digital items to upload
+ */
+export async function deliverOrderCodes(
+    orderId: string,
+    codes: string[]
+): Promise<MarketplaceResult<unknown>> {
+    const res = await fetch(`${BASE}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId, codes }),
     })
     return readJson(res)
 }
