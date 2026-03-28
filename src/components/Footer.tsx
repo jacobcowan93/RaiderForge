@@ -96,10 +96,19 @@ export default function Footer() {
                     </p>
                 </div>
 
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-rf-textSoft">
-                    <div>© {new Date().getFullYear()} RaiderForge. All rights reserved.</div>
-                    <div>
-                        <a href="https://raiderforge.org" className="hover:text-rf-text transition-colors">
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs">
+                    <div className="text-rf-textSoft">© {new Date().getFullYear()} RaiderForge. All rights reserved.</div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-white/40">
+                        <Link href="/privacy" className="hover:text-rf-text transition-colors">
+                            Privacy Policy
+                        </Link>
+                        <Link href="/terms" className="hover:text-rf-text transition-colors">
+                            Terms of Use
+                        </Link>
+                        <a
+                            href="https://raiderforge.org"
+                            className="hover:text-rf-text transition-colors"
+                        >
                             raiderforge.org
                         </a>
                     </div>

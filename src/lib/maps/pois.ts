@@ -18,7 +18,15 @@ export const ALL_MAP_POIS: MapPoi[] = [
     ...stellaMontisPois,
 ]
 
-export const POI_MVP_CATEGORIES: readonly PoiCategory[] = ['quest', 'container', 'key', 'extract']
+/** Minimum categories shown on first load (Locations group). */
+export const POI_MVP_CATEGORIES: readonly PoiCategory[] = ['extract', 'key', 'quest', 'area']
+
+/** All categories — used by the full NativeMapExplorer layer panel. */
+export const ALL_POI_CATEGORIES: readonly PoiCategory[] = [
+    'extract', 'key', 'quest', 'area',
+    'container', 'loot',
+    'arc', 'nature', 'interaction', 'noise',
+]
 
 export function getPoisForMap(mapId: string): MapPoi[] {
     return ALL_MAP_POIS.filter(p => p.mapId === mapId)

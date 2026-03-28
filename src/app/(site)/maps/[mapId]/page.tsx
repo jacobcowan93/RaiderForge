@@ -9,10 +9,10 @@ import { getActiveConditionsForMap } from '@/lib/events/conditions'
 import { getEventStyle, isMajorEvent } from '@/lib/events/eventsConfig'
 import { getMapGuide } from '@/lib/maps/mapGuideContent'
 import { getMetaforgeMapLootAreas } from '@/lib/maps/metaforgeMapData'
-import MapImageDisplay from '@/components/MapImageDisplay'
 import MapFieldGuide from '@/components/MapFieldGuide'
 import { getGameDataProvider } from '@/lib/game-data/provider'
 import { indexGameMapsByRfId, resolveMapThumbWithGameData } from '@/lib/maps/rfGameMapBridge'
+import NativeMapExplorer from './_components/NativeMapExplorer'
 
 type Props = { params: Promise<{ mapId: string }> }
 
@@ -28,7 +28,7 @@ export default async function MapDetailPage({ params }: Props) {
     const map = MAPS.find(m => m.id === mapId)
     if (!map) notFound()
 
-    // Parallel fetches — all fail gracefully. Game maps: same pipeline as GET /api/game/maps.
+    // Parallel fetches — all fail gracefully.
     const [events, mfQuests, ardbQuests, mfLootAreas, gameMaps] = await Promise.all([
         fetchMfEventsSchedule().catch(() => []),
         fetchMfQuests().catch(() => []),
@@ -37,7 +37,7 @@ export default async function MapDetailPage({ params }: Props) {
         getGameDataProvider()
             .getMaps()
             .catch((err) => {
-                console.warn('[maps] game-data getMaps failed (pipeline: /api/game/maps)', err)
+                console.warn('[maps] game-data getMaps failed', err)
                 return []
             }),
     ])
@@ -64,7 +64,7 @@ export default async function MapDetailPage({ params }: Props) {
     return (
         <div className="py-8 px-6 max-w-7xl mx-auto">
 
-            {/* Breadcrumb */}
+            {/* ── Breadcrumb ────────────────────────────────────────────────────── */}
             <div className="mb-6">
                 <Link
                     href="/maps"
@@ -76,19 +76,20 @@ export default async function MapDetailPage({ params }: Props) {
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                          strokeWidth={2.5} stroke="currentColor" className="w-3 h-3 shrink-0">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                        <path strokeLinecap="round" strokeLinejoin="round"
+                              d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
                     </svg>
                     All Zones
                 </Link>
             </div>
 
-            {/* ── Hero ─────────────────────────────────────────────────────────── */}
-            <div className="relative h-72 sm:h-96 rounded-2xl overflow-hidden mb-10 bg-rf-bgSoft">
+            {/* ── Compact hero ─────────────────────────────────────────────────── */}
+            <div className="relative h-48 sm:h-60 rounded-2xl overflow-hidden mb-8 bg-rf-bgSoft">
                 <img src={thumb} alt={map.displayName} className="w-full h-full object-cover" />
 
                 {/* Cinematic overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/15" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/35 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
 
                 {/* Risk badge — top right */}
                 <span className={`absolute top-4 right-4 flex items-center gap-1.5
@@ -128,12 +129,14 @@ export default async function MapDetailPage({ params }: Props) {
                 )}
 
                 {/* Map title — bottom left */}
-                <div className="absolute bottom-0 left-0 right-0 px-6 pb-6 pt-16
+                <div className="absolute bottom-0 left-0 right-0 px-6 pb-5 pt-12
                                 bg-gradient-to-t from-black/80 to-transparent">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-1.5">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-1">
                         {map.subtitle}
                     </p>
-                    <h1 className="text-4xl font-black text-white tracking-tight">{map.displayName}</h1>
+                    <h1 className="text-3xl font-black text-white tracking-tight text-shadow-hero">
+                        {map.displayName}
+                    </h1>
                 </div>
             </div>
 
@@ -143,29 +146,12 @@ export default async function MapDetailPage({ params }: Props) {
                 {/* ── Main column ── */}
                 <div className="lg:col-span-2 space-y-5">
 
-                    {/* Tactical Grid */}
-                    <div className="rf-card rounded-2xl overflow-hidden">
-                        <div className="flex items-center justify-between px-5 py-3.5
-                                        border-b border-white/5 bg-white/[0.02]">
-                            <div className="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                     strokeWidth={1.5} stroke="currentColor" className="w-3.5 h-3.5 text-white/30">
-                                    <path strokeLinecap="round" strokeLinejoin="round"
-                                          d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
-                                </svg>
-                                <span className="text-xs uppercase tracking-widest text-white/40 font-semibold">
-                                    Tactical Grid
-                                </span>
-                            </div>
-                            <span className="text-[10px] text-white/20">{map.displayName}</span>
-                        </div>
-                        <MapImageDisplay
-                            map={map}
-                            mapQuests={mapQuests}
-                            mfLootAreas={mfLootAreas}
-                            enableFullscreen
-                        />
-                    </div>
+                    {/* ── Native interactive map ── */}
+                    <NativeMapExplorer
+                        map={map}
+                        mapQuests={mapQuests}
+                        mfLootAreas={mfLootAreas}
+                    />
 
                     {/* Zone Overview */}
                     <div className="rf-card rounded-2xl p-5">
@@ -184,7 +170,7 @@ export default async function MapDetailPage({ params }: Props) {
                         </div>
                     </div>
 
-                    {/* Field Guide — curated tactics + live intel */}
+                    {/* Field Guide */}
                     <MapFieldGuide
                         guide={guide}
                         mapName={map.displayName}
@@ -232,10 +218,8 @@ export default async function MapDetailPage({ params }: Props) {
                                                 borderColor:     style.border,
                                             }}
                                         >
-                                            <span
-                                                className="h-2 w-2 rounded-full animate-pulse shrink-0"
-                                                style={{ backgroundColor: style.text }}
-                                            />
+                                            <span className="h-2 w-2 rounded-full animate-pulse shrink-0"
+                                                  style={{ backgroundColor: style.text }} />
                                             <span className="text-sm font-semibold text-white flex-1">{name}</span>
                                             <span
                                                 className="text-[9px] font-black uppercase tracking-widest
@@ -253,7 +237,6 @@ export default async function MapDetailPage({ params }: Props) {
                                 })}
                             </div>
                         ) : (
-                            /* Nominal — matches index page card treatment */
                             <div className="flex items-center gap-2 py-0.5">
                                 <span className="h-2 w-2 rounded-full bg-rf-green/50 shrink-0" />
                                 <span className="text-sm font-medium text-rf-green/60">Nominal</span>
@@ -332,7 +315,6 @@ export default async function MapDetailPage({ params }: Props) {
 
                         {mapQuests.length > 0 ? (
                             <>
-                                {/* Trader breakdown */}
                                 <div className="space-y-2">
                                     {Object.entries(traderBreakdown).map(([traderName, count]) => (
                                         <div key={traderName} className="flex items-center justify-between">
@@ -342,23 +324,17 @@ export default async function MapDetailPage({ params }: Props) {
                                     ))}
                                 </div>
 
-                                {/* Position coverage note */}
                                 {questsWithPosition.length < mapQuests.length && (
                                     <p className="text-[10px] text-white/20 mt-3 pt-3
                                                   border-t border-white/5 leading-relaxed">
-                                        {questsWithPosition.length} of {mapQuests.length} quests have map
-                                        positions. Remaining are tracked by MetaForge but not yet placed.
+                                        {questsWithPosition.length} of {mapQuests.length} quests have map positions.
                                     </p>
                                 )}
-
-                                <p className="text-[10px] text-white/15 mt-2">
-                                    via MetaForge &amp; ardb.app
-                                </p>
+                                <p className="text-[10px] text-white/15 mt-2">via MetaForge &amp; ardb.app</p>
                             </>
                         ) : (
                             <p className="text-[11px] text-white/25 leading-relaxed">
                                 No quest data available for this map.
-                                Check back after the next MetaForge sync.
                             </p>
                         )}
                     </div>
