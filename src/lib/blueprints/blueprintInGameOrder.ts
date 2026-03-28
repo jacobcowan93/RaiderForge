@@ -2,11 +2,15 @@
  * In-game blueprint collection menu display order (74 tiles).
  *
  * This array controls **sort order only** when using `ingame_asc`. Inclusion in the tracker
- * still comes from the spreadsheet allowlist + conservative matcher. Labels match allowlist
- * `trackerDisplayName` exactly.
+ * still comes from the spreadsheet allowlist + conservative matcher.
+ *
+ * **Page 1** (first 50): authoritative 5×10 screen order — edit only via
+ * `BLUEPRINT_IN_GAME_ORDER_PAGE_1`.
+ * **Page 2** (remaining 24): order unchanged until a dedicated update.
  */
 
-export const BLUEPRINT_IN_GAME_DISPLAY_ORDER: readonly string[] = [
+/** Page 1 — exact in-game order, left-to-right, top-to-bottom (50 tiles). */
+const BLUEPRINT_IN_GAME_ORDER_PAGE_1: readonly string[] = [
     'Bettina',
     'Blue Light Stick',
     'Aphelion Rifle',
@@ -57,6 +61,10 @@ export const BLUEPRINT_IN_GAME_DISPLAY_ORDER: readonly string[] = [
     'Padded Stock',
     'Shotgun Choke II',
     'Shotgun Choke III',
+]
+
+/** Page 2 — not reordered in this change; keep stable until page-2 source is applied. */
+const BLUEPRINT_IN_GAME_ORDER_PAGE_2: readonly string[] = [
     'Shotgun Silencer',
     'Showstopper',
     'Silencer I',
@@ -83,6 +91,17 @@ export const BLUEPRINT_IN_GAME_DISPLAY_ORDER: readonly string[] = [
     'Yellow Light Stick',
 ]
 
+export const BLUEPRINT_IN_GAME_DISPLAY_ORDER: readonly string[] = [
+    ...BLUEPRINT_IN_GAME_ORDER_PAGE_1,
+    ...BLUEPRINT_IN_GAME_ORDER_PAGE_2,
+]
+
+if (BLUEPRINT_IN_GAME_ORDER_PAGE_1.length !== 50) {
+    throw new Error(
+        `[blueprints] PAGE_1 must have 50 entries, got ${BLUEPRINT_IN_GAME_ORDER_PAGE_1.length}`
+    )
+}
+
 if (BLUEPRINT_IN_GAME_DISPLAY_ORDER.length !== 74) {
     throw new Error(
         `[blueprints] BLUEPRINT_IN_GAME_DISPLAY_ORDER must have 74 entries, got ${BLUEPRINT_IN_GAME_DISPLAY_ORDER.length}`
@@ -94,7 +113,23 @@ for (let i = 0; i < BLUEPRINT_IN_GAME_DISPLAY_ORDER.length; i++) {
     indexByLabel.set(BLUEPRINT_IN_GAME_DISPLAY_ORDER[i]!, i)
 }
 
+/** Alternate labels → allowlist / order key (explicit only; no fuzzy matching). */
+const INGAME_ORDER_LABEL_ALIASES: Readonly<Record<string, string>> = {
+    'Aphelion Blueprint': 'Aphelion Rifle',
+    "Il Toro Blueprint": "El' Toro",
+    'Jupiter Blueprint': 'Jupitar',
+    'Torrente Blueprint': 'Torrentte',
+    'Trailblazer Blueprint': 'Trailblazer Grenade',
+    'Fireworks Box Blueprint': 'Firework Box',
+    'Combat Mk. 3 (Agressive) Blueprint': 'Combat Mk. 3 (Aggressive)',
+}
+
 const warnedMissingGameOrder = new Set<string>()
+
+function canonicalInGameLookupKey(displayLabel: string): string {
+    const t = displayLabel.trim()
+    return INGAME_ORDER_LABEL_ALIASES[t] ?? t
+}
 
 /**
  * Sort key for `trackerDisplayName` / allowlist label. Unknown labels sort last (stable tie-break).
@@ -102,7 +137,8 @@ const warnedMissingGameOrder = new Set<string>()
 export function blueprintGameOrderIndex(displayLabel: string | null | undefined): number {
     const key = displayLabel?.trim()
     if (!key) return 99999
-    const idx = indexByLabel.get(key)
+    const lookup = canonicalInGameLookupKey(key)
+    const idx = indexByLabel.get(lookup)
     if (idx === undefined) {
         if (process.env.NODE_ENV === 'development' && !warnedMissingGameOrder.has(key)) {
             warnedMissingGameOrder.add(key)
