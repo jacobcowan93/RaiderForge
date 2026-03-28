@@ -45,6 +45,16 @@ model User {
   sessions      Session[]
   blueprintOwnerships UserBlueprintOwnership[]
   skillTreeSave UserSkillTreeSave?
+  mapProgressSave UserMapProgressSave?
+}
+
+/// Versioned JSON: per-map POI visit flags (quests / containers / loot areas).
+model UserMapProgressSave {
+  userId    String   @id
+  payload   Json
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 /// Versioned JSON skill tree build (point allocations per skill node id).

@@ -34,11 +34,14 @@ function rarityClass(rarity: string | undefined): string {
 interface Props {
   quest: MergedQuest
   onClose: () => void
+  /** When set, shows a “visited” checkbox for map POI progress. */
+  visited?: boolean
+  onVisitedChange?: (visited: boolean) => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function QuestDetailPanel({ quest, onClose }: Props) {
+export default function QuestDetailPanel({ quest, onClose, visited = false, onVisitedChange }: Props) {
   return (
     <div
       className="absolute top-0 right-0 h-full w-64 flex flex-col z-[1000] overflow-hidden"
@@ -244,6 +247,34 @@ export default function QuestDetailPanel({ quest, onClose }: Props) {
 
       {/* ── Footer: guide CTA + attribution ─────────────────────────────── */}
       <div className="px-4 py-2.5 border-t border-white/[0.05] flex-shrink-0 space-y-2">
+
+        {onVisitedChange && (
+          <label className="flex items-center gap-2 cursor-pointer select-none text-[11px] text-rf-textSoft">
+            <span className="relative flex shrink-0">
+              <input
+                type="checkbox"
+                checked={visited}
+                onChange={e => onVisitedChange(e.target.checked)}
+                className="rf-checkbox peer"
+              />
+              <svg
+                viewBox="0 0 10 10"
+                fill="none"
+                aria-hidden
+                className="pointer-events-none absolute inset-0 w-full h-full p-[2px] opacity-0 peer-checked:opacity-100 transition-opacity duration-100"
+              >
+                <polyline
+                  points="1.5,5.5 4,8 8.5,2"
+                  stroke="white"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            Mark POI visited
+          </label>
+        )}
 
         {/* MetaForge guide link */}
         {quest.guideUrl && (

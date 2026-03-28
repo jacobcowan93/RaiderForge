@@ -2,12 +2,21 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
+import { useSession } from 'next-auth/react'
 import type { MapMeta } from '../data/maps'
 import type { MergedQuest } from '../types/quests'
 import type { ContainerMarker, ContainerType, LootAreaMarker, LootAreaTier, MapLayerType } from '../types/mapLayers'
 import { CONTAINER_TYPE_META, LOOT_AREA_TIER_META } from '../types/mapLayers'
 import { getCalibrationForMap } from '../data/mapCalibration'
 import { CONTAINERS_BY_MAP } from '../data/containers'
+import {
+    emptyMapProgressSave,
+    isMapProgressSaveEmpty,
+    isVisited,
+    toggleVisit,
+    type MapProgressSaveV1,
+} from '@/lib/maps/mapProgressSave'
+import { loadMapProgressSave, saveMapProgressSave } from '@/lib/maps/mapProgressSaveStorage'
 import MapQuestFilter from './MapQuestFilter'
 import QuestDetailPanel from './QuestDetailPanel'
 
@@ -35,8 +44,22 @@ export default function MapImageDisplay({
   mfLootAreas = [],
   enableFullscreen = false,
 }: Props) {
+  const { data: session, status: sessionStatus } = useSession()
+  const userMutatedRef = useRef(false)
+  const progressRef = useRef<MapProgressSaveV1>(emptyMapProgressSave())
+  const persistenceRef = useRef<'local' | 'remote' | 'pending'>('local')
+
   const shellRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+
+  const [mapProgress, setMapProgress] = useState<MapProgressSaveV1>(() =>
+    typeof window === 'undefined' ? emptyMapProgressSave() : loadMapProgressSave()
+  )
+  const [progressStorageReady, setProgressStorageReady] = useState(false)
+  const [progressPersistence, setProgressPersistence] = useState<'local' | 'remote' | 'pending'>('local')
+
+  progressRef.current = mapProgress
+  persistenceRef.current = progressPersistence
 
   const [activeFloor, setActiveFloor]         = useState(0)
   const [tileFallback, setTileFallback]       = useState(false)
@@ -51,6 +74,148 @@ export default function MapImageDisplay({
   )
 
   const handleTileFallback = useCallback(() => setTileFallback(true), [])
+
+  useEffect(() => {
+    setMapProgress(loadMapProgressSave())
+    setProgressPersistence('local')
+    setProgressStorageReady(true)
+  }, [])
+
+  useEffect(() => {
+    if (!progressStorageReady) return
+    if (sessionStatus === 'loading') return
+
+    if (sessionStatus === 'unauthenticated') {
+      if (persistenceRef.current === 'remote') {
+        saveMapProgressSave(progressRef.current)
+      } else {
+        setMapProgress(loadMapProgressSave())
+      }
+      setProgressPersistence('local')
+      userMutatedRef.current = false
+      return
+    }
+
+    const uid = session?.user?.id
+    if (!uid) {
+      if (persistenceRef.current === 'remote') {
+        saveMapProgressSave(progressRef.current)
+      } else {
+        setMapProgress(loadMapProgressSave())
+      }
+      setProgressPersistence('local')
+      userMutatedRef.current = false
+      return
+    }
+
+    let cancelled = false
+    setProgressPersistence('pending')
+
+    ;(async () => {
+      const res = await fetch('/api/user/map-progress', { credentials: 'same-origin' })
+      if (cancelled) return
+
+      if (res.status === 401 || res.status === 503 || !res.ok) {
+        setProgressPersistence('local')
+        userMutatedRef.current = false
+        return
+      }
+
+      const data = (await res.json()) as { save?: MapProgressSaveV1 | null }
+      let nextSave: MapProgressSaveV1 =
+        data.save === null || data.save === undefined
+          ? emptyMapProgressSave()
+          : {
+              version: 1,
+              maps:
+                typeof data.save.maps === 'object' && data.save.maps !== null && !Array.isArray(data.save.maps)
+                  ? { ...data.save.maps }
+                  : {},
+            }
+
+      if (isMapProgressSaveEmpty(nextSave)) {
+        const local = loadMapProgressSave()
+        if (!isMapProgressSaveEmpty(local)) {
+          const seeded = await fetch('/api/user/map-progress', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ save: local }),
+          })
+          if (seeded.ok) {
+            const r2 = await fetch('/api/user/map-progress', { credentials: 'same-origin' })
+            if (r2.ok) {
+              const d2 = (await r2.json()) as { save?: MapProgressSaveV1 | null }
+              if (d2.save && typeof d2.save.maps === 'object' && d2.save.maps !== null) {
+                nextSave = { version: 1, maps: { ...d2.save.maps } }
+              }
+            }
+          }
+        }
+      }
+
+      if (cancelled) return
+      userMutatedRef.current = false
+      setMapProgress(nextSave)
+      setProgressPersistence('remote')
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [progressStorageReady, sessionStatus, session?.user?.id])
+
+  useEffect(() => {
+    if (!progressStorageReady) return
+    if (progressPersistence !== 'local') return
+    saveMapProgressSave(mapProgress)
+  }, [mapProgress, progressStorageReady, progressPersistence])
+
+  useEffect(() => {
+    if (!progressStorageReady) return
+    if (progressPersistence !== 'remote') return
+    if (!userMutatedRef.current) return
+
+    const t = window.setTimeout(async () => {
+      const payload = progressRef.current
+      try {
+        const res = await fetch('/api/user/map-progress', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ save: payload }),
+        })
+        if (res.ok) userMutatedRef.current = false
+      } catch {
+        /* leave dirty */
+      }
+    }, 450)
+    return () => window.clearTimeout(t)
+  }, [mapProgress, progressPersistence, progressStorageReady])
+
+  const visitQuest = useCallback(
+    (questName: string, visited: boolean) => {
+      userMutatedRef.current = true
+      setMapProgress(prev => toggleVisit(prev, map.id, 'q', questName, visited))
+    },
+    [map.id]
+  )
+
+  const visitContainer = useCallback(
+    (containerId: string, visited: boolean) => {
+      userMutatedRef.current = true
+      setMapProgress(prev => toggleVisit(prev, map.id, 'c', containerId, visited))
+    },
+    [map.id]
+  )
+
+  const visitLootArea = useCallback(
+    (lootId: string, visited: boolean) => {
+      userMutatedRef.current = true
+      setMapProgress(prev => toggleVisit(prev, map.id, 'l', lootId, visited))
+    },
+    [map.id]
+  )
 
   useEffect(() => {
     const onFs = () => {
@@ -305,6 +470,8 @@ export default function MapImageDisplay({
             <QuestDetailPanel
               quest={selectedQuest}
               onClose={() => setSelectedQuest(null)}
+              visited={isVisited(mapProgress, map.id, 'q', selectedQuest.name)}
+              onVisitedChange={v => visitQuest(selectedQuest.name, v)}
             />
           </div>
         )}
@@ -315,6 +482,8 @@ export default function MapImageDisplay({
             key={selectedContainer.id}
             container={selectedContainer}
             onClose={() => setSelectedContainer(null)}
+            visited={isVisited(mapProgress, map.id, 'c', selectedContainer.id)}
+            onVisitedChange={v => visitContainer(selectedContainer.id, v)}
           />
         )}
 
@@ -324,6 +493,8 @@ export default function MapImageDisplay({
             key={selectedLootArea.id}
             area={selectedLootArea}
             onClose={() => setSelectedLootArea(null)}
+            visited={isVisited(mapProgress, map.id, 'l', selectedLootArea.id)}
+            onVisitedChange={v => visitLootArea(selectedLootArea.id, v)}
           />
         )}
 
@@ -342,6 +513,18 @@ export default function MapImageDisplay({
           containerMarkerCount={visibleContainerMarkerCount}
           lootAreaMarkerCount={visibleLootAreaMarkerCount}
         />
+
+        {hasTiles && (
+          <div className="absolute bottom-14 left-3 z-[510] max-w-[12rem] pointer-events-none">
+            <p className="text-[9px] leading-snug text-white/35">
+              {progressPersistence === 'remote'
+                ? 'POI visits sync to your account.'
+                : progressPersistence === 'local' && sessionStatus === 'authenticated'
+                  ? 'POI visits on this device only (no DB).'
+                  : 'POI visits on this device.'}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -354,15 +537,19 @@ export default function MapImageDisplay({
 function ContainerInfoBadge({
   container,
   onClose,
+  visited = false,
+  onVisitedChange,
 }: {
   container: ContainerMarker
   onClose: () => void
+  visited?: boolean
+  onVisitedChange?: (visited: boolean) => void
 }) {
   const meta = CONTAINER_TYPE_META[container.containerType]
 
   return (
     <div
-      className="rf-badge-enter absolute top-3 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-2.5 bg-black/88 backdrop-blur-sm rounded-lg border border-white/[0.08] px-3 py-2 shadow-xl shadow-black/50 pointer-events-auto whitespace-nowrap"
+      className="rf-badge-enter absolute top-3 left-1/2 -translate-x-1/2 z-[999] flex flex-wrap items-center gap-2.5 bg-black/88 backdrop-blur-sm rounded-lg border border-white/[0.08] px-3 py-2 shadow-xl shadow-black/50 pointer-events-auto max-w-[min(100vw-1.5rem,22rem)]"
       onClick={e => e.stopPropagation()}
     >
       {/* Diamond indicator matching marker shape */}
@@ -387,6 +574,18 @@ function ContainerInfoBadge({
           </span>
         )}
       </div>
+
+      {onVisitedChange && (
+        <label className="flex items-center gap-1.5 cursor-pointer select-none pointer-events-auto shrink-0">
+          <input
+            type="checkbox"
+            checked={visited}
+            onChange={e => onVisitedChange(e.target.checked)}
+            className="rounded border-white/20 bg-black/40"
+          />
+          <span className="text-[10px] text-white/50 whitespace-nowrap">Visited</span>
+        </label>
+      )}
 
       <button
         onClick={onClose}
@@ -415,15 +614,19 @@ function ContainerInfoBadge({
 function LootAreaInfoBadge({
   area,
   onClose,
+  visited = false,
+  onVisitedChange,
 }: {
   area: LootAreaMarker
   onClose: () => void
+  visited?: boolean
+  onVisitedChange?: (visited: boolean) => void
 }) {
   const meta = LOOT_AREA_TIER_META[area.tier]
 
   return (
     <div
-      className="rf-badge-enter absolute top-3 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-2.5 bg-black/88 backdrop-blur-sm rounded-lg border border-white/[0.08] px-3 py-2 shadow-xl shadow-black/50 pointer-events-auto whitespace-nowrap"
+      className="rf-badge-enter absolute top-3 left-1/2 -translate-x-1/2 z-[999] flex flex-wrap items-center gap-2.5 bg-black/88 backdrop-blur-sm rounded-lg border border-white/[0.08] px-3 py-2 shadow-xl shadow-black/50 pointer-events-auto max-w-[min(100vw-1.5rem,22rem)]"
       onClick={e => e.stopPropagation()}
     >
       {/* Hollow circle indicator matching marker shape */}
@@ -446,6 +649,18 @@ function LootAreaInfoBadge({
           {area.name}
         </span>
       </div>
+
+      {onVisitedChange && (
+        <label className="flex items-center gap-1.5 cursor-pointer select-none pointer-events-auto shrink-0">
+          <input
+            type="checkbox"
+            checked={visited}
+            onChange={e => onVisitedChange(e.target.checked)}
+            className="rounded border-white/20 bg-black/40"
+          />
+          <span className="text-[10px] text-white/50 whitespace-nowrap">Visited</span>
+        </label>
+      )}
 
       <button
         onClick={onClose}
