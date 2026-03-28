@@ -44,8 +44,9 @@ model User {
   accounts      Account[]
   sessions      Session[]
   blueprintOwnerships UserBlueprintOwnership[]
-  skillTreeSave UserSkillTreeSave?
-  mapProgressSave UserMapProgressSave?
+  skillTreeSave       UserSkillTreeSave?
+  mapProgressSave     UserMapProgressSave?
+  listings            MarketplaceListing[]
 }
 
 /// Versioned JSON: per-map POI visit flags (quests / containers / loot areas).
@@ -84,4 +85,29 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// RaiderForge-native marketplace listing backed by an ARDB item reference.
+/// item metadata (name, icon) is denormalised at creation time for fast rendering.
+model MarketplaceListing {
+  id          String   @id @default(cuid())
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  /// ARDB item id used to look up metadata in the catalog store.
+  ardbItemId  String
+  /// Denormalized at creation – avoids catalog round-trips on every browse render.
+  itemName    String
+  itemIconUrl String?
+  price       Float
+  currency    String   @default("USD")
+  quantity    Int      @default(1)
+  /// active | sold | cancelled
+  status      String   @default("active")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sellerId])
+  @@index([status])
+  @@index([ardbItemId])
 }
