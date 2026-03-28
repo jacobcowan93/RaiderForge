@@ -7,12 +7,13 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
 
 const navLinks = [
-    { href: '/',           label: 'Home'       },
-    { href: '/maps',       label: 'Maps'       },
-    { href: '/builds',     label: 'Builds'     },
-    { href: '/blueprints', label: 'Blueprints' },
-    { href: '/guides',     label: 'Guides'     },
-    { href: '/marketplace',label: 'Marketplace'},
+    { href: '/',             label: 'Home'        },
+    { href: '/blueprints',   label: 'Blueprints'  },
+    { href: '/marketplace',  label: 'Marketplace' },
+    { href: '/maps',         label: 'Maps'        },
+    // /skill-trees route is in development; links to future page
+    { href: '/skill-trees',  label: 'Skill Trees' },
+    { href: '/guides',       label: 'Guides'      },
 ]
 
 export default function NavBar() {
@@ -59,8 +60,9 @@ export default function NavBar() {
                             priority
                         />
                     </div>
-                    <span className="text-sm font-bold tracking-[0.18em] uppercase">
-                        <span className="text-white">Raider</span><span className="text-rf-red">Forge</span>
+                    {/* font-black + text-rf-redSoft matches hero title exactly */}
+                    <span className="text-sm font-black tracking-[0.18em] uppercase">
+                        <span className="text-white">Raider</span><span className="text-rf-redSoft">Forge</span>
                     </span>
                 </Link>
 
@@ -82,7 +84,8 @@ export default function NavBar() {
                             >
                                 {label}
                                 {isActive && (
-                                    <span className="absolute inset-x-1 -bottom-[11px] h-[2px] rounded-full bg-rf-red" />
+                                    // bg-rf-green = #22c55e, same token as "Tactical Hub" in hero
+                                    <span className="absolute inset-x-1 -bottom-[11px] h-[3px] rounded-full bg-rf-green transition-all duration-200" />
                                 )}
                             </Link>
                         )
