@@ -61,13 +61,20 @@ export function BlueprintCard({ blueprint: b, owned, onOwnedChange, quickToggleM
 
             <div className="flex flex-col flex-1 min-h-0 p-4 sm:p-5 gap-3">
                 <div className="flex flex-wrap items-start justify-between gap-2 min-w-0">
-                    <h2
-                        className={`min-w-0 flex-1 text-left text-sm sm:text-base font-bold uppercase tracking-wide text-rf-text leading-snug transition-colors ${
-                            owned ? 'line-through text-rf-textSoft/70' : 'group-hover:text-white'
-                        }`}
-                    >
-                        {b.name}
-                    </h2>
+                    <div className="min-w-0 flex-1">
+                        <h2
+                            className={`text-left text-sm sm:text-base font-bold uppercase tracking-wide text-rf-text leading-snug transition-colors ${
+                                owned ? 'line-through text-rf-textSoft/70' : 'group-hover:text-white'
+                            }`}
+                        >
+                            {b.trackerDisplayName ?? b.name}
+                        </h2>
+                        {b.spreadsheetType ? (
+                            <p className="mt-1 text-[10px] uppercase tracking-wider text-rf-textSoft/80">
+                                {b.spreadsheetType}
+                            </p>
+                        ) : null}
+                    </div>
                     <span className={`shrink-0 ${rarityBadgeClasses(tier)}`}>{formatRarityLabel(b.rarity)}</span>
                 </div>
 

@@ -103,7 +103,7 @@ export async function exportMissingBlueprintsAsJpeg(
 
         ctx.fillStyle = TEXT
         ctx.font = '600 17px system-ui, sans-serif'
-        ctx.fillText(b.name, textXBase, y + 22)
+        ctx.fillText(b.trackerDisplayName ?? b.name, textXBase, y + 22)
 
         const rare = b.rarity?.trim()
         ctx.fillStyle = MUTED

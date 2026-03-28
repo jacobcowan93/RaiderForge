@@ -1,0 +1,450 @@
+{
+  "version": 1,
+  "source": "ARC Raiders Blueprints 74.xlsx",
+  "entries": [
+    {
+      "order": 1,
+      "sheetRow": 3,
+      "name": "Angled Grip II",
+      "type": "Attachment"
+    },
+    {
+      "order": 2,
+      "sheetRow": 4,
+      "name": "Angled Grip III",
+      "type": "Attachment"
+    },
+    {
+      "order": 3,
+      "sheetRow": 5,
+      "name": "Aphelion Rifle",
+      "type": "Weapon"
+    },
+    {
+      "order": 4,
+      "sheetRow": 6,
+      "name": "Anvil",
+      "type": "Weapon"
+    },
+    {
+      "order": 5,
+      "sheetRow": 7,
+      "name": "Barricade Kit",
+      "type": "Equipment"
+    },
+    {
+      "order": 6,
+      "sheetRow": 8,
+      "name": "Bettina",
+      "type": "Weapon"
+    },
+    {
+      "order": 7,
+      "sheetRow": 9,
+      "name": "Blaze Grenade",
+      "type": "Throwable"
+    },
+    {
+      "order": 8,
+      "sheetRow": 10,
+      "name": "Blue Light Stick",
+      "type": "Equipment"
+    },
+    {
+      "order": 9,
+      "sheetRow": 11,
+      "name": "Bobcat",
+      "type": "Weapon"
+    },
+    {
+      "order": 10,
+      "sheetRow": 12,
+      "name": "Burletta",
+      "type": "Weapon"
+    },
+    {
+      "order": 11,
+      "sheetRow": 13,
+      "name": "Combat Mk. 3 (Flanking)",
+      "type": "Equipment"
+    },
+    {
+      "order": 12,
+      "sheetRow": 14,
+      "name": "Combat Mk. 3 (Aggressive)",
+      "type": "Equipment"
+    },
+    {
+      "order": 13,
+      "sheetRow": 15,
+      "name": "Compensator II",
+      "type": "Attachment"
+    },
+    {
+      "order": 14,
+      "sheetRow": 16,
+      "name": "Compensator III",
+      "type": "Attachment"
+    },
+    {
+      "order": 15,
+      "sheetRow": 17,
+      "name": "Complex Gun Parts",
+      "type": "Crafting Material"
+    },
+    {
+      "order": 16,
+      "sheetRow": 18,
+      "name": "Deadline",
+      "type": "Equipment"
+    },
+    {
+      "order": 17,
+      "sheetRow": 19,
+      "name": "Defibrillator",
+      "type": "Equipment"
+    },
+    {
+      "order": 18,
+      "sheetRow": 20,
+      "name": "El' Toro",
+      "type": "Weapon"
+    },
+    {
+      "order": 19,
+      "sheetRow": 21,
+      "name": "Equalizer",
+      "type": "Weapon"
+    },
+    {
+      "order": 20,
+      "sheetRow": 22,
+      "name": "Explosive Mine",
+      "type": "Equipment"
+    },
+    {
+      "order": 21,
+      "sheetRow": 23,
+      "name": "Extended Barrel",
+      "type": "Attachment"
+    },
+    {
+      "order": 22,
+      "sheetRow": 24,
+      "name": "Extended Light Mag II",
+      "type": "Attachment"
+    },
+    {
+      "order": 23,
+      "sheetRow": 25,
+      "name": "Extended Light Mag III",
+      "type": "Attachment"
+    },
+    {
+      "order": 24,
+      "sheetRow": 26,
+      "name": "Extended Medium Mag II",
+      "type": "Attachment"
+    },
+    {
+      "order": 25,
+      "sheetRow": 27,
+      "name": "Extended Medium Mag III",
+      "type": "Attachment"
+    },
+    {
+      "order": 26,
+      "sheetRow": 28,
+      "name": "Extended Shotgun Mag II",
+      "type": "Attachment"
+    },
+    {
+      "order": 27,
+      "sheetRow": 29,
+      "name": "Extended Shotgun Mag III",
+      "type": "Attachment"
+    },
+    {
+      "order": 28,
+      "sheetRow": 30,
+      "name": "Firework Box",
+      "type": "Equipment"
+    },
+    {
+      "order": 29,
+      "sheetRow": 31,
+      "name": "Gas Mine",
+      "type": "Equipment"
+    },
+    {
+      "order": 30,
+      "sheetRow": 32,
+      "name": "Green Light Stick",
+      "type": "Equipment"
+    },
+    {
+      "order": 31,
+      "sheetRow": 33,
+      "name": "Heavy Gun Parts",
+      "type": "Crafting Material"
+    },
+    {
+      "order": 32,
+      "sheetRow": 34,
+      "name": "Hullcracker",
+      "type": "Weapon"
+    },
+    {
+      "order": 33,
+      "sheetRow": 35,
+      "name": "Jolt Mine",
+      "type": "Equipment"
+    },
+    {
+      "order": 34,
+      "sheetRow": 36,
+      "name": "Jupitar",
+      "type": "Weapon"
+    },
+    {
+      "order": 35,
+      "sheetRow": 37,
+      "name": "Light Gun Parts",
+      "type": "Crafting Material"
+    },
+    {
+      "order": 36,
+      "sheetRow": 38,
+      "name": "Lightweight Stock",
+      "type": "Attachment"
+    },
+    {
+      "order": 37,
+      "sheetRow": 39,
+      "name": "Looting Mk. 3 (Safekeeper)",
+      "type": "Equipment"
+    },
+    {
+      "order": 38,
+      "sheetRow": 40,
+      "name": "Looting Mk. 3 (Survivor)",
+      "type": "Equipment"
+    },
+    {
+      "order": 39,
+      "sheetRow": 41,
+      "name": "Lure Grenade",
+      "type": "Throwable"
+    },
+    {
+      "order": 40,
+      "sheetRow": 42,
+      "name": "Medium Gun Parts",
+      "type": "Crafting Material"
+    },
+    {
+      "order": 41,
+      "sheetRow": 43,
+      "name": "Muzzle Brake II",
+      "type": "Attachment"
+    },
+    {
+      "order": 42,
+      "sheetRow": 44,
+      "name": "Muzzle Brake III",
+      "type": "Attachment"
+    },
+    {
+      "order": 43,
+      "sheetRow": 45,
+      "name": "Osprey",
+      "type": "Weapon"
+    },
+    {
+      "order": 44,
+      "sheetRow": 46,
+      "name": "Padded Stock",
+      "type": "Attachment"
+    },
+    {
+      "order": 45,
+      "sheetRow": 47,
+      "name": "Pulse Mine",
+      "type": "Equipment"
+    },
+    {
+      "order": 46,
+      "sheetRow": 48,
+      "name": "Red Light Stick",
+      "type": "Equipment"
+    },
+    {
+      "order": 47,
+      "sheetRow": 49,
+      "name": "Remote Raider Flare",
+      "type": "Equipment"
+    },
+    {
+      "order": 48,
+      "sheetRow": 50,
+      "name": "Seeker Grenade",
+      "type": "Throwable"
+    },
+    {
+      "order": 49,
+      "sheetRow": 51,
+      "name": "Shotgun Choke II",
+      "type": "Attachment"
+    },
+    {
+      "order": 50,
+      "sheetRow": 52,
+      "name": "Shotgun Choke III",
+      "type": "Attachment"
+    },
+    {
+      "order": 51,
+      "sheetRow": 53,
+      "name": "Shotgun Silencer",
+      "type": "Attachment"
+    },
+    {
+      "order": 52,
+      "sheetRow": 54,
+      "name": "Showstopper",
+      "type": "Weapon"
+    },
+    {
+      "order": 53,
+      "sheetRow": 55,
+      "name": "Silencer I",
+      "type": "Attachment"
+    },
+    {
+      "order": 54,
+      "sheetRow": 56,
+      "name": "Silencer II",
+      "type": "Attachment"
+    },
+    {
+      "order": 55,
+      "sheetRow": 57,
+      "name": "Smoke Grenade",
+      "type": "Throwable"
+    },
+    {
+      "order": 56,
+      "sheetRow": 58,
+      "name": "Snap Hook",
+      "type": "Equipment"
+    },
+    {
+      "order": 57,
+      "sheetRow": 59,
+      "name": "Stable Stock II",
+      "type": "Attachment"
+    },
+    {
+      "order": 58,
+      "sheetRow": 60,
+      "name": "Stable Stock III",
+      "type": "Attachment"
+    },
+    {
+      "order": 59,
+      "sheetRow": 61,
+      "name": "Tactical Mk. 3 (Defensive)",
+      "type": "Equipment"
+    },
+    {
+      "order": 60,
+      "sheetRow": 62,
+      "name": "Tactical Mk. 3 (Healing)",
+      "type": "Equipment"
+    },
+    {
+      "order": 61,
+      "sheetRow": 63,
+      "name": "Tactical Mk. 3 (Revival)",
+      "type": "Equipment"
+    },
+    {
+      "order": 62,
+      "sheetRow": 64,
+      "name": "Tagging Grenade",
+      "type": "Throwable"
+    },
+    {
+      "order": 63,
+      "sheetRow": 65,
+      "name": "Tempest",
+      "type": "Weapon"
+    },
+    {
+      "order": 64,
+      "sheetRow": 66,
+      "name": "Torrentte",
+      "type": "Weapon"
+    },
+    {
+      "order": 65,
+      "sheetRow": 67,
+      "name": "Trailblazer Grenade",
+      "type": "Throwable"
+    },
+    {
+      "order": 66,
+      "sheetRow": 68,
+      "name": "Trigger Nade",
+      "type": "Equipment"
+    },
+    {
+      "order": 67,
+      "sheetRow": 69,
+      "name": "Venator",
+      "type": "Weapon"
+    },
+    {
+      "order": 68,
+      "sheetRow": 70,
+      "name": "Vertical Grip II",
+      "type": "Attachment"
+    },
+    {
+      "order": 69,
+      "sheetRow": 71,
+      "name": "Vertical Grip III",
+      "type": "Attachment"
+    },
+    {
+      "order": 70,
+      "sheetRow": 72,
+      "name": "Vita Shot",
+      "type": "Consumable"
+    },
+    {
+      "order": 71,
+      "sheetRow": 73,
+      "name": "Vita Spray",
+      "type": "Consumable"
+    },
+    {
+      "order": 72,
+      "sheetRow": 74,
+      "name": "Vulcano",
+      "type": "Weapon"
+    },
+    {
+      "order": 73,
+      "sheetRow": 75,
+      "name": "Wolfpack",
+      "type": "Weapon"
+    },
+    {
+      "order": 74,
+      "sheetRow": 76,
+      "name": "Yellow Light Stick",
+      "type": "Equipment"
+    }
+  ]
+}

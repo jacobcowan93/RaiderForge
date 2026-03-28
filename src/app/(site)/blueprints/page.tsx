@@ -17,7 +17,16 @@ import {
 import { groupBlueprintsByRarityTier } from '@/lib/blueprints/rarityGroups'
 import { resolveBlueprintImage } from '@/lib/blueprints/resolveBlueprintImage'
 import { formatRarityLabel, type RarityVisualTier } from '@/lib/blueprints/rarityCardStyles'
-import { applyBlueprintSort, type SortMode } from '@/lib/blueprints/sortBlueprints'
+import {
+    applyBlueprintSort,
+    blueprintDisplayName,
+    type SortMode,
+} from '@/lib/blueprints/sortBlueprints'
+import {
+    logSpreadsheetMatchStats,
+    matchBlueprintsToAllowlist,
+    type SpreadsheetMatchStats,
+} from '@/lib/blueprints/blueprintSpreadsheetMatcher'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -30,6 +39,7 @@ type CatalogResponse = {
 }
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+    { value: 'sheet_asc', label: 'Spreadsheet order' },
     { value: 'rarity_desc', label: 'Rarity (high → low)' },
     { value: 'rarity_asc', label: 'Rarity (low → high)' },
     { value: 'name_asc', label: 'Name (A–Z)' },
@@ -54,10 +64,11 @@ export default function BlueprintsPage() {
     const [catalogError, setCatalogError] = useState<string | null>(null)
     const [syncedAt, setSyncedAt] = useState<string | null>(null)
     const [blueprints, setBlueprints] = useState<NormalizedBlueprint[]>([])
+    const [allowlistStats, setAllowlistStats] = useState<SpreadsheetMatchStats | null>(null)
 
     const [query, setQuery] = useState('')
     const [foundInFilter, setFoundInFilter] = useState<string>('__all__')
-    const [sortMode, setSortMode] = useState<SortMode>('rarity_desc')
+    const [sortMode, setSortMode] = useState<SortMode>('sheet_asc')
     const [onlyMissing, setOnlyMissing] = useState(false)
     const [quickToggleMode, setQuickToggleMode] = useState(false)
 
@@ -80,13 +91,18 @@ export default function BlueprintsPage() {
         ;(async () => {
             setCatalogLoading(true)
             setCatalogError(null)
+            setAllowlistStats(null)
             try {
                 const res = await fetch('/api/marketplace/catalog', { cache: 'no-store' })
                 if (!res.ok) throw new Error(`Catalog request failed (${res.status})`)
                 const data = (await res.json()) as CatalogResponse
                 if (!cancelled && Array.isArray(data.items)) {
                     setSyncedAt(data.syncedAt ?? null)
-                    setBlueprints(blueprintsFromCatalogItems(data.items))
+                    const raw = blueprintsFromCatalogItems(data.items)
+                    const { blueprints: matched, stats } = matchBlueprintsToAllowlist(raw)
+                    logSpreadsheetMatchStats(stats)
+                    setAllowlistStats(stats)
+                    setBlueprints(matched)
                 }
             } catch (e) {
                 if (!cancelled) setCatalogError(e instanceof Error ? e.message : 'Failed to load catalog')
@@ -105,7 +121,7 @@ export default function BlueprintsPage() {
         const q = query.trim().toLowerCase()
         let list = blueprints
         if (onlyMissing) list = list.filter((b) => trackMap[b.id] !== 'owned')
-        if (q) list = list.filter((b) => b.name.toLowerCase().includes(q))
+        if (q) list = list.filter((b) => blueprintDisplayName(b).toLowerCase().includes(q))
         if (foundInFilter !== '__all__') {
             list = list.filter((b) => b.foundIn.includes(foundInFilter))
         }
@@ -122,7 +138,7 @@ export default function BlueprintsPage() {
     const printGroups = useMemo(() => {
         return groupBlueprintsByRarityTier(missingBlueprints).map((g) => ({
             ...g,
-            items: [...g.items].sort((a, b) => a.name.localeCompare(b.name)),
+            items: [...g.items].sort((a, b) => blueprintDisplayName(a).localeCompare(blueprintDisplayName(b))),
         }))
     }, [missingBlueprints])
 
@@ -141,13 +157,13 @@ export default function BlueprintsPage() {
     const handleExportJpeg = useCallback(async () => {
         setJpegBusy(true)
         try {
-            await exportMissingBlueprintsAsJpeg(missingBlueprints, 'rarity_desc')
+            await exportMissingBlueprintsAsJpeg(missingBlueprints, sortMode)
         } catch {
             window.alert('Could not export JPEG. Try print to PDF, or check the browser console.')
         } finally {
             setJpegBusy(false)
         }
-    }, [missingBlueprints])
+    }, [missingBlueprints, sortMode])
 
     return (
         <div className="max-w-7xl mx-auto py-8 md:py-10 px-4 sm:px-5">
@@ -160,10 +176,18 @@ export default function BlueprintsPage() {
                             </span>
                             <h1 className="mt-1.5 text-2xl sm:text-3xl font-bold tracking-tight text-white">Blueprint tracker</h1>
                             <p className="mt-2 text-xs text-rf-textSoft max-w-2xl leading-relaxed">
-                                Collection view — ARDB catalog rows where{' '}
-                                <code className="text-rf-text/90 bg-white/5 px-1 rounded text-[10px]">{`itemType.trim().toLowerCase() === "blueprint"`}</code>
-                                . Saved locally on this device; no sign-in.
+                                List and type labels follow the ARC Raiders Blueprints spreadsheet (exported into this app).
+                                Each row is matched to ARDB catalog blueprints for images, descriptions, and locations — no
+                                fabricated entries. Saved locally on this device; no sign-in.
                             </p>
+                            {allowlistStats && allowlistStats.unmatchedSheetNames.length > 0 ? (
+                                <p className="mt-2 text-[10px] text-rf-orange/90 leading-relaxed max-w-2xl">
+                                    {allowlistStats.unmatchedSheetNames.length} spreadsheet row
+                                    {allowlistStats.unmatchedSheetNames.length === 1 ? ' has' : 's have'} no ARDB match and{' '}
+                                    {allowlistStats.unmatchedSheetNames.length === 1 ? 'is' : 'are'} omitted from this list.
+                                    Names are logged in the browser dev console.
+                                </p>
+                            ) : null}
                             {syncedAt && (
                                 <p className="mt-1.5 text-[10px] text-rf-textSoft/80">
                                     Catalog synced{' '}
@@ -206,10 +230,11 @@ export default function BlueprintsPage() {
 
                 {!catalogLoading && !catalogError && blueprints.length === 0 && (
                     <div className="rf-card rounded-xl px-6 py-10 text-center">
-                        <p className="text-rf-text font-medium">No blueprint rows in catalog</p>
+                        <p className="text-rf-text font-medium">No blueprint rows to show</p>
                         <p className="text-sm text-rf-textSoft mt-2 max-w-md mx-auto">
                             Run an ARDB catalog sync so{' '}
-                            <code className="bg-white/5 px-1 rounded">/api/marketplace/catalog</code> includes items.
+                            <code className="bg-white/5 px-1 rounded">/api/marketplace/catalog</code> includes blueprint
+                            items that match the spreadsheet allowlist.
                         </p>
                     </div>
                 )}
@@ -451,7 +476,7 @@ export default function BlueprintsPage() {
                                             className="border border-neutral-200 rounded-xl p-4 break-inside-avoid"
                                         >
                                             <h3 className="font-semibold text-base text-neutral-900 leading-tight">
-                                                {b.name}
+                                                {blueprintDisplayName(b)}
                                             </h3>
                                             {b.rarity ? (
                                                 <p className="text-sm text-neutral-600 mt-1">

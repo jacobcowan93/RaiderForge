@@ -7,6 +7,12 @@ export type NormalizedBlueprint = {
     /** Stable id — ARDB item id from catalog. */
     id: string
     name: string
+    /** Spreadsheet `Blueprints` label when this row was allowlist-matched. */
+    trackerDisplayName?: string
+    /** Spreadsheet `Type` column when allowlist-matched. */
+    spreadsheetType?: string | null
+    /** 1-based order from spreadsheet allowlist. */
+    spreadsheetOrder?: number | null
     description: string | null
     /** From ARDB; many blueprint rows use `null`. */
     rarity: string | null
