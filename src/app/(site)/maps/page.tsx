@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { MAPS } from '@/data/maps'
+import { MAPS, PRACTICE_RANGE_OVERVIEW } from '@/data/maps'
 import { CONTAINERS_BY_MAP } from '@/data/containers'
 import { fetchMfEventsSchedule } from '@/api/metaforgeService'
 import { fetchArdbQuests } from '@/api/ardbService'
@@ -67,8 +67,8 @@ export default async function MapsPage() {
                     <h1 className="mt-2 text-3xl font-bold text-white text-shadow-hero">Interactive tactical maps</h1>
                     <p className="mt-2.5 text-rf-textSoft text-sm max-w-xl text-shadow-hero leading-relaxed">
                         Pan and zoom ARDB map tiles, toggle quest and container layers, and track live zone conditions.
-                        Same five regions as the in-game rotation: Dam Battlegrounds, Buried City, Blue Gate, Spaceport,
-                        and Stella Montis.
+                        The tactical maps below mirror the five-region in-game rotation. Field notes further down cover
+                        those theaters plus Practice Range in full.
                     </p>
                 </div>
             </div>
@@ -93,6 +93,33 @@ export default async function MapsPage() {
             </div>
 
             <MapsTacticalZonesClient zones={zones} />
+
+            <section
+                className="mt-16 border-t border-white/[0.06] pt-12 max-w-3xl"
+                aria-label="Zone field notes"
+            >
+                <p className="text-xs uppercase tracking-widest text-white/40 font-semibold mb-8">
+                    Zone field notes
+                </p>
+                <div className="space-y-10">
+                    {MAPS.map((m) => (
+                        <article key={m.id}>
+                            <h2 className="text-xl font-bold text-white tracking-tight text-shadow-hero">
+                                {m.displayName}
+                            </h2>
+                            <p className="mt-3 text-sm text-rf-textSoft leading-relaxed">{m.description}</p>
+                        </article>
+                    ))}
+                    <article>
+                        <h2 className="text-xl font-bold text-white tracking-tight text-shadow-hero">
+                            {PRACTICE_RANGE_OVERVIEW.displayName}
+                        </h2>
+                        <p className="mt-3 text-sm text-rf-textSoft leading-relaxed">
+                            {PRACTICE_RANGE_OVERVIEW.description}
+                        </p>
+                    </article>
+                </div>
+            </section>
 
             {/* Attribution */}
             <p className="mt-12 text-[11px] text-white/20 text-shadow-hero">
