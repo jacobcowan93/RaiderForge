@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { getEventDescription, EVENT_ICONS } from '@/lib/events/eventsConfig'
+import { LiveDataFeedStrip } from '@/components/live-data/LiveDataFeedStrip'
+import { LIVE_DATA_MAP_ROTATION_HINT } from '@/lib/live-data/messages'
 import { MapsHubLegend } from '@/components/maps/MapsHubLegend'
 import { canonicalHubSlugForMapId, resolveMapsHubZoneParam } from '@/lib/maps/maps-hub-zone'
 
@@ -16,6 +18,8 @@ export type TcnoZoneVM = {
     tcnoUrl: string
     hasEvents: boolean
     conditionBadges: { name: string; bg: string; border: string; text: string }[]
+    /** Zone modifiers matched live MetaForge rows (else rotation table). */
+    fromMetaforge: boolean
 }
 
 type Props = {
@@ -26,16 +30,8 @@ type Props = {
     /** ISO timestamp — MetaForge pull time for zone modifiers */
     liveConditionsUpdatedAt?: string | null
     liveConditionsUpstreamOk?: boolean
-}
-
-function formatHubTimestamp(iso: string): string {
-    try {
-        const d = new Date(iso)
-        if (Number.isNaN(d.getTime())) return iso
-        return d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' })
-    } catch {
-        return iso
-    }
+    /** Raw event count from last MetaForge payload (for chip: empty vs live). */
+    liveMetaforgeEventCount?: number
 }
 
 export function MapsTcnoCommandCenter({
@@ -44,6 +40,7 @@ export function MapsTcnoCommandCenter({
     initialZoneId,
     liveConditionsUpdatedAt,
     liveConditionsUpstreamOk,
+    liveMetaforgeEventCount = 0,
 }: Props) {
     const router = useRouter()
     const pathname = usePathname()
@@ -104,18 +101,16 @@ export function MapsTcnoCommandCenter({
     return (
         <div className="space-y-6">
             {liveConditionsUpdatedAt ? (
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border border-white/[0.08] bg-black/35 px-3 py-2">
-                    <p className="text-[11px] text-white/55">
-                        <span className="text-white/35 uppercase tracking-wider font-semibold mr-1.5">
-                            Live conditions
-                        </span>
-                        <span className="tabular-nums text-white/70">Last updated {formatHubTimestamp(liveConditionsUpdatedAt)}</span>
-                    </p>
-                    {liveConditionsUpstreamOk === false ? (
-                        <span className="text-[10px] text-amber-200/85 font-medium">
-                            MetaForge unreachable — zone tags may use rotation fallback
-                        </span>
-                    ) : null}
+                <div className="rounded-lg border border-white/[0.08] bg-black/35 px-3 py-2.5">
+                    <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-2">Live conditions</p>
+                    <LiveDataFeedStrip
+                        fetchedAt={liveConditionsUpdatedAt}
+                        upstreamOk={
+                            liveConditionsUpstreamOk === undefined ? null : liveConditionsUpstreamOk ? true : false
+                        }
+                        polledEventCount={liveMetaforgeEventCount}
+                        loading={false}
+                    />
                 </div>
             ) : null}
 
@@ -226,6 +221,9 @@ export function MapsTcnoCommandCenter({
                         <p className="text-sm text-white/60 leading-relaxed mb-4 line-clamp-3 sm:line-clamp-none">
                             {selected.description}
                         </p>
+                        {!selected.fromMetaforge ? (
+                            <p className="text-[10px] text-white/38 leading-snug max-w-xl mb-3">{LIVE_DATA_MAP_ROTATION_HINT}</p>
+                        ) : null}
                         {selected.conditionBadges.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 mb-4">
                                 {selected.conditionBadges.map((b) => {

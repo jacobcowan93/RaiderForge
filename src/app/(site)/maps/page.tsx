@@ -62,7 +62,12 @@ async function MapsPageContent({ searchParams }: PageProps) {
 
     const gameByRfId = indexGameMapsByRfId(gameMaps)
     const now = new Date()
-    const tcnoZones = buildTcnoZoneVMs(now, eventsPayload.events, gameByRfId)
+    const tcnoZones = buildTcnoZoneVMs(
+        now,
+        eventsPayload.events,
+        gameByRfId,
+        eventsPayload.upstreamOk,
+    )
 
     return (
         <div className="py-14 px-6 max-w-7xl mx-auto">
@@ -110,6 +115,7 @@ async function MapsPageContent({ searchParams }: PageProps) {
                 initialZoneId={initialZoneId}
                 liveConditionsUpdatedAt={eventsPayload.fetchedAt}
                 liveConditionsUpstreamOk={eventsPayload.upstreamOk}
+                liveMetaforgeEventCount={eventsPayload.events.length}
             />
 
             <p className="mt-10 text-[11px] text-white/30 text-shadow-hero leading-relaxed max-w-3xl">

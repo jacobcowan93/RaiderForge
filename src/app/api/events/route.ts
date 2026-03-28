@@ -14,6 +14,13 @@ import { fetchCurrentEvents } from '@/lib/data/metaforge-events'
 export async function GET() {
     try {
         const { events, fetchedAt, upstreamOk } = await fetchCurrentEvents()
+        if (process.env.NODE_ENV === 'development') {
+            const n = events.length
+            const fallback = !upstreamOk || n === 0
+            console.info(
+                `[live-events] upstreamOk=${upstreamOk} eventCount=${n} rotationFallback=${fallback ? 'yes' : 'no'}`,
+            )
+        }
         return Response.json(events, {
             headers: {
                 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
@@ -24,6 +31,9 @@ export async function GET() {
     } catch (err) {
         console.error('[/api/events] Failed:', err)
         const fetchedAt = new Date().toISOString()
+        if (process.env.NODE_ENV === 'development') {
+            console.info('[live-events] upstreamOk=false eventCount=0 rotationFallback=yes (exception path)')
+        }
         return Response.json([], {
             headers: {
                 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',

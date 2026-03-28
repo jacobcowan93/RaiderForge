@@ -48,8 +48,8 @@ export type MapConditions = {
   eventEndsAtMs: number | null
 }
 
-/** Normalize various map key formats to our route IDs. */
-function normalizeMapKey(raw: string): string {
+/** Normalize various map key formats to our route IDs (exported for tests / batch tooling). */
+export function normalizeMapKey(raw: string): string {
   const key = raw.toLowerCase().replace(/\s+/g, '-')
   const ALIASES: Record<string, string> = {
     dam:               'dam-battlegrounds',
@@ -63,13 +63,32 @@ function normalizeMapKey(raw: string): string {
   return ALIASES[key] ?? key
 }
 
-/** Check if a MetaForge event is currently active given the current time. */
-function isEventActive(event: MfEvent, now: Date): boolean {
-  if (!event.startTime || !event.endTime) return true // No time bounds — assume active
+/** Route id for map matching, or null when the row has no map key. */
+export function mfEventMapRouteId(event: MfEvent): string | null {
+  const raw = event.map ?? event.mapId ?? ''
+  if (!raw || typeof raw !== 'string') return null
+  return normalizeMapKey(raw)
+}
+
+/** Whether the row is active at `now` when start/end are present. */
+export function mfEventIsActiveAt(event: MfEvent, now: Date): boolean {
+  if (!event.startTime || !event.endTime) return true
   const start = new Date(event.startTime).getTime()
   const end = new Date(event.endTime).getTime()
   const t = now.getTime()
   return t >= start && t < end
+}
+
+/** Earliest valid future endTime among rows (epoch ms), or null. */
+export function mfEventEarliestEndMsAfter(events: MfEvent[], referenceMs: number): number | null {
+  let best: number | null = null
+  for (const e of events) {
+    if (!e.endTime || typeof e.endTime !== 'string') continue
+    const end = new Date(e.endTime).getTime()
+    if (Number.isNaN(end) || end <= referenceMs) continue
+    if (best === null || end < best) best = end
+  }
+  return best
 }
 
 /**
@@ -89,39 +108,29 @@ export function getActiveConditionsForMap(
 
   // ── Try MetaForge API events first ────────────────────────────────────────
   if (apiEvents && apiEvents.length > 0) {
-    const mapEvents = apiEvents.filter(e => {
-      const rawMap = e.map ?? e.mapId ?? ''
-      return rawMap && normalizeMapKey(rawMap) === mapId && isEventActive(e, now)
-    })
+    const mapEvents = apiEvents.filter(
+      (e) => mfEventMapRouteId(e) === mapId && mfEventIsActiveAt(e, now),
+    )
 
     if (mapEvents.length > 0) {
       // Extract minor/major from the event data
       let minor: string | null = null
       let major: string | null = null
-      let eventEndsAtMs: number | null = null
       const tNow = now.getTime()
 
       for (const e of mapEvents) {
         const eventName = e.name ?? e.event ?? null
         if (!eventName) {
-          // Event has explicit minor/major fields
           if (e.minor) minor = e.minor
           if (e.major) major = e.major
+        } else if (isMajorEvent(eventName)) {
+          major = eventName
         } else {
-          // Classify by name
-          if (isMajorEvent(eventName)) {
-            major = eventName
-          } else {
-            minor = eventName
-          }
-        }
-        if (e.endTime && typeof e.endTime === 'string') {
-          const end = new Date(e.endTime).getTime()
-          if (!Number.isNaN(end) && end > tNow) {
-            if (eventEndsAtMs === null || end < eventEndsAtMs) eventEndsAtMs = end
-          }
+          minor = eventName
         }
       }
+
+      const eventEndsAtMs = mfEventEarliestEndMsAfter(mapEvents, tNow)
 
       const activeConditions = [minor, major].filter((v): v is string => v !== null)
       return {

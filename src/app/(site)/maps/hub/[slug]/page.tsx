@@ -2,7 +2,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { MAPS } from '@/data/maps'
-import { fetchMfEventsSchedule } from '@/api/metaforgeService'
+import { fetchCurrentEvents } from '@/lib/data/metaforge-events'
+import { getLiveMapConditions } from '@/lib/live-data/mapConditions'
+import type { MfEvent } from '@/lib/events/conditions'
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 import { MapsHubLegend } from '@/components/maps/MapsHubLegend'
 import { getGameDataProvider } from '@/lib/game-data/provider'
@@ -15,7 +17,6 @@ import {
     hubUrlForMapId,
 } from '@/lib/maps/maps-hub-zone'
 import { buildTcnoZoneVMs } from '@/lib/maps/build-maps-hub-zones'
-import { getActiveConditionsForMap } from '@/lib/events/conditions'
 import { getEventDescription, EVENT_ICONS } from '@/lib/events/eventsConfig'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -40,8 +41,12 @@ export default async function MapsHubZonePage({ params }: Props) {
     const host = h.get('x-forwarded-host') ?? h.get('host')
     const useTcnoIframe = shouldUseTcnoIframeEmbed(host)
 
-    const [events, gameMaps] = await Promise.all([
-        fetchMfEventsSchedule().catch(() => []),
+    const [eventsPayload, gameMaps] = await Promise.all([
+        fetchCurrentEvents().catch(() => ({
+            events: [] as MfEvent[],
+            fetchedAt: new Date().toISOString(),
+            upstreamOk: false,
+        })),
         getGameDataProvider()
             .getMaps()
             .catch(() => {
@@ -51,11 +56,11 @@ export default async function MapsHubZonePage({ params }: Props) {
 
     const gameByRfId = indexGameMapsByRfId(gameMaps)
     const now = new Date()
-    const zones = buildTcnoZoneVMs(now, events, gameByRfId)
+    const zones = buildTcnoZoneVMs(now, eventsPayload.events, gameByRfId, eventsPayload.upstreamOk)
     const zone = zones.find((z) => z.id === mapId)
     if (!zone) notFound()
 
-    const conditions = getActiveConditionsForMap(map.id, now, events)
+    const conditions = getLiveMapConditions(map.id, now, eventsPayload.events, eventsPayload.upstreamOk)
     const tcnoUrl = getTcnoUrl(map.id)
     const hubQuery = hubUrlForMapId(map.id)
     const canonical = canonicalHubSlugForMapId(map.id)

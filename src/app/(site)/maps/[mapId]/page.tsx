@@ -2,10 +2,12 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { MAPS } from '@/data/maps'
 import { CONTAINERS_BY_MAP } from '@/data/containers'
-import { fetchMfEventsSchedule, fetchMfQuests } from '@/api/metaforgeService'
+import { fetchMfQuests } from '@/api/metaforgeService'
+import { fetchCurrentEvents } from '@/lib/data/metaforge-events'
+import { getLiveMapConditions } from '@/lib/live-data/mapConditions'
+import type { MfEvent } from '@/lib/events/conditions'
 import { fetchArdbQuests } from '@/api/ardbService'
 import { mergeQuests, filterQuestsByMap } from '@/lib/quests/questUtils'
-import { getActiveConditionsForMap } from '@/lib/events/conditions'
 import { getEventStyle, getEventDescription, isMajorEvent } from '@/lib/events/eventsConfig'
 import { getMapGuide } from '@/lib/maps/mapGuideContent'
 import { getMetaforgeMapLootAreas } from '@/lib/maps/metaforgeMapData'
@@ -30,8 +32,12 @@ export default async function MapDetailPage({ params }: Props) {
     if (!map) notFound()
 
     // Parallel fetches — all fail gracefully.
-    const [events, mfQuests, ardbQuests, mfLootAreas, gameMaps] = await Promise.all([
-        fetchMfEventsSchedule().catch(() => []),
+    const [eventsPayload, mfQuests, ardbQuests, mfLootAreas, gameMaps] = await Promise.all([
+        fetchCurrentEvents().catch(() => ({
+            events: [] as MfEvent[],
+            fetchedAt: new Date().toISOString(),
+            upstreamOk: false,
+        })),
         fetchMfQuests().catch(() => []),
         fetchArdbQuests().catch(() => []),
         getMetaforgeMapLootAreas(mapId).catch(() => []),
@@ -49,7 +55,7 @@ export default async function MapDetailPage({ params }: Props) {
     const mapQuests       = filterQuestsByMap(allMergedQuests, map.id)
 
     const now        = new Date()
-    const conditions = getActiveConditionsForMap(map.id, now, events)
+    const conditions = getLiveMapConditions(map.id, now, eventsPayload.events, eventsPayload.upstreamOk)
     const thumb      = resolveMapThumbWithGameData(map, gameByRfId)
     const risk       = riskStyle[map.risk]
     const hasEvents  = conditions.activeConditions.length > 0

@@ -15,8 +15,13 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { useState, useEffect } from 'react'
+import { LiveDataFeedStrip } from '@/components/live-data/LiveDataFeedStrip'
+import { LiveDataStatusChip } from '@/components/live-data/LiveDataStatusChip'
 import { useEventsSchedule } from '../hooks/useEventsSchedule'
-import { getActiveConditionsForMap } from '../lib/events/conditions'
+import { getLiveMapConditions } from '@/lib/live-data/mapConditions'
+import { deriveLiveDataChipKind } from '@/lib/live-data/feedState'
+import { formatLocalTimestampFull } from '@/lib/live-data/formatTimestamp'
+import { METAFORGE_ATTRIBUTION } from '@/lib/live-data/attribution'
 import { getEventStyle, EVENT_ICONS, getEventDescription } from '../lib/events/eventsConfig'
 import { fmtCountdown } from '../lib/events/rotationTable'
 import { MAPS, getMapThumbnail } from '../data/maps'
@@ -54,15 +59,17 @@ function EventBadge({ name }: { name: string }) {
 function MapConditionCard({
   map,
   now,
-  apiEvents,
+  events,
+  upstreamOk,
   thumbByRfId,
 }: {
   map: (typeof MAPS)[number]
   now: Date
-  apiEvents: import('../lib/events/conditions').MfEvent[]
+  events: import('../lib/events/conditions').MfEvent[]
+  upstreamOk: boolean | null
   thumbByRfId: Record<string, string>
 }) {
-  const conditions = getActiveConditionsForMap(map.id, now, apiEvents)
+  const conditions = getLiveMapConditions(map.id, now, events, upstreamOk)
   const thumb = thumbByRfId[map.id] ?? getMapThumbnail(map)
   const risk = RISK_STYLE[map.risk] ?? RISK_STYLE.Medium
   const hasLiveEvent = conditions.minor || conditions.major
@@ -140,15 +147,15 @@ function MapConditionCard({
 
 function LivePanelMapList({
   loading,
-  error,
   events,
   now,
+  upstreamOk,
   thumbByRfId,
 }: {
   loading: boolean
-  error: string | null
   events: import('../lib/events/conditions').MfEvent[]
   now: Date
+  upstreamOk: boolean | null
   thumbByRfId: Record<string, string>
 }) {
   return (
@@ -175,27 +182,14 @@ function LivePanelMapList({
             key={map.id}
             map={map}
             now={now}
-            apiEvents={events}
+            events={events}
+            upstreamOk={upstreamOk}
             thumbByRfId={thumbByRfId}
           />
         ))
       )}
-      {error && !loading && (
-        <p className="text-[9px] text-white/20 text-center pt-1">Using fallback rotation data</p>
-      )}
     </>
   )
-}
-
-function formatLiveFetchedAt(iso: string | null): string | null {
-  if (!iso) return null
-  try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return null
-    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  } catch {
-    return null
-  }
 }
 
 function LivePanelChrome({
@@ -203,26 +197,37 @@ function LivePanelChrome({
   headerExtra,
   fetchedAt,
   upstreamOk,
+  polledEventCount,
+  loading,
+  now,
 }: {
   children: ReactNode
   headerExtra?: ReactNode
   fetchedAt: string | null
   upstreamOk: boolean | null
+  polledEventCount: number
+  loading: boolean
+  now: Date
 }) {
-  const timeLabel = formatLiveFetchedAt(fetchedAt)
+  const footerFullTs = fetchedAt ? formatLocalTimestampFull(fetchedAt) : null
   return (
     <div className="rf-glass flex flex-col h-full border-white/5 bg-[rgba(5,6,10,0.92)] backdrop-blur-xl">
-      <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-white/5 shrink-0 gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="h-1.5 w-1.5 rounded-full bg-rf-green animate-pulse shrink-0" />
-          <span className="text-[10px] uppercase tracking-widest text-white/50 font-semibold truncate">
-            Live conditions
-          </span>
-          {timeLabel ? (
-            <span className="text-[9px] text-white/25 tabular-nums shrink-0 hidden sm:inline">{timeLabel}</span>
-          ) : null}
+      <div className="flex items-start justify-between px-3 pt-3 pb-2 border-b border-white/5 shrink-0 gap-2">
+        <div className="flex-1 min-w-0 pr-1">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[10px] uppercase tracking-widest text-white/50 font-semibold truncate">
+              Live conditions
+            </span>
+          </div>
+          <LiveDataFeedStrip
+            now={now}
+            fetchedAt={fetchedAt}
+            upstreamOk={upstreamOk}
+            polledEventCount={polledEventCount}
+            loading={loading}
+          />
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 pt-0.5">
           {headerExtra}
           <Link
             href="/maps"
@@ -236,34 +241,32 @@ function LivePanelChrome({
       <div className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-2 min-h-0">{children}</div>
       <div className="px-3 py-2 border-t border-white/5 shrink-0 space-y-1">
         <p className="text-[9px] text-white/20 leading-relaxed text-center">
-          Live conditions powered by{' '}
+          {METAFORGE_ATTRIBUTION.short}.{' '}
           <a
-            href="https://metaforge.app/arc-raiders"
+            href={METAFORGE_ATTRIBUTION.url}
             target="_blank"
             rel="noopener noreferrer"
             className="text-rf-red/50 hover:text-rf-red/70 transition-colors"
           >
-            MetaForge
+            {METAFORGE_ATTRIBUTION.name}
           </a>
-          {timeLabel ? (
+          {footerFullTs ? (
             <>
               {' '}
-              · Refreshed <span className="tabular-nums">{timeLabel}</span>
+              ·{' '}
+              <span className="tabular-nums" title={footerFullTs}>
+                {footerFullTs}
+              </span>
             </>
           ) : null}
         </p>
-        {upstreamOk === false ? (
-          <p className="text-[9px] text-amber-200/55 text-center leading-snug">
-            Upstream unreachable — hourly rotation fallback in use.
-          </p>
-        ) : null}
       </div>
     </div>
   )
 }
 
 export default function LivePanel() {
-  const { events, loading, error, fetchedAt, upstreamOk } = useEventsSchedule()
+  const { events, loading, fetchedAt, upstreamOk } = useEventsSchedule()
   const [now, setNow] = useState(() => new Date())
   const [thumbByRfId, setThumbByRfId] = useState<Record<string, string>>({})
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -292,12 +295,20 @@ export default function LivePanel() {
   const list = (
     <LivePanelMapList
       loading={loading}
-      error={error}
       events={events}
       now={now}
+      upstreamOk={upstreamOk}
       thumbByRfId={thumbByRfId}
     />
   )
+
+  const dockChipKind = deriveLiveDataChipKind({
+    upstreamOk,
+    fetchedAt,
+    now,
+    polledEventCount: events.length,
+    loading,
+  })
 
   return (
     <>
@@ -305,7 +316,13 @@ export default function LivePanel() {
         className="hidden xl:flex flex-col fixed top-16 right-0 w-[300px] h-[calc(100vh-4rem)] z-40 border-l border-white/5"
         aria-label="Live Map Conditions"
       >
-        <LivePanelChrome fetchedAt={fetchedAt} upstreamOk={upstreamOk}>
+        <LivePanelChrome
+          fetchedAt={fetchedAt}
+          upstreamOk={upstreamOk}
+          polledEventCount={events.length}
+          loading={loading}
+          now={now}
+        >
           {list}
         </LivePanelChrome>
       </aside>
@@ -317,12 +334,12 @@ export default function LivePanel() {
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="flex w-full items-center justify-center gap-2 border-t border-white/10 bg-[rgba(5,6,10,0.96)] backdrop-blur-xl
-                         px-4 py-3 text-left shadow-[0_-8px_32px_rgba(0,0,0,0.55)]"
+              className="flex w-full flex-nowrap items-center justify-center gap-2 border-t border-white/10 bg-[rgba(5,6,10,0.96)] backdrop-blur-xl
+                         px-3 sm:px-4 py-3 text-left shadow-[0_-8px_32px_rgba(0,0,0,0.55)] overflow-x-auto min-w-0"
             >
-              <span className="h-2 w-2 rounded-full bg-rf-green animate-pulse shrink-0" />
-              <span className="text-xs font-semibold text-white/90">Active map conditions</span>
-              <span className="text-[10px] text-white/40">Tap to expand</span>
+              <LiveDataStatusChip kind={dockChipKind} className="scale-95 origin-left" />
+              <span className="text-xs font-semibold text-white/90 whitespace-nowrap">Active map conditions</span>
+              <span className="text-[10px] text-white/40 whitespace-nowrap">Tap to expand</span>
             </button>
           ) : (
             <div
@@ -333,6 +350,9 @@ export default function LivePanel() {
               <LivePanelChrome
                 fetchedAt={fetchedAt}
                 upstreamOk={upstreamOk}
+                polledEventCount={events.length}
+                loading={loading}
+                now={now}
                 headerExtra={
                   <button
                     type="button"
