@@ -8,6 +8,15 @@ import { MapsTacticalZonesClient, type MapZoneHubDTO } from '@/components/maps/M
 import { getGameDataProvider } from '@/lib/game-data/provider'
 import { indexGameMapsByRfId, resolveMapThumbWithGameData } from '@/lib/maps/rfGameMapBridge'
 
+/** Cycles ARC-style accent colors across zone field-note headings (Dam → … → Practice Range). */
+const arcTitleColors = [
+    'text-red-500',
+    'text-orange-400',
+    'text-yellow-300',
+    'text-sky-400',
+    'text-white',
+] as const
+
 export default async function MapsPage() {
     // Parallel fetches — all fail gracefully. Game maps use the same provider as GET /api/game/maps.
     const [events, ardbQuests, gameMaps] = await Promise.all([
@@ -112,19 +121,27 @@ export default async function MapsPage() {
                     Zone field notes
                 </p>
                 <div className="space-y-10">
-                    {MAPS.map((m) => (
+                    {MAPS.map((m, index) => (
                         <article key={m.id}>
-                            <h2 className="text-xl font-bold tracking-tight text-white text-shadow-hero border-l-2 border-rf-red pl-3">
+                            <h2
+                                className={`text-4xl font-extrabold drop-shadow-lg ${
+                                    arcTitleColors[index % arcTitleColors.length]
+                                }`}
+                            >
                                 {m.displayName}
                             </h2>
-                            <p className="mt-3 text-sm text-white font-normal leading-[1.65]">{m.description}</p>
+                            <p className="mt-3 text-white/90 text-sm leading-relaxed">{m.description}</p>
                         </article>
                     ))}
                     <article>
-                        <h2 className="text-xl font-bold tracking-tight text-white text-shadow-hero border-l-2 border-rf-red pl-3">
+                        <h2
+                            className={`text-4xl font-extrabold drop-shadow-lg ${
+                                arcTitleColors[MAPS.length % arcTitleColors.length]
+                            }`}
+                        >
                             {PRACTICE_RANGE_OVERVIEW.displayName}
                         </h2>
-                        <p className="mt-3 text-sm text-white font-normal leading-[1.65]">
+                        <p className="mt-3 text-white/90 text-sm leading-relaxed">
                             {PRACTICE_RANGE_OVERVIEW.description}
                         </p>
                     </article>
