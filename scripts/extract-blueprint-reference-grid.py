@@ -2,7 +2,8 @@
 """
 Slice the Speranza / xlsx embedded blueprint grid (1200×2291) into per-item WEBP tiles.
 
-Source PNG: src/blueprints/Speranza-Blueprint-Tracker-2026-03-28.png
+Source PNG (default): ~/Desktop/RaiderForge_Archive/src/blueprints/Speranza-Blueprint-Tracker-2026-03-28.png
+Fallback: repo src/blueprints/... if you copy sources back locally.
 (or xl/media/image1.png from ARC Raiders Blueprints 74.xlsx — same dimensions)
 
 Outputs:
@@ -25,7 +26,9 @@ except ImportError:
     sys.exit(1)
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC_PNG = ROOT / "src/blueprints/Speranza-Blueprint-Tracker-2026-03-28.png"
+_ARCHIVE = Path.home() / "Desktop/RaiderForge_Archive/src/blueprints/Speranza-Blueprint-Tracker-2026-03-28.png"
+_REPO_SRC = ROOT / "src/blueprints/Speranza-Blueprint-Tracker-2026-03-28.png"
+SRC_PNG = _ARCHIVE if _ARCHIVE.exists() else _REPO_SRC
 OUT_DIR = ROOT / "public/assets/blueprints/registry"
 MANIFEST_PATH = ROOT / "src/lib/blueprints/data/blueprint-reference-artifacts.json"
 
