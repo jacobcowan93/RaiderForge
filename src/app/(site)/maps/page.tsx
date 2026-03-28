@@ -64,11 +64,19 @@ export default async function MapsPage() {
             <div className="mb-10 pl-1">
                 <div className="border-l-2 border-rf-red pl-5">
                     <span className="text-xs uppercase tracking-widest text-rf-red font-semibold">Operations</span>
-                    <h1 className="mt-2 text-3xl font-bold text-white text-shadow-hero">Interactive tactical maps</h1>
+                    <h1 className="mt-2 text-3xl font-bold text-white text-shadow-hero">ARC Raiders Interactive Maps</h1>
                     <p className="mt-2.5 text-rf-textSoft text-sm max-w-xl text-shadow-hero leading-relaxed">
-                        Pan and zoom ARDB map tiles, toggle quest and container layers, and track live zone conditions.
-                        The tactical maps below mirror the five-region in-game rotation. Field notes further down cover
-                        those theaters plus Practice Range in full.
+                        Browse all ARC Raiders zones in one place, complete with lore snippets and embedded interactive
+                        maps. The in&#x2011;game layouts and POIs are powered by Wesley&apos;s excellent work at{' '}
+                        <a
+                            href="https://maps.tcno.co/arc"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-rf-blue hover:underline font-medium text-rf-text"
+                        >
+                            maps.tcno.co/arc
+                        </a>
+                        .
                     </p>
                 </div>
             </div>
