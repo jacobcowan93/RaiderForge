@@ -45,6 +45,10 @@
  * 7. SSR safety:
  *    Leaflet is dynamically imported inside useEffect. No runtime Leaflet code
  *    executes on the server.
+ *
+ * 8. Tactical tint:
+ *    A 25% black overlay is injected into mapPane (z-index 350) so it sits above
+ *    tiles (~200) but below markers/tooltips (~600+). pointer-events: none.
  */
 
 import { useEffect, useRef } from 'react'
