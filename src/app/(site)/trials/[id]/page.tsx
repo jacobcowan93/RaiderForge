@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation'
 import { GuideArticleCard } from '@/components/learning/GuideArticleCard'
 import { LearningDifficultyBadge } from '@/components/learning/LearningDifficultyBadge'
 import { LearningTagList } from '@/components/learning/LearningTagList'
+import { TrialDetailProgressToolbar } from '@/components/learning/TrialDetailProgressToolbar'
+import { TrialProgressChecklist } from '@/components/learning/TrialProgressChecklist'
 import { TrialSummaryCard } from '@/components/learning/TrialSummaryCard'
 import { getGuidesForTrialId } from '@/data/guides'
 import { formatEstimatedTime } from '@/data/learningShared'
@@ -127,6 +129,13 @@ export default async function TrialDetailPage({ params }: PageProps) {
                     ) : null}
                 </div>
             </header>
+
+            <div className="mb-8 space-y-4 max-w-[42rem]">
+                <TrialDetailProgressToolbar trialId={trial.id} title={trial.name} />
+                {trial.progressChecklist && trial.progressChecklist.length > 0 ? (
+                    <TrialProgressChecklist trialId={trial.id} items={trial.progressChecklist} />
+                ) : null}
+            </div>
 
             <div className="space-y-10 text-sm text-white/70 leading-relaxed max-w-[42rem]">
                 <section>

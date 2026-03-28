@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { GuideArticleCard } from '@/components/learning/GuideArticleCard'
+import { GuideDetailProgressToolbar } from '@/components/learning/GuideDetailProgressToolbar'
 import { LearningDifficultyBadge } from '@/components/learning/LearningDifficultyBadge'
 import { LearningTagList } from '@/components/learning/LearningTagList'
 import { TrialSummaryCard } from '@/components/learning/TrialSummaryCard'
@@ -58,6 +59,10 @@ export default async function GuideArticlePage({ params }: PageProps) {
                     <LearningTagList tags={article.tags} />
                 </div>
             </header>
+
+            <div className="mb-10 max-w-[42rem]">
+                <GuideDetailProgressToolbar slug={article.slug} title={article.title} />
+            </div>
 
             <article className="max-w-none">
                 <div className="space-y-10 text-white/75 leading-relaxed [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-white [&_h2]:tracking-tight [&_h2]:mt-0 [&_p]:text-sm [&_p]:leading-[1.7] max-w-[42rem]">

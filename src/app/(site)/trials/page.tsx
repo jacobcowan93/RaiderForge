@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
+import { ProgressThisWeekSummary } from '@/components/learning/ProgressThisWeekSummary'
+import { RecommendedTracksSection } from '@/components/learning/RecommendedTracksSection'
 import { TrialSummaryCard } from '@/components/learning/TrialSummaryCard'
 import { TrialsHubClient } from '@/components/learning/TrialsHubClient'
 import { MAPS } from '@/data/maps'
@@ -59,6 +61,10 @@ export default async function TrialsPage() {
                     </Link>
                 </p>
             </header>
+
+            <ProgressThisWeekSummary weekLabel={featured.label} featuredTrialIds={featured.trials.map((t) => t.id)} />
+
+            <RecommendedTracksSection />
 
             <section aria-labelledby="this-week-heading" className="mb-12">
                 <h2 id="this-week-heading" className="text-xs uppercase tracking-[0.2em] text-red-500 font-bold mb-1">

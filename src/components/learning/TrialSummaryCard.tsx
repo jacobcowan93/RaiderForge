@@ -1,11 +1,14 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { getMapById } from '@/data/maps'
 import type { TrialBranch, WeeklyTrial } from '@/data/trials'
 import { formatEstimatedTime } from '@/data/learningShared'
-import { mapCoverPath } from '@/lib/maps/mapCovers'
 import { LearningDifficultyBadge } from '@/components/learning/LearningDifficultyBadge'
+import { LearningProgressPill, useLearningItemAriaStatus } from '@/components/learning/LearningProgressPill'
 import { LearningTagList } from '@/components/learning/LearningTagList'
+import { mapCoverPath } from '@/lib/maps/mapCovers'
 
 const BRANCH_SHORT: Record<TrialBranch, string> = {
     conditioning: 'Cond',
@@ -30,14 +33,22 @@ export function TrialSummaryCard({ trial, liveHint, emphasize }: Props) {
     const map = trial.mapRfId ? getMapById(trial.mapRfId) : undefined
     const cover = trial.mapRfId ? mapCoverPath(trial.mapRfId) : undefined
     const mapName = map?.displayName ?? 'Any zone'
+    const ariaProgress = useLearningItemAriaStatus('trial', trial.id)
 
     return (
         <article
-            className={`rounded-xl border bg-black/40 overflow-hidden flex flex-col min-w-0 ${
+            className={`rounded-xl border bg-black/40 overflow-hidden flex flex-col min-w-0 relative ${
                 emphasize ? 'border-red-500/35 ring-1 ring-red-500/15' : `border-white/[0.08] ${BRANCH_BORDER[trial.branch]}`
             }`}
         >
-            <Link href={`/trials/${trial.id}`} className="flex flex-col sm:flex-row flex-1 min-h-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/45 focus-visible:ring-inset">
+            <div className="absolute top-2 right-2 z-10 pointer-events-none">
+                <LearningProgressPill kind="trial" id={trial.id} />
+            </div>
+            <Link
+                href={`/trials/${trial.id}`}
+                aria-label={ariaProgress ? `${trial.name}. Progress: ${ariaProgress}.` : trial.name}
+                className="flex flex-col sm:flex-row flex-1 min-h-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/45 focus-visible:ring-inset"
+            >
                 <div className="relative w-full sm:w-[140px] shrink-0 aspect-[16/10] sm:aspect-square sm:min-h-[140px] bg-rf-bgSoft">
                     {cover ? (
                         <Image

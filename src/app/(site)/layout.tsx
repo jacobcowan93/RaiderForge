@@ -1,4 +1,5 @@
 import bgLogo from '../../assets/images/AR_BasicLogo.png'
+import { LearningProgressProvider } from '@/lib/progression/learningProgressContext'
 
 /**
  * (site) layout — wraps all non-home app pages.
@@ -7,15 +8,15 @@ import bgLogo from '../../assets/images/AR_BasicLogo.png'
  */
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="relative">
-            <div
-                className="pointer-events-none fixed inset-0 bg-center bg-no-repeat bg-contain opacity-[0.18] z-0"
-                style={{ backgroundImage: `url(${bgLogo.src})` }}
-                aria-hidden="true"
-            />
-            <div className="relative z-10">
-                {children}
+        <LearningProgressProvider>
+            <div className="relative">
+                <div
+                    className="pointer-events-none fixed inset-0 bg-center bg-no-repeat bg-contain opacity-[0.18] z-0"
+                    style={{ backgroundImage: `url(${bgLogo.src})` }}
+                    aria-hidden="true"
+                />
+                <div className="relative z-10">{children}</div>
             </div>
-        </div>
+        </LearningProgressProvider>
     )
 }

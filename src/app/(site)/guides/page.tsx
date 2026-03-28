@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { GuidesHubClient } from '@/components/learning/GuidesHubClient'
+import { RecommendedTracksSection } from '@/components/learning/RecommendedTracksSection'
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 import { GUIDE_ARTICLES, GUIDE_HUB_SHORTCUTS } from '@/data/guides'
 import { fetchMetaforgeGuidesSnapshot } from '@/lib/data/metaforge-guides'
@@ -42,6 +43,8 @@ export default async function GuidesPage() {
                     </Link>
                 </p>
             </header>
+
+            <RecommendedTracksSection />
 
             <section aria-labelledby="shortcuts-heading" className="mb-12">
                 <h2 id="shortcuts-heading" className="text-xs uppercase tracking-[0.2em] text-white/40 font-bold mb-4">

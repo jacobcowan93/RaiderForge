@@ -8,6 +8,8 @@ import type { MapCoverRfId } from '@/lib/maps/mapCovers'
 
 export type TrialBranch = 'conditioning' | 'mobility' | 'survival'
 
+export type TrialProgressChecklistItem = { id: string; label: string }
+
 export type WeeklyTrial = {
     id: string
     name: string
@@ -25,6 +27,8 @@ export type WeeklyTrial = {
     avoid: string
     roleHint: string
     iconSrc?: string
+    /** Local checklist keys for progression UI */
+    progressChecklist?: TrialProgressChecklistItem[]
 }
 
 export type TrialWeekBundle = {
@@ -50,6 +54,11 @@ const T_HORNET: WeeklyTrial = {
         'Pre-clear sightlines on spillways, save explosives for clumped spawns, and chain staggers so no hornet gets a free volley on your squad.',
     avoid: 'Panicked reloads in the open — one burst down and the multiplier resets hard.',
     roleHint: 'Conditioning / damage roles with mag size or reload perks; one player on crowd control.',
+    progressChecklist: [
+        { id: 'modifiers', label: 'Modifiers understood' },
+        { id: 'route', label: 'Route / sightlines planned' },
+        { id: 'roles', label: 'Roles practiced in squad' },
+    ],
 }
 
 const T_CARRIABLE: WeeklyTrial = {
@@ -68,6 +77,11 @@ const T_CARRIABLE: WeeklyTrial = {
         'Scout the pad-to-pad line in raid daylight once, then run “hot” with only health stops. Drop carriables in cover-adjacent slots to shave exposure.',
     avoid: 'Fighting ARC off-route — kills rarely beat checkpoint bonuses.',
     roleHint: 'Mobility-first kits; one escort with smoke or flash to break line-of-sight.',
+    progressChecklist: [
+        { id: 'modifiers', label: 'Checkpoint timing clear' },
+        { id: 'route', label: 'Handoff path scouted' },
+        { id: 'roles', label: 'Escort + carrier assigned' },
+    ],
 }
 
 const T_BOMB: WeeklyTrial = {
@@ -86,6 +100,11 @@ const T_BOMB: WeeklyTrial = {
         'Never stand on rooftops longer than one magazine. Move diagonally through blocks after each salvo so bombardiers re-target empty space.',
     avoid: 'Stacking as a team — splash wipes the whole multiplier.',
     roleHint: 'Survival / sustain roles; spread vertically instead of huddling.',
+    progressChecklist: [
+        { id: 'modifiers', label: 'Artillery cadence internalized' },
+        { id: 'route', label: 'Rotation cover mapped' },
+        { id: 'roles', label: 'Spread / heals rehearsed' },
+    ],
 }
 
 const T_LIGHT: WeeklyTrial = {
@@ -104,6 +123,11 @@ const T_LIGHT: WeeklyTrial = {
         'Call lightning paint verbally, hard-pivot wide when ground glows, and use the 1–2s after strike to dump burst damage.',
     avoid: 'Greeding DPS — getting downed clears streak bonuses.',
     roleHint: 'Balanced Conditioning + Mobility; avoid heavy armor that slows exits.',
+    progressChecklist: [
+        { id: 'modifiers', label: 'Lightning windows called' },
+        { id: 'route', label: 'Safe exits identified' },
+        { id: 'roles', label: 'Burst / move roles set' },
+    ],
 }
 
 const T_FLY: WeeklyTrial = {
@@ -122,6 +146,11 @@ const T_FLY: WeeklyTrial = {
         'Stage on gantries and launch towers, pre-aim travel lanes, and swap to precision weapons when drones hover for scans.',
     avoid: 'Dumping ammo into grounded ARC — empty mags when flyers appear.',
     roleHint: 'Mobility + accurate mid-range; coordinate who calls targets.',
+    progressChecklist: [
+        { id: 'modifiers', label: 'Flyer-only scoring rule clear' },
+        { id: 'route', label: 'Elevation / lanes chosen' },
+        { id: 'roles', label: 'Callouts for air targets' },
+    ],
 }
 
 const T_FROST: WeeklyTrial = {
@@ -139,6 +168,11 @@ const T_FROST: WeeklyTrial = {
         'Plan a loop through heated interiors, never double-back into wind tunnels, and pull ARC one pack at a time to avoid crossfire.',
     avoid: 'Long outdoor fights — exposure stacks faster than heals.',
     roleHint: 'Survival sustain and thermal gear; one player dedicated to route calls.',
+    progressChecklist: [
+        { id: 'modifiers', label: 'Cold / patrol cadence noted' },
+        { id: 'route', label: 'Warm loop practiced' },
+        { id: 'roles', label: 'Pull discipline agreed' },
+    ],
 }
 
 export const TRIAL_WEEK_EXAMPLES: TrialWeekBundle[] = [
