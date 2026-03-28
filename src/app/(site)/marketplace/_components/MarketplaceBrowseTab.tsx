@@ -1,166 +1,185 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 
-import { fetchListings, type ListingRow, type ListingsError } from '@/lib/marketplace/listings-api'
-import type { OrderRow } from '@/lib/marketplace/orders-api'
+import type { MarketplaceCatalogItem } from '@/lib/marketplace/catalog-types'
+import { ARDB_CATALOG_ATTRIBUTION } from '@/lib/marketplace/catalog-types'
 
-import { BROWSE_LISTINGS_LIMIT, inputCls } from '../_lib/marketplace-constants'
-import { filterBrowseListings, uniqueItemTypesFromListings } from '../_lib/marketplace-view-models'
+import { inputCls } from '../_lib/marketplace-constants'
 import { ErrorMsg, Spinner } from './MarketplaceShared'
-import { MarketplaceListingCard } from './MarketplaceListingCard'
 import { MarketplaceEmptyState } from './MarketplaceEmptyState'
-import { MarketplaceCheckoutModal } from './MarketplaceCheckoutModal'
+import { MarketplaceCatalogItemCard } from './MarketplaceCatalogItemCard'
 
-export function MarketplaceBrowseTab({
-    isLoggedIn,
-    onOrderPlaced,
-}: {
-    isLoggedIn: boolean
-    onOrderPlaced?: (order: OrderRow) => void
-}) {
-    const [listings, setListings] = useState<ListingRow[]>([])
+type CatalogResponse = {
+    syncedAt: string | null
+    count: number
+    attribution: typeof ARDB_CATALOG_ATTRIBUTION
+    items: MarketplaceCatalogItem[]
+}
+
+function uniqueItemTypes(items: MarketplaceCatalogItem[]): string[] {
+    const set = new Set<string>()
+    for (const it of items) {
+        const t = (it.itemType ?? '').trim()
+        if (t) set.add(t)
+    }
+    return [...set].sort((a, b) => a.localeCompare(b))
+}
+
+const btnReset =
+    'inline-flex items-center justify-center rounded-lg border border-white/15 bg-rf-bg/80 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-rf-text hover:border-rf-red/40 hover:bg-white/5 hover:text-white transition-colors'
+
+export function MarketplaceBrowseTab() {
+    const [items, setItems] = useState<MarketplaceCatalogItem[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [search, setSearch] = useState('')
-    const [typeFilter, setTypeFilter] = useState<string>('all')
-    const [checkoutListing, setCheckoutListing] = useState<ListingRow | null>(null)
+    const [typeFilter, setTypeFilter] = useState<string>('__all__')
 
     useEffect(() => {
         let cancelled = false
         ;(async () => {
             setLoading(true)
             setError(null)
-            const r = await fetchListings({ status: 'active', limit: BROWSE_LISTINGS_LIMIT })
-            if (cancelled) return
-            if (!r.ok) {
-                const e = r as ListingsError
-                setError(e.message ?? e.error)
-            } else {
-                setListings(r.listings)
+            try {
+                const res = await fetch('/api/marketplace/catalog', { cache: 'no-store' })
+                if (!res.ok) throw new Error(`Catalog request failed (${res.status})`)
+                const data = (await res.json()) as CatalogResponse
+                if (!cancelled && Array.isArray(data.items)) setItems(data.items)
+            } catch (e) {
+                if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load catalog')
+            } finally {
+                if (!cancelled) setLoading(false)
             }
-            setLoading(false)
         })()
-        return () => { cancelled = true }
+        return () => {
+            cancelled = true
+        }
     }, [])
 
-    const itemTypes = useMemo(() => uniqueItemTypesFromListings(listings), [listings])
+    const typeOptions = useMemo(() => uniqueItemTypes(items), [items])
 
-    const filtered = useMemo(
-        () => filterBrowseListings(listings, search, typeFilter),
-        [listings, search, typeFilter],
-    )
-
-    function handleOrderPlaced(order: OrderRow) {
-        // Remove 1 unit from available count optimistically
-        setListings((prev) =>
-            prev.map((l) =>
-                l.id === checkoutListing?.id
-                    ? { ...l, availableQuantity: Math.max(0, l.availableQuantity - order.quantity) }
-                    : l
-            )
-        )
-        onOrderPlaced?.(order)
-    }
+    const filtered = useMemo(() => {
+        const q = search.trim().toLowerCase()
+        let list = items
+        if (typeFilter !== '__all__') {
+            list = list.filter((it) => (it.itemType ?? '').trim() === typeFilter)
+        }
+        if (q) list = list.filter((it) => it.name.toLowerCase().includes(q))
+        return list
+    }, [items, search, typeFilter])
 
     return (
-        <div className="space-y-5">
-            <MarketplaceCheckoutModal
-                listing={checkoutListing}
-                onClose={() => setCheckoutListing(null)}
-                onOrderPlaced={handleOrderPlaced}
-            />
-
-            <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                    <svg
-                        viewBox="0 0 16 16"
-                        width="14"
-                        height="14"
-                        fill="currentColor"
-                        aria-hidden
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-rf-textSoft/40 pointer-events-none"
+        <div className="space-y-4 md:space-y-5">
+            <div className="rf-card rounded-lg border border-blue-950/35 border-l-rf-red/25 bg-[#050810]/40 px-3 py-3 sm:px-4">
+                <p className="text-[11px] text-rf-textSoft/90 leading-relaxed">
+                    Item data powered by{' '}
+                    <Link
+                        href={ARDB_CATALOG_ATTRIBUTION.providerUrl}
+                        className="text-rf-red/90 hover:underline font-medium"
                     >
-                        <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z" />
-                    </svg>
-                    <input
-                        className={inputCls + ' pl-9'}
-                        placeholder="Search items, sellers…"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
+                        ardb.app
+                    </Link>
+                    . Live trading via G2G is coming soon — browse only for now.
+                </p>
             </div>
 
-            {itemTypes.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                    {(['all', ...itemTypes] as string[]).map((t) => (
-                        <button
-                            key={t}
-                            type="button"
-                            onClick={() => setTypeFilter(t)}
-                            className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.15em] font-semibold border transition-all duration-150 ${
-                                typeFilter === t
-                                    ? 'bg-rf-orange/15 border-rf-orange/40 text-rf-orange'
-                                    : 'bg-white/[0.03] border-white/[0.08] text-rf-textSoft/70 hover:border-white/15 hover:text-rf-textSoft'
-                            }`}
+            <div className="flex flex-col lg:flex-row lg:items-end gap-3 lg:justify-between">
+                <div className="flex-1 min-w-0">
+                    <label htmlFor="mp-catalog-search" className="text-xs uppercase tracking-wider text-rf-textSoft block mb-1.5">
+                        Search
+                    </label>
+                    <div className="relative">
+                        <svg
+                            viewBox="0 0 16 16"
+                            width="14"
+                            height="14"
+                            fill="currentColor"
+                            aria-hidden
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-rf-textSoft/40 pointer-events-none"
                         >
-                            {t}
-                        </button>
-                    ))}
+                            <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z" />
+                        </svg>
+                        <input
+                            id="mp-catalog-search"
+                            type="search"
+                            className={`${inputCls} pl-9 focus-visible:border-rf-red/40 focus-visible:ring-2 focus-visible:ring-rf-red/[0.12]`}
+                            placeholder="Filter by item name…"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
                 </div>
-            )}
+                {typeOptions.length > 0 ? (
+                    <div className="sm:w-56">
+                        <label htmlFor="mp-catalog-type" className="text-xs uppercase tracking-wider text-rf-textSoft block mb-1.5">
+                            Type
+                        </label>
+                        <select
+                            id="mp-catalog-type"
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value)}
+                            className={`${inputCls} cursor-pointer focus-visible:border-rf-red/40 focus-visible:ring-2 focus-visible:ring-rf-red/[0.12]`}
+                        >
+                            <option value="__all__">All types</option>
+                            {typeOptions.map((t) => (
+                                <option key={t} value={t}>
+                                    {t}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                ) : null}
+            </div>
 
             {loading ? (
                 <div className="flex items-center justify-center py-16 gap-2.5 text-rf-textSoft">
                     <Spinner size={20} />
-                    <span className="text-sm">Loading listings…</span>
+                    <span className="text-sm">Loading catalog…</span>
                 </div>
             ) : error ? (
-                <div className="text-center py-12">
+                <div className="rf-card rounded-xl px-6 py-10 text-center border border-rf-red/25">
                     <ErrorMsg msg={error} />
                 </div>
             ) : filtered.length === 0 ? (
-                <MarketplaceEmptyState
-                    title="No listings yet"
-                    description={
-                        search || typeFilter !== 'all'
-                            ? 'No listings match your current filters.'
-                            : 'Be the first to post an item for sale in the Sell tab.'
-                    }
-                />
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filtered.map((l) => (
-                        <MarketplaceListingCard
-                            key={l.id}
-                            listing={l}
-                            onBuy={isLoggedIn ? () => setCheckoutListing(l) : undefined}
-                        />
-                    ))}
+                <div className="rf-card rounded-xl px-6 py-10 text-center border border-white/[0.06]">
+                    <MarketplaceEmptyState
+                        title="No items match your filters"
+                        description={
+                            search || typeFilter !== '__all__'
+                                ? 'Try a different search or set type to “All types”.'
+                                : 'The catalog is empty. Check back after the next server sync.'
+                        }
+                    />
+                    {(search || typeFilter !== '__all__') && (
+                        <div className="mt-4 flex flex-wrap justify-center gap-2">
+                            <button
+                                type="button"
+                                className={btnReset}
+                                onClick={() => {
+                                    setSearch('')
+                                    setTypeFilter('__all__')
+                                }}
+                            >
+                                Reset filters
+                            </button>
+                        </div>
+                    )}
                 </div>
+            ) : (
+                <>
+                    <p className="text-xs text-rf-textSoft/80">
+                        Showing <strong className="text-rf-text">{filtered.length}</strong> of{' '}
+                        <strong className="text-rf-text">{items.length}</strong> items
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-3.5 justify-items-stretch">
+                        {filtered.map((it) => (
+                            <MarketplaceCatalogItemCard key={it.ardbId} item={it} />
+                        ))}
+                    </div>
+                </>
             )}
-
-            {!isLoggedIn && filtered.length > 0 && (
-                <p className="text-[11px] text-rf-textSoft/50 text-center">
-                    <a href="/auth/signin" className="underline underline-offset-2 hover:text-rf-textSoft/70 transition-colors">
-                        Sign in
-                    </a>
-                    {' '}to purchase listings.
-                </p>
-            )}
-
-            <p className="text-[10px] text-rf-textSoft/40 text-center pt-4 border-t border-white/[0.04]">
-                Item data provided by{' '}
-                <a
-                    href="https://ardb.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline underline-offset-2 hover:text-rf-textSoft/70 transition-colors"
-                >
-                    ardb.app
-                </a>
-            </p>
         </div>
     )
 }

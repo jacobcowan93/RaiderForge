@@ -23,7 +23,7 @@ export function MarketplaceTabs({
                 >
                     {label}
                     {activeTab === id && (
-                        <span className="absolute bottom-0 inset-x-0 h-[2px] bg-rf-orange rounded-t-full" />
+                        <span className="absolute bottom-0 inset-x-0 h-[2px] bg-rf-red rounded-t-full" />
                     )}
                 </button>
             ))}

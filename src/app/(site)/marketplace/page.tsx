@@ -1,8 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 
+import { ARDB_CATALOG_ATTRIBUTION } from '@/lib/marketplace/catalog-types'
 import { fetchListings, type ListingRow, type ListingsError } from '@/lib/marketplace/listings-api'
 
 import type { ListingStatus, MarketplaceTabId } from './_lib/marketplace-types'
@@ -31,7 +33,9 @@ function MarketplaceAuthenticatedSell({ userId }: { userId: string }) {
             else setMyListings(r.listings)
             setLoadingMyListings(false)
         })()
-        return () => { cancelled = true }
+        return () => {
+            cancelled = true
+        }
     }, [userId])
 
     function handleDelete(id: string) {
@@ -69,28 +73,39 @@ export default function MarketplacePage() {
     const userId = (session?.user as { id?: string } | undefined)?.id
 
     return (
-        <main className="min-h-screen bg-rf-bg text-rf-text px-4 pt-8 pb-20">
-            <div className="max-w-4xl mx-auto space-y-8">
+        <div className="relative max-w-7xl mx-auto py-8 md:py-10 px-4 sm:px-5">
+            <div
+                className="pointer-events-none absolute inset-x-0 -top-24 h-[28rem] -z-10"
+                aria-hidden
+                style={{
+                    background:
+                        'radial-gradient(ellipse 70% 40% at 50% 0%, rgba(239,68,68,0.06) 0%, transparent 70%)',
+                }}
+            />
+            <div className="space-y-4 md:space-y-5">
                 <MarketplaceHeader />
 
                 <MarketplaceTabs activeTab={tab} onTabChange={setTab} />
 
                 <div>
-                    {tab === 'browse' && (
-                        <MarketplaceBrowseTab
-                            isLoggedIn={!!userId}
-                            onOrderPlaced={() => setTab('orders')}
-                        />
-                    )}
-                    {tab === 'sell' && (
-                        sessionStatus === 'loading' ? (
+                    {tab === 'browse' && <MarketplaceBrowseTab />}
+                    {tab === 'sell' &&
+                        (sessionStatus === 'loading' ? (
                             <div className="flex items-center justify-center py-20 gap-2.5 text-rf-textSoft/60">
                                 <Spinner size={20} />
                                 <span className="text-sm">Loading…</span>
                             </div>
                         ) : !userId ? (
                             <div className="flex flex-col items-center justify-center py-24 gap-4 text-rf-textSoft/60">
-                                <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden>
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="40"
+                                    height="40"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.2"
+                                    aria-hidden
+                                >
                                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
                                 </svg>
                                 <p className="text-sm font-medium text-rf-textSoft">Sign in to post listings</p>
@@ -103,17 +118,24 @@ export default function MarketplacePage() {
                             </div>
                         ) : (
                             <MarketplaceAuthenticatedSell userId={userId} />
-                        )
-                    )}
-                    {tab === 'orders' && (
-                        sessionStatus === 'loading' ? (
+                        ))}
+                    {tab === 'orders' &&
+                        (sessionStatus === 'loading' ? (
                             <div className="flex items-center justify-center py-20 gap-2.5 text-rf-textSoft/60">
                                 <Spinner size={20} />
                                 <span className="text-sm">Loading…</span>
                             </div>
                         ) : !userId ? (
                             <div className="flex flex-col items-center justify-center py-24 gap-4 text-rf-textSoft/60">
-                                <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden>
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="40"
+                                    height="40"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.2"
+                                    aria-hidden
+                                >
                                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
                                 </svg>
                                 <p className="text-sm font-medium text-rf-textSoft">Sign in to view orders</p>
@@ -126,10 +148,25 @@ export default function MarketplacePage() {
                             </div>
                         ) : (
                             <MarketplaceOrdersTab userId={userId} />
-                        )
-                    )}
+                        ))}
                 </div>
+
+                <footer className="pt-6 pb-2 space-y-2 border-t border-white/[0.05] mt-6">
+                    <p className="text-center text-[11px] text-white/60 max-w-xl mx-auto leading-relaxed">
+                        Marketplace catalog from{' '}
+                        <Link href={ARDB_CATALOG_ATTRIBUTION.providerUrl} className="text-rf-red/90 hover:underline">
+                            ardb.app
+                        </Link>{' '}
+                        • Trading powered by G2G (planned)
+                    </p>
+                    <p className="text-center text-[11px] text-rf-textSoft/70 max-w-xl mx-auto leading-relaxed">
+                        {ARDB_CATALOG_ATTRIBUTION.providerName} item metadata — verify in-game where it matters.{' '}
+                        <Link href={ARDB_CATALOG_ATTRIBUTION.providerUrl} className="text-rf-blue hover:underline">
+                            {ARDB_CATALOG_ATTRIBUTION.providerUrl.replace(/^https?:\/\//, '')}
+                        </Link>
+                    </p>
+                </footer>
             </div>
-        </main>
+        </div>
     )
 }

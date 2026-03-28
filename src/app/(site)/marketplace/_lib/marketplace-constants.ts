@@ -31,7 +31,7 @@ export const btnGreen =
 export const sectionHeading = 'text-[10px] uppercase tracking-[0.2em] text-rf-textSoft font-semibold'
 
 export const MARKETPLACE_TABS: { id: MarketplaceTabId; label: string }[] = [
-    { id: 'browse', label: 'Browse' },
+    { id: 'browse', label: 'Catalog' },
     { id: 'sell', label: 'Sell' },
     { id: 'orders', label: 'My Orders' },
 ]
