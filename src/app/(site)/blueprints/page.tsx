@@ -20,6 +20,7 @@ import { applyBlueprintSort, type SortMode } from '@/lib/blueprints/sortBlueprin
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+// Public route: tracker uses localStorage only (`raiderforge.blueprint-track.v1`); no sign-in wall.
 type CatalogResponse = {
     syncedAt: string | null
     count: number
@@ -156,8 +157,7 @@ export default function BlueprintsPage() {
                     <p className="mt-3 text-rf-textSoft text-sm max-w-2xl">
                         Blueprints come from synced ARDB catalog rows where{' '}
                         <code className="text-rf-text/90 bg-white/5 px-1 rounded">{`itemType.trim().toLowerCase() === "blueprint"`}</code>
-                        . Mark what you
-                        own locally — stored in this browser only.
+                        . No account needed — progress is saved locally on this device (this browser only).
                     </p>
                     {syncedAt && (
                         <p className="mt-2 text-xs text-rf-textSoft">
