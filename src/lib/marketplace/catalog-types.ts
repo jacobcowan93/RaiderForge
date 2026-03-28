@@ -11,6 +11,8 @@ export type MarketplaceCatalogItem = {
     iconUrl: string | null
     imageUrl: string | null
     sourceImageUrls: string[]
+    /** Blueprint detail: icon URL for the crafted item (`blueprintFor`), when ARDB provides it. */
+    craftedItemIconUrl: string | null
     stackSize: number | null
     weight: number | null
     ardbUpdatedAt: string

@@ -46,4 +46,6 @@ export type ArdbItemDetail = ArdbItemListEntry & {
     quickUseSpecs?: Record<string, number>
     craftingRequirement?: ArdbCraftingRequirement
     breaksInto?: ArdbBreakIntoEntry[]
+    /** Present on some blueprint detail payloads — the item this blueprint crafts. */
+    blueprintFor?: ArdbItemNestedRef
 }

@@ -41,6 +41,10 @@ export function normalizeArdbItemToCatalog(
     const iconUrl = absolutizeStaticPath(iconPath)
     const imageUrl = absolutizeStaticPath(imagePath)
 
+    const craftedItemIconUrl = absolutizeStaticPath(
+        detail?.blueprintFor && typeof detail.blueprintFor.icon === 'string' ? detail.blueprintFor.icon : null
+    )
+
     const itemType = resolveArdbItemType(merged, listEntry)
 
     return {
@@ -60,6 +64,7 @@ export function normalizeArdbItemToCatalog(
         iconUrl,
         imageUrl,
         sourceImageUrls,
+        craftedItemIconUrl,
         stackSize: typeof detail?.stackSize === 'number' ? detail.stackSize : null,
         weight: typeof detail?.weight === 'number' ? detail.weight : null,
         ardbUpdatedAt: typeof merged.updatedAt === 'string' ? merged.updatedAt : listEntry.updatedAt,

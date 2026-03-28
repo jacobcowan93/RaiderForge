@@ -18,6 +18,8 @@ export type NormalizedBlueprint = {
     imageUrl: string | null
     /** ARDB detail `sources` (e.g. inspect art); often the only non-generic image for blueprints. */
     sourceImageUrls: string[]
+    /** ARDB `blueprintFor.icon` — crafted item icon when present. */
+    craftedItemIconUrl: string | null
 }
 
 export function isBlueprintCatalogItem(item: MarketplaceCatalogItem): boolean {
@@ -36,6 +38,7 @@ export function normalizeBlueprintFromCatalogItem(item: MarketplaceCatalogItem):
         iconUrl: item.iconUrl,
         imageUrl: item.imageUrl,
         sourceImageUrls: Array.isArray(item.sourceImageUrls) ? [...item.sourceImageUrls] : [],
+        craftedItemIconUrl: item.craftedItemIconUrl ?? null,
     }
 }
 
