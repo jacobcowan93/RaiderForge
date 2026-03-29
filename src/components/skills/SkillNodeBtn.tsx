@@ -1,64 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import type { SkillNode, SkillNodeState } from '@/data/skillTree'
 import { BRANCH_META } from '@/data/skillTree'
 import { useId, useRef, useState } from 'react'
-
-// ── Rank pips ─────────────────────────────────────────────────────────────────
-
-function RankPips({ ranks, maxRanks, color, locked }: {
-    ranks:    number
-    maxRanks: number
-    color:    string
-    locked:   boolean
-}) {
-    if (maxRanks <= 1) return null
-    return (
-        <div className="flex items-center justify-center gap-[3px] mt-[3px]">
-            {Array.from({ length: maxRanks }).map((_, i) => (
-                <span
-                    key={i}
-                    className="rounded-full block flex-shrink-0 transition-all duration-150"
-                    style={{
-                        width:           3,
-                        height:          3,
-                        backgroundColor: i < ranks
-                            ? (locked ? '#374151' : color)
-                            : 'rgba(255,255,255,0.10)',
-                        boxShadow: !locked && i < ranks ? `0 0 3px ${color}99` : 'none',
-                    }}
-                />
-            ))}
-        </div>
-    )
-}
-
-// ── Node label ────────────────────────────────────────────────────────────────
-// Always-visible compact name below the node button.  Dark text-shadow keeps
-// it legible over the SVG connector lines.
-
-function NodeLabel({ name, color, locked }: { name: string; color: string; locked: boolean }) {
-    return (
-        <span
-            aria-hidden="true"           // button's aria-label already carries the name
-            className="block text-center overflow-hidden whitespace-nowrap pointer-events-none select-none"
-            style={{
-                fontSize:     '7.5px',
-                fontWeight:   600,
-                lineHeight:   1.2,
-                maxWidth:     72,
-                color:        locked ? 'rgba(255,255,255,0.22)' : color,
-                textShadow:   '0 1px 4px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.9)',
-                textOverflow: 'ellipsis',
-                marginTop:    '3px',
-                letterSpacing:'0.01em',
-                transition:   'color 0.2s',
-            }}
-        >
-            {name}
-        </span>
-    )
-}
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -74,6 +19,34 @@ interface Props {
     onActivate?:   (active: boolean) => void              // hover/focus notification
 }
 
+// ── Rank badge ────────────────────────────────────────────────────────────────
+// Small "N/max" pill pinned to the bottom of the circle for multi-rank nodes.
+
+function RankBadge({ ranks, maxRanks, color, locked }: {
+    ranks:    number
+    maxRanks: number
+    color:    string
+    locked:   boolean
+}) {
+    if (maxRanks <= 1) return null
+    return (
+        <div
+            className="absolute bottom-[-1px] left-1/2 -translate-x-1/2
+                       rounded-full px-[5px] py-[1px] text-[8px] font-bold
+                       tabular-nums leading-none pointer-events-none select-none
+                       whitespace-nowrap z-10"
+            style={{
+                background:  locked ? 'rgba(20,25,35,0.92)' : 'rgba(10,12,18,0.94)',
+                border:      `1px solid ${locked ? 'rgba(255,255,255,0.10)' : color + '60'}`,
+                color:       locked ? 'rgba(255,255,255,0.28)' : color,
+                boxShadow:   locked ? 'none' : `0 0 6px ${color}44`,
+            }}
+        >
+            {ranks}/{maxRanks}
+        </div>
+    )
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function SkillNodeBtn({
@@ -87,126 +60,99 @@ export function SkillNodeBtn({
     tooltipAlign  = 'center',
     onActivate,
 }: Props) {
-    const [showTip,    setShowTip]    = useState(false)
-    const [kbFocused,  setKbFocused]  = useState(false)   // keyboard-only focus ring
+    const [showTip,   setShowTip]   = useState(false)
+    const [kbFocused, setKbFocused] = useState(false)
     const tipId     = useId()
     const meta      = BRANCH_META[node.branch]
     const isMajor   = node.size === 'major'
     const locked    = state === 'locked'
     const maxed     = state === 'maxed'
+    const active    = ranks > 0
 
-    // Track whether focus arrived via pointer so we can suppress the ring
-    // on mouse click (only show it for keyboard navigation).
     const pointerRef = useRef(false)
 
     // ── Sizes ─────────────────────────────────────────────────────────────────
-    const sz  = isMajor ? 54 : 42
-    const rSz = isMajor ?  7 :  5
+    // Major nodes: 52px · Minor: 38px — matches the in-game proportions
+    const sz      = isMajor ? 52 : 38
+    const iconSz  = isMajor ? 30 : 22   // icon inner size
+    const borderW = isMajor ? 2.5 : 2
 
-    // ── Colors by state ───────────────────────────────────────────────────────
-    let bgColor      = 'rgba(12,16,22,0.97)'
-    let borderColor  = 'rgba(255,255,255,0.07)'
-    let glowColor    = 'transparent'
-    let contentColor = 'rgba(255,255,255,0.22)'
+    // ── Border / glow by state ────────────────────────────────────────────────
+    let borderColor = 'rgba(255,255,255,0.08)'
+    let glowShadow  = 'none'
+    let bgTint      = 'rgba(14,18,26,0.97)'
 
     if (!locked && ranks === 0) {
-        borderColor  = `${meta.hex}38`
-        contentColor = `${meta.hex}88`
+        // Available but unspent — subtle branch-colour hint
+        borderColor = `${meta.hex}35`
     }
-    if (ranks > 0 && !maxed) {
-        bgColor      = `${meta.hex}18`
-        borderColor  = `${meta.hex}65`
-        glowColor    = `${meta.hex}22`
-        contentColor = meta.hex
+    if (active && !maxed) {
+        borderColor = `${meta.hex}80`
+        bgTint      = `${meta.hex}14`
+        glowShadow  = `0 0 12px ${meta.hex}30, 0 0 4px ${meta.hex}20`
     }
     if (maxed) {
-        bgColor      = `${meta.hex}28`
-        borderColor  = meta.hex
-        glowColor    = `${meta.hex}48`
-        contentColor = meta.hex
+        borderColor = meta.hex
+        bgTint      = `${meta.hex}22`
+        glowShadow  = `0 0 18px ${meta.hex}55, 0 0 6px ${meta.hex}35`
     }
 
-    // Focus ring uses branch color for keyboard focus; hidden otherwise
     const ringColor = locked ? 'rgba(255,255,255,0.45)' : `${meta.hex}cc`
 
     // ── Event handlers ────────────────────────────────────────────────────────
-    const handleClick = () => { if (!locked) onClick() }
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            if (!locked) onClick()
-        }
+    const handleClick      = () => { if (!locked) onClick() }
+    const handleKeyDown    = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!locked) onClick() }
         if ((e.key === '-' || e.key === 'Backspace') && !locked && ranks > 0) {
-            e.preventDefault()
-            onDecrement?.()
+            e.preventDefault(); onDecrement?.()
         }
     }
-
-    const handleContextMenu = (e: React.MouseEvent) => {
-        e.preventDefault()
-        if (!locked) onDecrement?.()
-    }
-
+    const handleContextMenu = (e: React.MouseEvent) => { e.preventDefault(); if (!locked) onDecrement?.() }
     const handlePointerDown = () => { pointerRef.current = true }
-    // Use rAF so the flag outlasts the focus event that fires after pointerup
-    const handlePointerUp   = () => {
-        requestAnimationFrame(() => { pointerRef.current = false })
+    const handlePointerUp   = () => { requestAnimationFrame(() => { pointerRef.current = false }) }
+    const handleMouseDown   = (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (!locked) e.currentTarget.style.transform = 'scale(0.90)'
     }
-
-    const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
-        if (!locked) e.currentTarget.style.transform = 'scale(0.92)'
-    }
-    const handleMouseUp = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleMouseUp     = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.currentTarget.style.transform = 'scale(1)'
     }
-
-    const handleMouseEnter = () => { setShowTip(true);  onActivate?.(true)  }
-    const handleMouseLeave = () => { setShowTip(false); onActivate?.(false) }
-
-    const handleFocus = () => {
+    const handleMouseEnter  = () => { setShowTip(true);  onActivate?.(true)  }
+    const handleMouseLeave  = () => { setShowTip(false); onActivate?.(false) }
+    const handleFocus       = () => {
         setShowTip(true)
         if (!pointerRef.current) setKbFocused(true)
         onActivate?.(true)
     }
-    const handleBlur = () => {
-        setShowTip(false)
-        setKbFocused(false)
-        onActivate?.(false)
-    }
+    const handleBlur        = () => { setShowTip(false); setKbFocused(false); onActivate?.(false) }
 
-    // ── Tooltip state + positioning ───────────────────────────────────────────
-    const tooltip = showTip
-
+    // ── Tooltip position ─────────────────────────────────────────────────────
     const tipVertical: React.CSSProperties = tooltipSide === 'below'
-        ? { top: '100%', marginTop: 8 }
-        : { bottom: '100%', marginBottom: 8 }
-
+        ? { top: '100%', marginTop: 10 }
+        : { bottom: '100%', marginBottom: 10 }
     const tipHorizontal: React.CSSProperties =
         tooltipAlign === 'left'  ? { left: 0 } :
         tooltipAlign === 'right' ? { right: 0, left: 'auto' } :
         { left: '50%', transform: 'translateX(-50%)' }
 
-    // Compose the aria-label: name + branch + rank/selected state + lock status
+    // ── Aria label ────────────────────────────────────────────────────────────
     const rankFragment = node.maxRanks > 1
         ? `, ${ranks} of ${node.maxRanks} ranks`
         : ranks > 0 ? ', selected' : ''
-    const lockFragment = locked ? ', locked' : ''
-    const ariaLabel = `${node.name}${rankFragment}, ${node.branch}${lockFragment}`
+    const ariaLabel = `${node.name}${rankFragment}, ${node.branch}${locked ? ', locked' : ''}`
 
     return (
         <div
             className="relative flex flex-col items-center"
-            style={{ zIndex: tooltip ? 60 : 'auto' }}
+            style={{ zIndex: showTip ? 60 : 'auto' }}
         >
-            {/* ── Button ────────────────────────────────────────────────────── */}
+            {/* ── Circular button ───────────────────────────────────────────── */}
             <button
                 type="button"
                 role="switch"
                 aria-checked={ranks > 0}
                 aria-disabled={locked || undefined}
                 aria-label={ariaLabel}
-                aria-describedby={tooltip ? tipId : undefined}
+                aria-describedby={showTip ? tipId : undefined}
                 onClick={handleClick}
                 onKeyDown={handleKeyDown}
                 onContextMenu={handleContextMenu}
@@ -218,74 +164,84 @@ export function SkillNodeBtn({
                 onPointerUp={handlePointerUp}
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
-                // Never truly disabled — locked nodes remain in tab order for a11y
                 className="relative flex items-center justify-center select-none transition-transform duration-100"
                 style={{
                     width:        sz,
                     height:       sz,
-                    borderRadius: rSz,
-                    background:   bgColor,
-                    border:       `${isMajor ? 2 : 1.5}px solid ${borderColor}`,
+                    borderRadius: '50%',
+                    background:   bgTint,
+                    border:       `${borderW}px solid ${borderColor}`,
                     cursor:       locked ? 'not-allowed' : 'pointer',
-                    boxShadow:    ranks > 0 || maxed
-                        ? `0 0 0 1px rgba(0,0,0,0.6), 0 0 14px ${glowColor}, 0 2px 8px rgba(0,0,0,0.7)`
-                        : '0 0 0 1px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.6)',
-                    // Focus ring — keyboard focus only (kbFocused state)
+                    boxShadow:    [
+                        '0 0 0 1px rgba(0,0,0,0.55)',
+                        '0 2px 8px rgba(0,0,0,0.70)',
+                        glowShadow,
+                    ].filter(Boolean).join(', '),
                     outline:       kbFocused ? `2px solid ${ringColor}` : '2px solid transparent',
                     outlineOffset: 3,
-                    transition:   'transform 0.1s, box-shadow 0.15s, outline-color 0.15s',
+                    transition:   'transform 0.1s, box-shadow 0.2s, border-color 0.2s, outline-color 0.15s',
+                    overflow:     'hidden',      // keep inner image circular
                 }}
             >
-                {/* Locked: padlock icon */}
+                {/* ── Skill icon ──────────────────────────────────────────── */}
+                {/* Always rendered; locked = heavy desaturation + dim overlay */}
+                <div
+                    className="absolute inset-0 flex items-center justify-center"
+                    style={{ padding: isMajor ? 8 : 5 }}
+                >
+                    <Image
+                        src={node.icon}
+                        alt=""
+                        width={iconSz}
+                        height={iconSz}
+                        aria-hidden="true"
+                        className="object-contain pointer-events-none"
+                        style={{
+                            filter: locked
+                                ? 'grayscale(1) brightness(0.35)'
+                                : active
+                                    ? `brightness(1.1) drop-shadow(0 0 3px ${meta.hex}88)`
+                                    : 'brightness(0.55)',
+                            transition: 'filter 0.2s',
+                        }}
+                    />
+                </div>
+
+                {/* ── Locked overlay (darker tint + padlock) ───────────────── */}
                 {locked && (
-                    <svg
-                        className="absolute inset-0 m-auto"
-                        width={13} height={13}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="rgba(255,255,255,0.18)"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                    <div
+                        className="absolute inset-0 flex items-center justify-center rounded-full"
+                        style={{ background: 'rgba(6,8,14,0.55)' }}
                         aria-hidden="true"
                     >
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
+                        <svg
+                            width={isMajor ? 14 : 11}
+                            height={isMajor ? 14 : 11}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="rgba(255,255,255,0.30)"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </div>
                 )}
 
-                {/* Multi-rank: show current rank count */}
-                {!locked && node.maxRanks > 1 && (
-                    <span
-                        className="text-[11px] font-bold leading-none tabular-nums"
-                        style={{ color: contentColor }}
+                {/* ── Maxed shimmer ring ────────────────────────────────────── */}
+                {maxed && (
+                    <div
+                        className="absolute inset-0 rounded-full pointer-events-none"
+                        style={{ boxShadow: `inset 0 0 8px ${meta.hex}33` }}
                         aria-hidden="true"
-                    >
-                        {ranks > 0 ? ranks : <span style={{ opacity: 0.35 }}>0</span>}
-                    </span>
-                )}
-
-                {/* Single-rank selected: checkmark */}
-                {!locked && node.maxRanks === 1 && ranks === 1 && (
-                    <svg width={15} height={15} viewBox="0 0 24 24" fill="none"
-                         stroke={contentColor} strokeWidth={2.5}
-                         strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                )}
-
-                {/* Single-rank available: subtle dot */}
-                {!locked && node.maxRanks === 1 && ranks === 0 && (
-                    <span
-                        className="block rounded-full"
-                        aria-hidden="true"
-                        style={{ width: 7, height: 7, background: contentColor }}
                     />
                 )}
             </button>
 
-            {/* ── Rank pips ─────────────────────────────────────────────────── */}
-            <RankPips
+            {/* ── Rank badge (0/5, 1/5 …) ──────────────────────────────────── */}
+            <RankBadge
                 ranks={ranks}
                 maxRanks={node.maxRanks}
                 color={meta.hex}
@@ -293,10 +249,27 @@ export function SkillNodeBtn({
             />
 
             {/* ── Name label ────────────────────────────────────────────────── */}
-            <NodeLabel name={node.name} color={contentColor} locked={locked} />
+            <span
+                aria-hidden="true"
+                className="block text-center overflow-hidden whitespace-nowrap pointer-events-none select-none"
+                style={{
+                    fontSize:     '7px',
+                    fontWeight:   600,
+                    lineHeight:   1.2,
+                    maxWidth:     74,
+                    marginTop:    node.maxRanks > 1 ? 9 : 4,
+                    color:        locked ? 'rgba(255,255,255,0.20)' : active ? meta.hex : 'rgba(255,255,255,0.38)',
+                    textShadow:   '0 1px 4px rgba(0,0,0,0.95)',
+                    textOverflow: 'ellipsis',
+                    letterSpacing:'0.01em',
+                    transition:   'color 0.2s',
+                }}
+            >
+                {node.name}
+            </span>
 
             {/* ── Tooltip ───────────────────────────────────────────────────── */}
-            {tooltip && (
+            {showTip && (
                 <div
                     id={tipId}
                     role="tooltip"
@@ -319,14 +292,11 @@ export function SkillNodeBtn({
                     <p className="text-[11px] font-bold text-white mb-1 leading-snug">{node.name}</p>
                     <p className="text-[10px] text-white/55 leading-relaxed">{node.description}</p>
 
-                    {/* Rank detail */}
                     {node.maxRanks > 1 && !locked && (
                         <p className="text-[10px] font-semibold mt-1.5" style={{ color: meta.hex }}>
                             {ranks}/{node.maxRanks} ranks
                         </p>
                     )}
-
-                    {/* Lock explanations */}
                     {locked && node.pointGate > 0 && (
                         <p className="text-[10px] text-amber-400/85 mt-1.5">
                             ⚠ Requires {node.pointGate} branch points
@@ -335,8 +305,6 @@ export function SkillNodeBtn({
                     {locked && lockReason && (
                         <p className="text-[10px] text-white/40 mt-0.5">{lockReason}</p>
                     )}
-
-                    {/* Interaction hint */}
                     {!locked && (
                         <p className="text-[9px] text-white/25 mt-1.5 tabular-nums">
                             {node.maxRanks > 1
@@ -345,9 +313,7 @@ export function SkillNodeBtn({
                         </p>
                     )}
                     {locked && (
-                        <p className="text-[9px] text-white/25 mt-1.5">
-                            Unlock prerequisites first
-                        </p>
+                        <p className="text-[9px] text-white/25 mt-1.5">Unlock prerequisites first</p>
                     )}
                 </div>
             )}
