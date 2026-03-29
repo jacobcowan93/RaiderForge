@@ -168,8 +168,12 @@ export async function fetchMfWeeklyTrials(): Promise<MfWeeklyTrialsResult> {
     }
     const o = raw as Record<string, unknown>
     const data = Array.isArray(o.data) ? (o.data as MfWeeklyTrialRow[]) : []
-    const activeWindowEnd = normalizeMfWeeklyWindowTime(o.activeWindowEnd)
-    const nextWindowStart = normalizeMfWeeklyWindowTime(o.nextWindowStart)
+    const activeWindowEnd = normalizeMfWeeklyWindowTime(
+        o.activeWindowEnd ?? o.active_window_end ?? o.rotation_end ?? o.rotationEnd,
+    )
+    const nextWindowStart = normalizeMfWeeklyWindowTime(
+        o.nextWindowStart ?? o.next_window_start ?? o.rotation_start ?? o.rotationStart,
+    )
     return { data, activeWindowEnd, nextWindowStart, ok: true }
   } catch (err) {
     console.error('[MetaForge] Failed to fetch weekly-trials:', err)

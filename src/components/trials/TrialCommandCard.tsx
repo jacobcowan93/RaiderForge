@@ -60,11 +60,11 @@ export function TrialCommandCard({ trial }: Props) {
     return (
         <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0a0a0a] shadow-lg shadow-black/50 transition-colors hover:border-white/[0.15]">
             <div className="flex h-full min-h-0 flex-1 flex-col pb-1.5 sm:pb-2">
-                <div className="relative shrink-0 rounded-t-[14px] rounded-b-[2.35rem] bg-[#e8e4da] px-3 pb-4 pt-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                <div className="relative shrink-0 rounded-t-[14px] rounded-b-[2.35rem] bg-[#e8e4da] px-3 pb-6 pt-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
                     <p className="mb-3 text-center text-[10px] font-medium leading-snug tracking-tight text-stone-800 line-clamp-3 sm:text-[11px]">
                         {trial.description}
                     </p>
-                    <div className="relative mx-auto flex w-full max-w-[168px] justify-center">
+                    <div className="relative mx-auto flex w-full max-w-[180px] justify-center pb-1">
                         <TrialCardHeroImage
                             variant="shield"
                             src={trial.imageUrl}

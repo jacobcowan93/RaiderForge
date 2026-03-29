@@ -4,7 +4,8 @@ import { TrialsHeroCountdown } from '@/components/trials/TrialsHeroCountdown'
 import { getFeaturedTrialWeek } from '@/data/trials'
 import { fetchCurrentEvents } from '@/lib/data/metaforge-events'
 import { getWeeklyTrialsForPage } from '@/lib/trials/metaforgeWeeklyTrials'
-import { getNextUtcMondayMidnightMs, getUtcMondayMidnightOfCurrentWeekMs } from '@/lib/trials/weeklyReset'
+import { resolveTrialsCountdownTarget } from '@/lib/trials/trialsCountdownTarget'
+import { getUtcMondayMidnightOfCurrentWeekMs } from '@/lib/trials/weeklyReset'
 import { TRIALS_PAGE_MATURITY } from '@/lib/trials/trialsData'
 
 export const metadata = {
@@ -46,7 +47,7 @@ export default async function TrialsPage() {
         events: [],
         upstreamOk: false,
     }))
-    const resetMs = getNextUtcMondayMidnightMs(now)
+    const countdown = resolveTrialsCountdownTarget(now, weekly)
     const featured = getFeaturedTrialWeek(now)
 
     const activeLine =
@@ -82,8 +83,11 @@ export default async function TrialsPage() {
 
                         <div className="mt-6">
                             <TrialsHeroCountdown
-                                targetEpochMs={resetMs}
-                                metaforgeUpstreamOk={eventsPayload.upstreamOk}
+                                targetEpochMs={countdown.targetEpochMs}
+                                countdownVariant={countdown.variant}
+                                targetIsoUtc={countdown.targetIso}
+                                trialsScheduleSynced={weekly.source === 'metaforge'}
+                                eventsUpstreamOk={eventsPayload.upstreamOk}
                             />
                         </div>
 
@@ -119,9 +123,12 @@ export default async function TrialsPage() {
                     </div>
                 </header>
 
-                <section aria-labelledby="this-week-heading" className="mb-10">
+                <section aria-labelledby="this-week-heading" className="mb-0">
                     <div className="mb-4">
-                        <h2 id="this-week-heading" className="text-[11px] uppercase tracking-[0.2em] text-rf-red font-bold">
+                        <h2
+                            id="this-week-heading"
+                            className="text-sm font-black uppercase tracking-[0.18em] text-[#CF3213] drop-shadow-[0_0_20px_rgba(207,50,19,0.35)] sm:text-base"
+                        >
                             This Week&apos;s Trials
                         </h2>
                         <p className="mt-1 text-xs text-white/45">{thisWeek.label}</p>
@@ -139,9 +146,17 @@ export default async function TrialsPage() {
                     </div>
                 </section>
 
+                <div className="w-full py-8 sm:py-10" role="presentation">
+                    <div className="h-[3px] w-full rounded-full bg-[#3711B8]" aria-hidden />
+                </div>
+
                 <section aria-labelledby="next-week-heading" className="mb-6">
                     <div
-                        className="mt-10 h-1 w-full rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-400"
+                        className="mt-6 h-1.5 w-full rounded-full bg-gradient-to-r from-sky-400 via-cyan-400 to-blue-500"
+                        aria-hidden
+                    />
+                    <div
+                        className="mt-2 h-1 w-full rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-400"
                         aria-hidden
                     />
                     <div className="mb-4 mt-4">

@@ -88,16 +88,16 @@ export function TrialCardHeroImage({ src, alt, className, variant = 'banner' }: 
     if (variant === 'shield') {
         return (
             <div
-                className={`relative mx-auto aspect-square h-[7.25rem] w-[7.25rem] shrink-0 overflow-hidden rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.28)] ring-[3px] ring-white sm:h-[8.25rem] sm:w-[8.25rem] ${className ?? ''}`}
+                className={`relative mx-auto flex aspect-square h-[7.75rem] w-[7.75rem] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#cfc8bc] shadow-[0_4px_16px_rgba(0,0,0,0.28)] ring-[3px] ring-white sm:h-[9rem] sm:w-[9rem] ${className ?? ''}`}
             >
                 <Image
                     key={`${displaySrc}-${attempt}`}
                     src={displaySrc}
                     alt={alt}
-                    width={200}
-                    height={200}
-                    sizes="(max-width: 640px) 116px, 132px"
-                    className="h-full w-full rounded-full object-cover object-center"
+                    width={240}
+                    height={240}
+                    sizes="(max-width: 640px) 124px, 144px"
+                    className="h-full w-full rounded-full object-contain object-center p-0.5"
                     unoptimized={unoptimized}
                     loading="lazy"
                     onError={() => setAttempt((a) => Math.min(a + 1, candidates.length - 1))}

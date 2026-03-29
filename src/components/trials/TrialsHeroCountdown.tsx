@@ -2,16 +2,40 @@
 
 import { useEffect, useState } from 'react'
 
+import type { TrialsCountdownVariant } from '@/lib/trials/trialsCountdownTarget'
+
 function pad2(n: number) {
     return n.toString().padStart(2, '0')
 }
 
-type Props = {
-    targetEpochMs: number
-    metaforgeUpstreamOk: boolean
+function fmtCaptionUtc(iso: string): string {
+    return (
+        new Date(iso).toLocaleString('en-US', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+            timeZone: 'UTC',
+        }) + ' UTC'
+    )
 }
 
-export function TrialsHeroCountdown({ targetEpochMs, metaforgeUpstreamOk }: Props) {
+type Props = {
+    targetEpochMs: number
+    countdownVariant: TrialsCountdownVariant
+    /** When MetaForge-driven, ISO instant the timer counts down to */
+    targetIsoUtc: string | null
+    /** Weekly trials list came from MetaForge `weekly-trials` (5+5 rows). */
+    trialsScheduleSynced: boolean
+    /** Separate: live map events endpoint (modifiers, etc.). */
+    eventsUpstreamOk: boolean
+}
+
+export function TrialsHeroCountdown({
+    targetEpochMs,
+    countdownVariant,
+    targetIsoUtc,
+    trialsScheduleSynced,
+    eventsUpstreamOk,
+}: Props) {
     const [left, setLeft] = useState(() => Math.max(0, targetEpochMs - Date.now()))
 
     useEffect(() => {
@@ -34,14 +58,26 @@ export function TrialsHeroCountdown({ targetEpochMs, metaforgeUpstreamOk }: Prop
         { label: 'Sec', value: pad2(seconds) },
     ]
 
+    const headline =
+        countdownVariant === 'metaforge-next-start'
+            ? 'Next rotation in'
+            : countdownVariant === 'metaforge-active-end'
+              ? 'Resets in'
+              : 'Resets in'
+
+    const subcopy =
+        countdownVariant === 'metaforge-active-end' && targetIsoUtc
+            ? `Current rotation ends ${fmtCaptionUtc(targetIsoUtc)} · MetaForge weekly-trials`
+            : countdownVariant === 'metaforge-next-start' && targetIsoUtc
+              ? `Next rotation starts ${fmtCaptionUtc(targetIsoUtc)} · MetaForge weekly-trials`
+              : 'Next UTC Monday 00:00 · estimate when MetaForge schedule is unavailable'
+
     return (
         <div className="w-full max-w-2xl">
             <div className="mb-3 flex flex-col gap-0.5 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
                 <div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.35em] text-rf-red sm:text-xs">Resets in</p>
-                    <p className="mt-1 text-[10px] text-white/40">
-                        Next UTC Monday <span className="text-white/55">00:00</span> · estimate until rotation refresh
-                    </p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.35em] text-rf-red sm:text-xs">{headline}</p>
+                    <p className="mt-1 text-[10px] text-white/40">{subcopy}</p>
                 </div>
                 <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-sky-200/35 sm:text-right">Clock</p>
             </div>
@@ -65,18 +101,25 @@ export function TrialsHeroCountdown({ targetEpochMs, metaforgeUpstreamOk }: Prop
 
             <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-white/[0.06] pt-3 text-[9px] sm:text-[10px] text-white/38">
                 <span className="text-center">
-                    Replace this clock when Trials publish an official API —{' '}
-                    <span className="text-white/50">until then, Monday UTC is our ops default</span>
+                    {trialsScheduleSynced ? (
+                        <>
+                            Timer uses{' '}
+                            <span className="text-white/55">metaforge.app/api/arc-raiders/weekly-trials</span> window times.
+                        </>
+                    ) : (
+                        <>
+                            Weekly trial rows are a local fallback — timer uses{' '}
+                            <span className="text-white/50">UTC Monday 00:00</span> until MetaForge returns a full schedule.
+                        </>
+                    )}
                 </span>
                 <span className="hidden sm:inline text-white/15">|</span>
                 <span
                     className={
-                        metaforgeUpstreamOk
-                            ? 'font-semibold text-emerald-400/90'
-                            : 'font-semibold text-amber-200/75'
+                        eventsUpstreamOk ? 'font-semibold text-emerald-400/90' : 'font-semibold text-amber-200/75'
                     }
                 >
-                    MetaForge conditions: {metaforgeUpstreamOk ? 'synced' : 'offline'}
+                    Map events API: {eventsUpstreamOk ? 'synced' : 'offline'}
                 </span>
             </div>
         </div>
