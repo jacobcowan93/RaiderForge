@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { normalizePublicAssetUrl } from '@/lib/site/publicAssetUrl'
 
 /**
  * Maps section layout — full-viewport skill tree art (`public/images/ARC_Raiders_Main_SkillTree.png`)
@@ -18,7 +19,7 @@ export default function MapsLayout({ children }: { children: React.ReactNode }) 
         <div className="relative min-h-[100dvh]">
             <div className="pointer-events-none fixed inset-0 z-[5]" aria-hidden>
                 <Image
-                    src="/images/ARC_Raiders_Main_SkillTree.png"
+                    src={normalizePublicAssetUrl('/images/ARC_Raiders_Main_SkillTree.png')}
                     alt=""
                     fill
                     className="object-cover object-center"

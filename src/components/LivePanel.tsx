@@ -25,6 +25,7 @@ import { METAFORGE_ATTRIBUTION } from '@/lib/live-data/attribution'
 import { getEventStyle, EVENT_ICONS, getEventDescription } from '../lib/events/eventsConfig'
 import { MAPS } from '../data/maps'
 import { encodeLocalPublicPath, getZoneThumbnailUrlOrFallback } from '@/lib/maps/mapCovers'
+import { normalizePublicAssetUrl } from '@/lib/site/publicAssetUrl'
 import { hubUrlForMapId } from '@/lib/maps/maps-hub-zone'
 
 // Risk level -> display style
@@ -66,8 +67,8 @@ function MapConditionCard({
   upstreamOk: boolean | null
 }) {
   const conditions = getLiveMapConditions(map.id, now, events, upstreamOk)
-  /** Same shipped thumbnails as command center; plain `img` avoids Image optimizer quirks on encoded `/images/...` paths. */
-  const thumb = encodeLocalPublicPath(getZoneThumbnailUrlOrFallback(map.id))
+  /** Same shipped thumbnails as command center; basePath prefix for subpath deploys; plain `img` for encoded paths. */
+  const thumb = normalizePublicAssetUrl(encodeLocalPublicPath(getZoneThumbnailUrlOrFallback(map.id)))
   const risk = RISK_STYLE[map.risk] ?? RISK_STYLE.Medium
   const hasLiveEvent = conditions.minor || conditions.major
 
