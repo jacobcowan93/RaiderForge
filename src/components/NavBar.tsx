@@ -18,12 +18,12 @@ import { useSession, signIn, signOut } from 'next-auth/react'
 
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 
-const navLinks: { href: string; label: string; badge?: 'beta' }[] = [
+const navLinks: { href: string; label: string; badge?: 'beta' | 'live' }[] = [
     { href: '/', label: 'Home' },
     { href: '/blueprints', label: 'Blueprints' },
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/maps', label: 'Maps' },
-    { href: '/trials', label: 'Trials', badge: 'beta' },
+    { href: '/trials', label: 'Trials', badge: 'live' },
     { href: '/loadouts', label: 'Loadouts', badge: 'beta' },
     { href: '/skill-trees', label: 'Skill Trees' },
     { href: '/guides', label: 'Guides' },
@@ -43,7 +43,7 @@ function NavDestinationLink({
 }: {
     href: string
     label: string
-    badge?: 'beta'
+    badge?: 'beta' | 'live'
     pathname: string
     variant: 'desktop' | 'mobile'
     onNavigate?: () => void
@@ -63,6 +63,9 @@ function NavDestinationLink({
                 {badge === 'beta' ? (
                     <PageMaturityBadge level="beta" className="!px-1 !py-0 !text-[8px] !leading-tight" />
                 ) : null}
+                {badge === 'live' ? (
+                    <PageMaturityBadge level="live" className="!px-1 !py-0 !text-[8px] !leading-tight" />
+                ) : null}
                 {isActive ? (
                     <span className="absolute inset-x-1 -bottom-[11px] h-[3px] rounded-full bg-rf-green transition-all duration-200" />
                 ) : null}
@@ -80,6 +83,7 @@ function NavDestinationLink({
         >
             <span>{label}</span>
             {badge === 'beta' ? <PageMaturityBadge level="beta" className="!px-1.5 !py-0 !text-[9px]" /> : null}
+            {badge === 'live' ? <PageMaturityBadge level="live" className="!px-1.5 !py-0 !text-[9px]" /> : null}
         </Link>
     )
 }

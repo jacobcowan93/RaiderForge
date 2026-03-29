@@ -54,14 +54,23 @@ export default function Home() {
                             className="hero-enter mt-8 flex flex-col items-center gap-4 sm:gap-3"
                             style={{ animationDelay: '0.42s' }}
                         >
-                            <Link
-                                href="/maps"
-                                className="inline-flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm sm:text-base font-bold px-8 py-3.5 sm:px-10 sm:py-4 border border-red-400/30 shadow-lg shadow-red-950/40 transition-colors"
-                            >
-                                Enter Maps Command Center
-                            </Link>
+                            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full max-w-lg sm:max-w-none sm:w-auto">
+                                <Link
+                                    href="/maps"
+                                    className="inline-flex w-full sm:w-auto justify-center items-center rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm sm:text-base font-bold px-8 py-3.5 sm:px-10 sm:py-4 border border-red-400/30 shadow-lg shadow-red-950/40 transition-colors"
+                                >
+                                    Enter Maps Command Center
+                                </Link>
+                                <Link
+                                    href="/trials"
+                                    className="inline-flex w-full sm:w-auto justify-center items-center rounded-xl border border-white/20 bg-black/20 hover:bg-white/10 text-white text-sm sm:text-base font-bold px-8 py-3.5 sm:px-10 sm:py-4 backdrop-blur-sm transition-colors"
+                                >
+                                    Weekly Trials briefing
+                                </Link>
+                            </div>
                             <p className="text-xs sm:text-sm text-white/50 max-w-md leading-relaxed">
-                                Start here — the most complete Arc Raiders maps experience we can offer right now.
+                                Start with maps for live zones — or jump into this week&apos;s rotation, max-score tips, and reset
+                                countdown.
                             </p>
                         </div>
                     </div>
@@ -94,6 +103,44 @@ export default function Home() {
                         </h2>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {/* Weekly Trials — Live */}
+                            <Link
+                                href="/trials"
+                                className="group flex flex-col rounded-xl border border-red-500/25 bg-gradient-to-b from-rose-950/25 to-black/40 p-6
+                                           hover:border-red-500/45 hover:shadow-[0_0_40px_-12px_rgba(239,68,68,0.35)] transition-all hover:-translate-y-0.5"
+                            >
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-red-400/90">
+                                        Weekly Trials
+                                    </span>
+                                    <PageMaturityBadge level="live" />
+                                </div>
+                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/15 text-red-400 border border-red-500/25">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        strokeWidth={1.5}
+                                        stroke="currentColor"
+                                        className="w-5 h-5"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                        />
+                                    </svg>
+                                </div>
+                                <h3 className="font-semibold text-white mb-2">Trials command center</h3>
+                                <p className="text-sm text-white/65 leading-relaxed flex-1">
+                                    This week and next week rotations, max points, how-to-max tips, reset countdown, and the full
+                                    filterable catalog.
+                                </p>
+                                <span className="mt-5 inline-flex items-center justify-center rounded-lg bg-red-600 group-hover:bg-red-500 text-white text-sm font-bold py-2.5 px-4 border border-red-400/25 transition-colors">
+                                    Open Weekly Trials
+                                </span>
+                            </Link>
+
                             {/* Interactive Maps — Live */}
                             <Link
                                 href="/maps"
@@ -245,15 +292,19 @@ export default function Home() {
                                 </span>
                             </Link>
 
-                            {/* Guides & skill trees — beta links */}
-                            <div className="flex flex-col rounded-xl border border-white/10 bg-black/35 p-6 hover:border-white/18 transition-colors">
-                                <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-amber-200/70">
-                                        Guides &amp; Skill Trees
+                            {/* Skill Tree Planner — beta */}
+                            <Link
+                                href="/skill-trees"
+                                className="group flex flex-col rounded-xl border border-white/12 bg-gradient-to-b from-[#0a0f18]/90 to-black/45 p-6
+                                           hover:border-rf-red/35 hover:shadow-[0_0_36px_-12px_rgba(239,68,68,0.22)] transition-all hover:-translate-y-0.5"
+                            >
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-rf-red/85">
+                                        Skill Trees
                                     </span>
                                     <PageMaturityBadge level="beta" />
                                 </div>
-                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-200/80 border border-amber-500/20">
+                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-rf-red/10 text-rf-red/90 border border-rf-red/20">
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         fill="none"
@@ -265,29 +316,18 @@ export default function Home() {
                                         <path
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
-                                            d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+                                            d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6"
                                         />
                                     </svg>
                                 </div>
-                                <h3 className="font-semibold text-white mb-2">Learn &amp; plan</h3>
-                                <p className="text-sm text-white/60 leading-relaxed flex-1 mb-4">
-                                    Sample guides and an interactive skill tree planner — both early but usable.
+                                <h3 className="font-semibold text-white mb-2">Skill tree planner</h3>
+                                <p className="text-sm text-white/60 leading-relaxed flex-1">
+                                    Allocate expedition points across Conditioning, Mobility, and Survival. Plan your build and share it with a link.
                                 </p>
-                                <div className="flex flex-col sm:flex-row gap-2 mt-auto">
-                                    <Link
-                                        href="/guides"
-                                        className="inline-flex justify-center rounded-lg border border-white/15 bg-white/[0.06] py-2 px-3 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
-                                    >
-                                        Guides
-                                    </Link>
-                                    <Link
-                                        href="/skill-trees"
-                                        className="inline-flex justify-center rounded-lg border border-white/15 bg-white/[0.06] py-2 px-3 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
-                                    >
-                                        Skill trees
-                                    </Link>
-                                </div>
-                            </div>
+                                <span className="mt-5 inline-flex items-center justify-center rounded-lg bg-rf-red/90 group-hover:bg-rf-red text-white text-sm font-bold py-2.5 px-4 border border-rf-red/30 transition-colors">
+                                    Open Skill Tree Planner
+                                </span>
+                            </Link>
                         </div>
                     </div>
                 </section>
