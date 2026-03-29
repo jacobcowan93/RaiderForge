@@ -5,6 +5,14 @@
  */
 const nextConfig = {
     reactStrictMode: true,
+    images: {
+        remotePatterns: [
+            { protocol: 'https', hostname: 'metaforge.app', pathname: '/**' },
+            { protocol: 'https', hostname: 'www.metaforge.app', pathname: '/**' },
+            { protocol: 'https', hostname: 'cdn.metaforge.app', pathname: '/**' },
+            { protocol: 'https', hostname: 'unhbvkszwhczbjxgetgk.supabase.co', pathname: '/**' },
+        ],
+    },
     /** Short TCNO-style paths → hub (avoid colliding with /maps/[mapId] tactical routes). */
     async redirects() {
         return [

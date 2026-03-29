@@ -111,6 +111,72 @@ export type MfEventsScheduleResult = {
   ok: boolean
 }
 
+/** Single row from GET /api/arc-raiders/weekly-trials */
+export type MfWeeklyTrialRow = {
+  id: string
+  name: string
+  image_url?: string
+  guide_link?: string | null
+  video_link?: string | null
+  is_active?: boolean
+  upcoming?: boolean
+  has_event_header?: boolean
+  sort_order?: number
+  database_links?: unknown[]
+  [key: string]: unknown
+}
+
+/** API may send ISO strings or Unix seconds (number). Normalized to ISO string for UI. */
+export type MfWeeklyTrialsPayload = {
+  data: MfWeeklyTrialRow[]
+  activeWindowEnd: string | null
+  nextWindowStart: string | null
+}
+
+function normalizeMfWeeklyWindowTime(v: unknown): string | null {
+  if (v == null) return null
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    const ms = v < 1e12 ? v * 1000 : v
+    return new Date(ms).toISOString()
+  }
+  if (typeof v === 'string') {
+    const trimmed = v.trim()
+    if (/^\d+$/.test(trimmed)) {
+      const n = Number(trimmed)
+      const ms = n < 1e12 ? n * 1000 : n
+      return new Date(ms).toISOString()
+    }
+    const d = new Date(trimmed)
+    return Number.isNaN(d.getTime()) ? null : d.toISOString()
+  }
+  return null
+}
+
+export type MfWeeklyTrialsResult = MfWeeklyTrialsPayload & {
+  ok: boolean
+}
+
+/**
+ * Weekly Trials — 5 `is_active` (this week) + 5 `upcoming` (next week) per API contract.
+ * TTL: 60s in-memory + Next fetch revalidate.
+ */
+export async function fetchMfWeeklyTrials(): Promise<MfWeeklyTrialsResult> {
+  try {
+    const raw = await mfFetch<unknown>(`${ARC_BASE}/weekly-trials`, TTL_DYNAMIC)
+    if (!raw || typeof raw !== 'object') {
+      return { data: [], activeWindowEnd: null, nextWindowStart: null, ok: false }
+    }
+    const o = raw as Record<string, unknown>
+    const data = Array.isArray(o.data) ? (o.data as MfWeeklyTrialRow[]) : []
+    const activeWindowEnd = normalizeMfWeeklyWindowTime(o.activeWindowEnd)
+    const nextWindowStart = normalizeMfWeeklyWindowTime(o.nextWindowStart)
+    return { data, activeWindowEnd, nextWindowStart, ok: true }
+  } catch (err) {
+    console.error('[MetaForge] Failed to fetch weekly-trials:', err)
+    return { data: [], activeWindowEnd: null, nextWindowStart: null, ok: false }
+  }
+}
+
 /**
  * Fetch events-schedule (replaces deprecated /event-timers per MetaForge docs).
  * TTL: 60s in-memory + Next fetch revalidate.

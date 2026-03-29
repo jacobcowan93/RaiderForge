@@ -1,0 +1,175 @@
+/**
+ * MetaForge weekly trials — GET /api/arc-raiders/weekly-trials
+ * Yields 5 `is_active` (this week) and 5 `upcoming` (next week) rows when live.
+ */
+
+import { getAllTrialsCatalog, getTrialById, type WeeklyTrial } from '@/data/trials'
+import type { TrialDifficultyTier } from '@/lib/trials/trialsData'
+import { fetchMfWeeklyTrials, type MfWeeklyTrialRow } from '@/api/metaforgeService'
+import { getZoneThumbnailUrlOrFallback } from '@/lib/maps/mapCovers'
+import {
+    TRIAL_COMMAND_BRIEFS,
+    buildTrialBriefFromWeekly,
+    getNextWeekPresentation,
+    getThisWeekPresentation,
+    type TrialBrief,
+    type TrialWeekPresentation,
+} from '@/lib/trials/trialsData'
+
+const GENERIC_TIPS = [
+    'Read the in-game objective — partial clears often score worse than one perfect stretch.',
+    'Assign one voice for callouts; keep DPS on the scoring condition only.',
+    'Check MetaForge map conditions before you lock a route.',
+]
+
+const TIER_FROM_DIFF: Record<WeeklyTrial['difficulty'], TrialDifficultyTier> = {
+    onboarding: 'Easy',
+    casual: 'Medium',
+    advanced: 'Hard',
+}
+
+function matchLocalTrialId(metaforgeName: string): string | undefined {
+    const n = metaforgeName.toLowerCase()
+    if (n.includes('hornet')) return 'trial-hornet-havoc'
+    if (n.includes('bombardier')) return 'trial-bombardier-siege'
+    if (n.includes('flying') && n.includes('arc')) return 'trial-flying-arc-hunt'
+    if (n.includes('lightning')) return 'trial-lightning-gauntlet'
+    if (n.includes('carriable') || /\bdeliver\b/i.test(metaforgeName)) return 'trial-carriable-dash'
+    if (n.includes('frost') || n.includes('cold') || n.includes('stella')) return 'trial-frostline'
+    return undefined
+}
+
+function imageForTrial(mf: { image_url?: string }, local?: WeeklyTrial): string {
+    const u = mf.image_url?.trim()
+    if (u) return u
+    if (local?.mapRfId) return getZoneThumbnailUrlOrFallback(local.mapRfId)
+    if (local?.iconSrc) return local.iconSrc
+    return getZoneThumbnailUrlOrFallback('dam-battlegrounds')
+}
+
+function metaforgeRowToBrief(mf: MfWeeklyTrialRow): TrialBrief {
+    const localId = matchLocalTrialId(mf.name)
+    const local = localId ? getTrialById(localId) : undefined
+    const brief = localId ? TRIAL_COMMAND_BRIEFS[localId] : undefined
+
+    const video = mf.video_link && String(mf.video_link).trim()
+    const guide = mf.guide_link && String(mf.guide_link).trim()
+    const guideUrl =
+        video ||
+        guide ||
+        brief?.guideUrl ||
+        `https://www.youtube.com/results?search_query=${encodeURIComponent(`ARC Raiders ${mf.name} trial`)}`
+    const guideLabel = video ? 'Video' : guide ? 'Guide' : brief?.guideLabel ?? 'YouTube'
+
+    const tips =
+        brief?.tips ??
+        (local?.maxScoreTips
+            ? local.maxScoreTips
+                  .split(/(?<=[.!?])\s+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .slice(0, 4)
+            : GENERIC_TIPS)
+
+    return {
+        sourceRowId: typeof mf.id === 'string' ? mf.id : String(mf.id),
+        trialId: localId,
+        name: mf.name,
+        description: brief?.description ?? local?.shortDescription ?? `Weekly objective: ${mf.name}.`,
+        maxPoints: brief?.maxPoints ?? 12_000,
+        tips: tips.length > 0 ? tips : GENERIC_TIPS,
+        imageUrl: imageForTrial(mf, local),
+        guideUrl,
+        guideLabel,
+        difficultyTier: local ? TIER_FROM_DIFF[local.difficulty] : 'Medium',
+    }
+}
+
+function sortBySortOrder(rows: MfWeeklyTrialRow[]): MfWeeklyTrialRow[] {
+    return [...rows].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+}
+
+/** Exactly five cards — trim or pad from catalog rotation. */
+function ensureFiveTrials(briefs: TrialBrief[]): TrialBrief[] {
+    const out = briefs.slice(0, 5)
+    const c = getAllTrialsCatalog()
+    let i = 0
+    while (out.length < 5 && c.length > 0) {
+        out.push(buildTrialBriefFromWeekly(c[i % c.length]!))
+        i++
+    }
+    return out.slice(0, 5)
+}
+
+/** Primary: MetaForge weekly-trials. Fallback: `getThisWeekPresentation` / `getNextWeekPresentation` (capped at 5). */
+export async function getWeeklyTrialsForPage(now: Date = new Date()): Promise<{
+    thisWeek: TrialWeekPresentation
+    nextWeek: TrialWeekPresentation
+    source: 'metaforge' | 'fallback'
+    activeWindowEnd: string | null
+    nextWindowStart: string | null
+    /** Temporary: MetaForge “current week” window vs API status (remove when stable). */
+    metaforgeDebugLine: string
+}> {
+    const mf = await fetchMfWeeklyTrials()
+
+    if (mf.ok && mf.data.length > 0) {
+        const active = sortBySortOrder(mf.data.filter((t) => t.is_active)).slice(0, 5)
+        const upcoming = sortBySortOrder(mf.data.filter((t) => t.upcoming)).slice(0, 5)
+
+        if (active.length === 5 && upcoming.length === 5) {
+            const fmt = (iso: string | null) =>
+                iso
+                    ? new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }) +
+                      ' UTC'
+                    : null
+
+            const dbgFmt = (iso: string | null) =>
+                iso ? new Date(iso).toISOString().replace(/\.\d{3}Z$/, 'Z') : '—'
+            return {
+                source: 'metaforge',
+                activeWindowEnd: mf.activeWindowEnd,
+                nextWindowStart: mf.nextWindowStart,
+                metaforgeDebugLine: `[Debug] MetaForge weekly-trials: source=live · active_rotation_end_utc=${dbgFmt(mf.activeWindowEnd)} · next_rotation_start_utc=${dbgFmt(mf.nextWindowStart)} · this_section_rows=5 · next_section_rows=5`,
+                thisWeek: {
+                    weekKey: 'metaforge-this',
+                    label: mf.activeWindowEnd
+                        ? `This rotation (resets ${fmt(mf.activeWindowEnd)})`
+                        : 'This week’s Trials (MetaForge)',
+                    subtitle: undefined,
+                    trials: active.map(metaforgeRowToBrief),
+                },
+                nextWeek: {
+                    weekKey: 'metaforge-next',
+                    label: mf.nextWindowStart
+                        ? `Next rotation (starts ${fmt(mf.nextWindowStart)})`
+                        : 'Next week’s Trials (MetaForge)',
+                    subtitle: undefined,
+                    trials: upcoming.map(metaforgeRowToBrief),
+                },
+            }
+        }
+    }
+
+    const thisP = getThisWeekPresentation(now)
+    const nextP = getNextWeekPresentation(now)
+
+    return {
+        source: 'fallback',
+        activeWindowEnd: null,
+        nextWindowStart: null,
+        metaforgeDebugLine:
+            '[Debug] MetaForge weekly-trials: source=fallback (API missing or not 5+5 rows) · using getThisWeekPresentation / getNextWeekPresentation · rows capped/padded to 5 each',
+        thisWeek: {
+            ...thisP,
+            subtitle:
+                thisP.subtitle ??
+                'Live schedule unavailable — showing the local rotation preview (five trials) until MetaForge responds.',
+            trials: ensureFiveTrials(thisP.trials),
+        },
+        nextWeek: {
+            ...nextP,
+            trials: ensureFiveTrials(nextP.trials),
+        },
+    }
+}

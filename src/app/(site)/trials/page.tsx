@@ -3,8 +3,9 @@ import { TrialCommandCard } from '@/components/trials/TrialCommandCard'
 import { TrialsHeroCountdown } from '@/components/trials/TrialsHeroCountdown'
 import { getFeaturedTrialWeek } from '@/data/trials'
 import { fetchCurrentEvents } from '@/lib/data/metaforge-events'
+import { getWeeklyTrialsForPage } from '@/lib/trials/metaforgeWeeklyTrials'
 import { getNextUtcMondayMidnightMs, getUtcMondayMidnightOfCurrentWeekMs } from '@/lib/trials/weeklyReset'
-import { getNextWeekPresentation, getThisWeekPresentation, TRIALS_PAGE_MATURITY } from '@/lib/trials/trialsData'
+import { TRIALS_PAGE_MATURITY } from '@/lib/trials/trialsData'
 
 export const metadata = {
     title: 'Weekly Trials — Command Center | Raider Forge',
@@ -25,17 +26,35 @@ function formatLastUpdated(now: Date): string {
     return `Last updated ${now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' })} UTC`
 }
 
+function fmtMfWindow(iso: string | null): string | null {
+    if (!iso) return null
+    return (
+        new Date(iso).toLocaleString('en-US', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+            timeZone: 'UTC',
+        }) + ' UTC'
+    )
+}
+
 export default async function TrialsPage() {
     const now = new Date()
-    const featured = getFeaturedTrialWeek(now)
-    const thisWeek = getThisWeekPresentation(now)
-    const nextWeek = getNextWeekPresentation(now)
+    const weekly = await getWeeklyTrialsForPage(now)
+    const { thisWeek, nextWeek, metaforgeDebugLine } = weekly
 
     const eventsPayload = await fetchCurrentEvents().catch(() => ({
         events: [],
         upstreamOk: false,
     }))
     const resetMs = getNextUtcMondayMidnightMs(now)
+    const featured = getFeaturedTrialWeek(now)
+
+    const activeLine =
+        weekly.source === 'metaforge' && weekly.activeWindowEnd
+            ? `This rotation resets ${fmtMfWindow(weekly.activeWindowEnd)}.`
+            : weekly.source === 'metaforge' && weekly.nextWindowStart
+              ? `Next window starts ${fmtMfWindow(weekly.nextWindowStart)}.`
+              : `Active catalog week: ${featured.label}`
 
     return (
         <div className="relative">
@@ -79,7 +98,22 @@ export default async function TrialsPage() {
                             </p>
                             <p className="text-xs tabular-nums text-white/65 sm:text-sm">{formatLastUpdated(now)}</p>
                             <p className="text-xs text-white/50 sm:text-[13px]">
-                                Active rotation: <span className="font-medium text-white/80">{featured.label}</span>
+                                {weekly.source === 'metaforge' ? (
+                                    <>
+                                        Live schedule:{' '}
+                                        <span className="font-medium text-white/80">{activeLine}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        Active rotation: <span className="font-medium text-white/80">{activeLine}</span>
+                                    </>
+                                )}
+                            </p>
+                            <p
+                                className="mt-2 rounded border border-amber-500/25 bg-amber-950/20 px-2 py-1 font-mono text-[10px] leading-snug text-amber-100/80 [word-break:break-word]"
+                                title="Temporary MetaForge week verification — remove after validation"
+                            >
+                                {metaforgeDebugLine}
                             </p>
                         </div>
                     </div>
@@ -91,10 +125,16 @@ export default async function TrialsPage() {
                             This Week&apos;s Trials
                         </h2>
                         <p className="mt-1 text-xs text-white/45">{thisWeek.label}</p>
+                        {thisWeek.subtitle ? (
+                            <p className="mt-0.5 text-[11px] text-white/35">{thisWeek.subtitle}</p>
+                        ) : null}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
-                        {thisWeek.trials.map((trial) => (
-                            <TrialCommandCard key={trial.trialId ?? trial.name} trial={trial} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+                        {thisWeek.trials.map((trial, i) => (
+                            <TrialCommandCard
+                                key={trial.sourceRowId ?? trial.trialId ?? `this-${trial.name}-${i}`}
+                                trial={trial}
+                            />
                         ))}
                     </div>
                 </section>
@@ -105,10 +145,16 @@ export default async function TrialsPage() {
                             Next Week&apos;s Trials
                         </h2>
                         <p className="mt-1 text-xs text-white/45">{nextWeek.label}</p>
+                        {nextWeek.subtitle ? (
+                            <p className="mt-0.5 text-[11px] text-white/35">{nextWeek.subtitle}</p>
+                        ) : null}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
-                        {nextWeek.trials.map((trial) => (
-                            <TrialCommandCard key={`next-${trial.trialId ?? trial.name}`} trial={trial} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+                        {nextWeek.trials.map((trial, i) => (
+                            <TrialCommandCard
+                                key={trial.sourceRowId ?? trial.trialId ?? `next-${trial.name}-${i}`}
+                                trial={trial}
+                            />
                         ))}
                     </div>
                 </section>

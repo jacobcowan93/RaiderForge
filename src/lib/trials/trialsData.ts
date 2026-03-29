@@ -19,6 +19,8 @@ const DIFFICULTY_TO_TIER: Record<LearningDifficulty, TrialDifficultyTier> = {
 
 export type TrialBrief = {
     trialId?: string
+    /** MetaForge weekly-trials row id — stable key when `trialId` is absent. */
+    sourceRowId?: string
     name: string
     description: string
     maxPoints: number
@@ -131,7 +133,8 @@ export const TRIAL_COMMAND_BRIEFS: Record<
 
 export const TRIALS_PAGE_MATURITY = 'live' as const
 
-function trialToBrief(t: WeeklyTrial): TrialBrief {
+/** Build a command-center card from catalog data (used by MetaForge fallback rotation). */
+export function buildTrialBriefFromWeekly(t: WeeklyTrial): TrialBrief {
     const extra = TRIAL_COMMAND_BRIEFS[t.id]
     const tips =
         extra?.tips ??
@@ -158,7 +161,7 @@ export function mergeWeekBundle(bundle: TrialWeekBundle): TrialWeekPresentation 
         weekKey: bundle.weekId,
         label: bundle.label,
         subtitle: bundle.seasonNote,
-        trials: bundle.trials.map(trialToBrief),
+        trials: bundle.trials.map(buildTrialBriefFromWeekly),
     }
 }
 
