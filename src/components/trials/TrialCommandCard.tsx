@@ -9,6 +9,41 @@ const TIER_STYLES: Record<TrialBrief['difficultyTier'], string> = {
     Hard: 'border-red-500/40 bg-red-950/40 text-red-200/95',
 }
 
+const TIER_STAR_COUNT: Record<TrialBrief['difficultyTier'], number> = {
+    Easy: 1,
+    Medium: 2,
+    Hard: 3,
+}
+
+function TrialDifficultyPillMeta({ tier }: { tier: TrialBrief['difficultyTier'] }) {
+    const n = TIER_STAR_COUNT[tier]
+    const tierClass = TIER_STYLES[tier]
+    return (
+        <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5">
+            <span className="flex shrink-0 items-center gap-px" aria-label={`${tier} difficulty`}>
+                {[0, 1, 2].map((i) => (
+                    <span
+                        key={i}
+                        className={
+                            i < n
+                                ? 'text-[10px] leading-none text-amber-400/95'
+                                : 'text-[10px] leading-none text-white/15'
+                        }
+                        aria-hidden
+                    >
+                        ★
+                    </span>
+                ))}
+            </span>
+            <span
+                className={`inline-flex shrink-0 rounded border px-1 py-px text-[8px] font-extrabold uppercase tracking-wider ${tierClass}`}
+            >
+                {tier}
+            </span>
+        </div>
+    )
+}
+
 type Props = {
     trial: TrialBrief
 }
@@ -20,49 +55,37 @@ export function TrialCommandCard({ trial }: Props) {
     const external = guide.startsWith('http')
 
     const maxPts = new Intl.NumberFormat('en-US').format(trial.maxPoints)
-    const tierClass = TIER_STYLES[trial.difficultyTier]
 
     return (
         <article className="rf-card group relative flex h-full flex-col overflow-hidden rounded-lg border border-blue-950/45 border-l-[3px] border-l-rf-red bg-[#050810]/60 shadow-md shadow-black/50 transition-all hover:border-rf-red/25 hover:shadow-[0_0_28px_-8px_rgba(239,68,68,0.35)]">
-            <div className="relative z-0 h-[4rem] w-full min-h-[4rem] shrink-0 overflow-hidden sm:h-[4.75rem] sm:min-h-[4.75rem]">
-                <TrialCardHeroImage
-                    src={trial.imageUrl}
-                    alt={`${trial.name} — trial preview`}
-                    className="opacity-95 transition-opacity group-hover:opacity-100"
-                />
-                <div
-                    className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-[#050810] via-[#050810]/55 to-transparent"
-                    aria-hidden
-                />
-                <div
-                    className="pointer-events-none absolute inset-0 z-[1] opacity-[0.4] bg-[linear-gradient(rgba(56,189,248,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.06)_1px,transparent_1px)] bg-[length:14px_14px]"
-                    aria-hidden
-                />
-            </div>
-
             <div className="relative flex flex-1 flex-col px-1.5 py-1.5 sm:px-2 sm:py-1.5">
+                <div className="mb-3 flex flex-col items-center">
+                    <TrialCardHeroImage
+                        variant="circle"
+                        src={trial.imageUrl}
+                        alt={trial.name}
+                        className="opacity-95 transition-opacity duration-300 ease-out group-hover:opacity-100"
+                    />
+                    <div className="mt-1 w-full">
+                        <TrialDifficultyPillMeta tier={trial.difficultyTier} />
+                    </div>
+                </div>
+
                 <div className="mb-0.5 flex flex-wrap items-start gap-0.5 gap-y-0.5">
                     <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-0.5 mb-px">
-                            <span
-                                className={`inline-flex shrink-0 rounded border px-0.5 py-px text-[7px] font-extrabold uppercase tracking-wider ${tierClass}`}
+                        {detailHref ? (
+                            <Link
+                                href={detailHref}
+                                className="block text-sm font-semibold leading-snug text-white line-clamp-2 tracking-tight transition-colors hover:text-rf-red"
                             >
-                                {trial.difficultyTier}
-                            </span>
-                            {detailHref ? (
-                                <Link
-                                    href={detailHref}
-                                    className="min-w-0 font-black text-[13px] leading-tight text-white tracking-tight transition-colors hover:text-rf-red sm:text-sm"
-                                >
-                                    {trial.name}
-                                </Link>
-                            ) : (
-                                <h3 className="min-w-0 font-black text-[13px] leading-tight text-white tracking-tight sm:text-sm">
-                                    {trial.name}
-                                </h3>
-                            )}
-                        </div>
-                        <p className="text-[9px] leading-snug text-white/55 sm:text-[10px]">{trial.description}</p>
+                                {trial.name}
+                            </Link>
+                        ) : (
+                            <h3 className="text-sm font-semibold leading-snug text-white line-clamp-2 tracking-tight">
+                                {trial.name}
+                            </h3>
+                        )}
+                        <p className="mt-1 text-xs leading-snug text-white/55 line-clamp-3">{trial.description}</p>
                     </div>
                     <div className="shrink-0 rounded border border-rf-red/80 bg-gradient-to-br from-rf-red/28 to-red-950/60 px-0.5 py-px text-right shadow-[0_0_10px_-3px_rgba(239,68,68,0.5)] ring-1 ring-rf-red/40">
                         <p className="text-[4px] font-extrabold uppercase tracking-[0.08em] text-red-200/95 leading-none">

@@ -18,15 +18,22 @@ import { useSession, signIn, signOut } from 'next-auth/react'
 
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 
-const navLinks: { href: string; label: string; badge?: 'beta' | 'live' }[] = [
+type NavLinkItem = {
+    href: string
+    label: string
+    badge?: 'beta' | 'live'
+    /** Visual priority for the Skill Tree Planner entry */
+    emphasis?: 'planner'
+}
+
+const navLinks: NavLinkItem[] = [
     { href: '/', label: 'Home' },
-    { href: '/blueprints', label: 'Blueprints' },
-    { href: '/marketplace', label: 'Marketplace' },
     { href: '/maps', label: 'Maps' },
+    { href: '/skill-trees', label: 'Skill Tree Planner', badge: 'beta', emphasis: 'planner' },
+    { href: '/blueprints', label: 'Blueprints' },
     { href: '/trials', label: 'Trials', badge: 'live' },
-    { href: '/loadouts', label: 'Loadouts', badge: 'beta' },
-    { href: '/skill-trees', label: 'Skill Trees' },
-    { href: '/guides', label: 'Guides' },
+    { href: '/marketplace', label: 'Marketplace' },
+    { href: '/profile', label: 'Profile' },
 ]
 
 function navIsActive(pathname: string, href: string): boolean {
@@ -37,6 +44,7 @@ function NavDestinationLink({
     href,
     label,
     badge,
+    emphasis,
     pathname,
     variant,
     onNavigate,
@@ -44,22 +52,27 @@ function NavDestinationLink({
     href: string
     label: string
     badge?: 'beta' | 'live'
+    emphasis?: 'planner'
     pathname: string
     variant: 'desktop' | 'mobile'
     onNavigate?: () => void
 }) {
     const isActive = navIsActive(pathname, href)
+    const planner = emphasis === 'planner'
 
     if (variant === 'desktop') {
+        const base =
+            planner && !isActive
+                ? 'border border-rf-red/35 bg-rf-red/[0.12] text-white shadow-[0_0_20px_-8px_rgba(255,64,64,0.45)]'
+                : ''
+        const idle = isActive ? 'text-white' : planner ? 'text-white/95' : 'text-white/70 hover:text-white hover:bg-white/5'
         return (
             <Link
                 href={href}
                 onClick={onNavigate}
-                className={`relative px-3 py-1.5 text-xs font-medium rounded transition-colors inline-flex items-center gap-1.5 ${
-                    isActive ? 'text-white' : 'text-white/55 hover:text-white hover:bg-white/5'
-                }`}
+                className={`relative px-2.5 py-1.5 text-xs font-medium rounded transition-colors inline-flex items-center gap-1.5 ${base} ${idle}`}
             >
-                <span>{label}</span>
+                <span className={planner ? 'font-semibold tracking-tight' : ''}>{label}</span>
                 {badge === 'beta' ? (
                     <PageMaturityBadge level="beta" className="!px-1 !py-0 !text-[8px] !leading-tight" />
                 ) : null}
@@ -73,15 +86,16 @@ function NavDestinationLink({
         )
     }
 
+    const mobPlanner = planner && !isActive ? 'border border-rf-red/30 bg-rf-red/10' : ''
     return (
         <Link
             href={href}
             onClick={onNavigate}
-            className={`flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive ? 'bg-white/10 text-white' : 'text-white/75 hover:bg-white/5 hover:text-white'
+            className={`flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${mobPlanner} ${
+                isActive ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
             }`}
         >
-            <span>{label}</span>
+            <span className={planner ? 'font-semibold' : ''}>{label}</span>
             {badge === 'beta' ? <PageMaturityBadge level="beta" className="!px-1.5 !py-0 !text-[9px]" /> : null}
             {badge === 'live' ? <PageMaturityBadge level="live" className="!px-1.5 !py-0 !text-[9px]" /> : null}
         </Link>
@@ -158,8 +172,8 @@ export default function NavBar() {
             <nav
                 className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 border-b-2 border-rf-red/40 ${
                     scrolled
-                        ? 'bg-rf-bg/95 backdrop-blur-md shadow-lg shadow-black/50'
-                        : 'bg-gradient-to-b from-black/75 via-black/30 to-transparent'
+                        ? 'bg-rf-bg/[0.97] backdrop-blur-md shadow-lg shadow-black/50'
+                        : 'bg-[#05060a]/92 backdrop-blur-md shadow-[0_8px_32px_-12px_rgba(0,0,0,0.65)]'
                 }`}
             >
                 <div className="flex flex-nowrap items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-3 max-w-7xl mx-auto min-h-[52px]">
@@ -181,12 +195,13 @@ export default function NavBar() {
                     </Link>
 
                     <div className="hidden md:flex items-center gap-0.5 flex-1 justify-center">
-                        {navLinks.map(({ href, label, badge }) => (
+                        {navLinks.map(({ href, label, badge, emphasis }) => (
                             <NavDestinationLink
                                 key={href}
                                 href={href}
                                 label={label}
                                 badge={badge}
+                                emphasis={emphasis}
                                 pathname={pathname}
                                 variant="desktop"
                             />
@@ -338,12 +353,13 @@ export default function NavBar() {
                         className="md:hidden border-t border-white/10 bg-rf-bg/98 backdrop-blur-md shadow-inner max-h-[min(70vh,calc(100dvh-4rem))] overflow-y-auto overscroll-contain"
                     >
                         <ul className="px-2 py-2 space-y-0.5 list-none m-0">
-                            {navLinks.map(({ href, label, badge }) => (
+                            {navLinks.map(({ href, label, badge, emphasis }) => (
                                 <li key={href}>
                                     <NavDestinationLink
                                         href={href}
                                         label={label}
                                         badge={badge}
+                                        emphasis={emphasis}
                                         pathname={pathname}
                                         variant="mobile"
                                         onNavigate={closeMobile}

@@ -13,6 +13,7 @@ import {
     getRanks,
     cycleNode,
     decrementNode,
+    skillPrerequisiteLockHint,
 } from '@/lib/skills/planner'
 import {
     CANVAS_W,
@@ -70,17 +71,20 @@ function DenialToast({ denial }: { denial: CapDenial | null }) {
     if (!denial) return null
     return (
         <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
             className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50
-                       flex items-center gap-2 rounded-xl px-4 py-2.5
+                       flex items-start gap-2 rounded-xl px-4 py-2.5
                        text-[11px] font-semibold text-amber-300 pointer-events-none"
             style={{
                 background: 'rgba(15,10,5,0.94)',
                 border:     '1px solid rgba(251,191,36,0.40)',
                 boxShadow:  '0 4px 24px rgba(0,0,0,0.8)',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'normal',
+                maxWidth:   'min(90vw, 22rem)',
+                textAlign:  'center',
             }}
-            aria-live="assertive"
-            aria-atomic="true"
         >
             <svg width={12} height={12} viewBox="0 0 24 24" fill="none"
                  stroke="rgb(251,191,36)" strokeWidth={2}
@@ -161,7 +165,7 @@ function UnifiedSkillTreeCanvasInner({ allocs, onChange, maxPts }: Props) {
         [branchData]
     )
 
-    // Cap denial feedback (auto-clears after 2.5 s)
+    // Cap denial feedback (~4 s auto-dismiss)
     const [denial, setDenial]   = useState<CapDenial | null>(null)
     const denialRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -170,7 +174,7 @@ function UnifiedSkillTreeCanvasInner({ allocs, onChange, maxPts }: Props) {
         if (result.denial) {
             if (denialRef.current) clearTimeout(denialRef.current)
             setDenial(result.denial)
-            denialRef.current = setTimeout(() => setDenial(null), 2500)
+            denialRef.current = setTimeout(() => setDenial(null), 4000) // ~4 s
         } else {
             if (denialRef.current) clearTimeout(denialRef.current)
             setDenial(null)
@@ -223,18 +227,10 @@ function UnifiedSkillTreeCanvasInner({ allocs, onChange, maxPts }: Props) {
                 const state  = getNodeState(node, allocs, bpts)
                 const ranks  = getRanks(allocs, node.uid)
 
-                // Lock reason: list names of missing prerequisites
                 let lockReason: string | null = null
                 if (state === 'locked') {
-                    const missing = node.prerequisites.filter(
-                        (pid) => getRanks(allocs, `${node.branch}_${pid}`) < 1
-                    )
-                    if (missing.length > 0) {
-                        const names = missing
-                            .map((pid) => nodeById.get(pid)?.name ?? pid)
-                            .join(' & ')
-                        lockReason = `Requires: ${names}`
-                    }
+                    lockReason = skillPrerequisiteLockHint(node, allocs, (pid) =>
+                        nodeById.get(pid)?.name ?? pid)
                 }
 
                 return (

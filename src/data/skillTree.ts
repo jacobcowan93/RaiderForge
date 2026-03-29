@@ -25,7 +25,9 @@ export type SkillNodeState = 'locked' | 'available' | 'partial' | 'maxed'
  * `pointGate`     — minimum branch-points that must be spent before this node
  *                   can be unlocked (0 = no gate, 15 = keystones, 36 = capstones)
  * `prerequisites` — per-branch `id` values that must have ≥1 rank before this
- *                   node becomes available
+ *                   node becomes available (AND).
+ * `prerequisitesAnyOf` — optional: at least one of these ids must have ≥1 rank (OR).
+ *                   Evaluated after `prerequisites` (e.g. Crawl Before You Walk: 4l OR 4r).
  */
 export interface SkillNode {
     id:            string
@@ -36,6 +38,8 @@ export interface SkillNode {
     maxRanks:      number
     pointGate:     number
     prerequisites: string[]
+    /** If non-empty, any one of these branch-local ids with ≥1 rank satisfies this clause. */
+    prerequisitesAnyOf?: string[]
     size:          SkillNodeSize
     /** Path to the node's icon webp, relative to /public */
     icon:          string
@@ -307,7 +311,10 @@ export const SKILL_NODES: SkillNode[] = [
         id: '5c', uid: 'Mobility_5c', branch: 'Mobility',
         name: 'Crawl Before You Walk',
         description: 'When downed, you crawl faster.',
-        maxRanks: 5, pointGate: 0, prerequisites: ['4l', '4r'], size: 'minor',
+        maxRanks: 5, pointGate: 0,
+        prerequisites: [],
+        prerequisitesAnyOf: ['4l', '4r'], // Carry the Momentum OR Calming Stroll
+        size: 'minor',
         icon: '/images/skilltree-icons/crawl_before_you_walk.webp',
     },
     {

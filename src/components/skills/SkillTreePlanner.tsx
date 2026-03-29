@@ -12,7 +12,7 @@ import {
     encodeBuildToUrl,
     sanitizeBuild,
     normalizeBuild,
-    totalPointsWithCap,
+    totalPoints,
 } from '@/lib/skills/planner'
 import { EXPEDITION_CAPS, type ExpeditionLevel } from '@/lib/skills/caps'
 import { loadSkillTreeSave, saveSkillTreeSave } from '@/lib/skill-tree/skillTreeSaveStorage'
@@ -22,12 +22,14 @@ import { UnifiedSkillTreeCanvas } from './UnifiedSkillTreeCanvas'
 
 const EXPEDITION_LEVEL_KEY = 'raiderforge.expedition-level.v1'
 
+/** Default 2 = both expeditions (86 pts). Base / Exp 1 stored as 0 / 1. */
 function loadExpeditionLevel(): ExpeditionLevel {
-    if (typeof window === 'undefined') return 0
+    if (typeof window === 'undefined') return 2
     const raw = localStorage.getItem(EXPEDITION_LEVEL_KEY)
-    const n   = Number(raw)
-    if (n === 1 || n === 2) return n
-    return 0
+    if (raw === null || raw === '') return 2
+    const n = Number(raw)
+    if (n === 0 || n === 1 || n === 2) return n
+    return 2
 }
 
 // ── Branch tab selector ───────────────────────────────────────────────────────
@@ -165,28 +167,32 @@ export function SkillTreePlanner() {
         setSidebarOpen((v) => !v)
     }, [])
 
-    // Live point total + cap for the aria-live announcement
-    const { spent: total, cap: globalCap } = useMemo(
-        () => totalPointsWithCap(allocs, maxPts),
-        [allocs, maxPts],
-    )
+    /** Header + branch panels: one computation from `allocs`, passed to BuildSidebar (matches tree). */
+    const spentTotal = useMemo(() => totalPoints(allocs), [allocs])
+    const branchSpent = useMemo(() => {
+        const m = {} as Record<SkillBranch, number>
+        for (const b of BRANCHES) m[b] = branchPoints(allocs, b)
+        return m
+    }, [allocs])
 
-    // Dev-only: header total must equal sum of per-branch totals (same math as BuildSidebar / planner).
     useEffect(() => {
         if (process.env.NODE_ENV !== 'development') return
-        const totalSpent = total
-        const branchConditioning = branchPoints(allocs, 'Conditioning')
-        const branchMobility     = branchPoints(allocs, 'Mobility')
-        const branchSurvival     = branchPoints(allocs, 'Survival')
-        if (totalSpent !== branchConditioning + branchMobility + branchSurvival) {
+        const branchConditioning = branchSpent.Conditioning
+        const branchMobility     = branchSpent.Mobility
+        const branchSurvival     = branchSpent.Survival
+        const sumBranches        = branchConditioning + branchMobility + branchSurvival
+        if (spentTotal !== sumBranches) {
             console.warn('Skill tree total mismatch', {
-                totalSpent,
+                totalSpent: spentTotal,
                 branchConditioning,
                 branchMobility,
                 branchSurvival,
+                sumBranches,
+                allocKeys: Object.keys(allocs),
+                allocs,
             })
         }
-    }, [allocs, total])
+    }, [allocs, branchSpent, spentTotal])
 
     return (
         <div className="flex flex-col gap-6 overflow-x-hidden">
@@ -204,8 +210,8 @@ export function SkillTreePlanner() {
 
             {/* ── aria-live: announces total points (+ cap) to screen readers  */}
             <div aria-live="polite" aria-atomic="true" className="sr-only">
-                {total}{globalCap !== null ? ` of ${globalCap}` : ''} expedition point{total !== 1 ? 's' : ''} spent
-                {globalCap !== null && total >= globalCap ? ' — point cap reached' : ''}
+                {spentTotal} of {maxPts} expedition point{spentTotal !== 1 ? 's' : ''} spent
+                {spentTotal >= maxPts ? ' — point cap reached' : ''}
             </div>
 
             {/* ── Mobile branch tabs + sidebar toggle ─────────────────────── */}
@@ -238,6 +244,8 @@ export function SkillTreePlanner() {
                 <div id="mobile-build-summary" className="lg:hidden">
                     <BuildSidebar
                         allocs={allocs}
+                        spentTotal={spentTotal}
+                        branchSpent={branchSpent}
                         onChange={handleChange}
                         maxPts={maxPts}
                         expeditionLevel={expeditionLevel}
@@ -268,6 +276,8 @@ export function SkillTreePlanner() {
                 <div id="build-summary" className="hidden lg:block">
                     <BuildSidebar
                         allocs={allocs}
+                        spentTotal={spentTotal}
+                        branchSpent={branchSpent}
                         onChange={handleChange}
                         maxPts={maxPts}
                         expeditionLevel={expeditionLevel}

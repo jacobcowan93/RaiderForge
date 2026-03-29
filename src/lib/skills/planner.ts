@@ -24,6 +24,8 @@ import {
 } from '@/data/skillTree'
 import { PLANNER_CAPS } from './caps'
 
+export { MAX_EXPEDITION_POINTS_FULL } from './caps'
+
 // ── Allocation record ─────────────────────────────────────────────────────────
 
 /** Keyed by SkillNode.uid; value = ranks allocated (omit key for 0). */
@@ -130,12 +132,19 @@ export function totalPointsWithCap(
     }
 }
 
+/** Shown when the user tries to add a rank at the expedition point ceiling. */
+export const EXPEDITION_POINTS_FULL_MESSAGE =
+    'All expedition points are used. Remove points from another skill to add more.'
+
 // ── Internal cap check ────────────────────────────────────────────────────────
 
 /**
  * Checks whether adding one rank to `node` would violate a hard cap.
  * Returns the first violation found, or null if all caps are clear.
  * Branch cap is checked before global cap.
+ *
+ * Global cap denials never rebalance existing allocations: {@link cycleNode} returns the
+ * original `allocs` unchanged and only surfaces a denial object for the UI.
  *
  * `maxPts` overrides `PLANNER_CAPS.totalPoints` when supplied (used for
  * expedition-tier dynamic caps — e.g. 75, 81, or 86).
@@ -159,11 +168,11 @@ function checkAddRankCaps(
 
     const globalCap = maxPts ?? PLANNER_CAPS.totalPoints
     if (globalCap !== null) {
-        const tpts = totalPoints(allocs)
-        if (tpts >= globalCap) {
+        const totalSpent = totalPoints(allocs)
+        if (totalSpent >= globalCap) {
             return {
                 kind:    'global_cap',
-                message: `Maximum of ${globalCap} expedition points reached`,
+                message: EXPEDITION_POINTS_FULL_MESSAGE,
                 limit:   globalCap,
             }
         }
@@ -177,6 +186,8 @@ function checkAddRankCaps(
 /**
  * Returns true if the node's prerequisites are met and the branch point gate
  * has been satisfied.
+ *
+ * `prerequisites` are AND; optional `prerequisitesAnyOf` is OR (at least one ≥1 rank).
  */
 export function isNodeUnlocked(
     node:   SkillNode,
@@ -184,10 +195,43 @@ export function isNodeUnlocked(
     bpts:   number,   // pre-computed branchPoints(allocs, node.branch)
 ): boolean {
     if (node.pointGate > 0 && bpts < node.pointGate) return false
-    return node.prerequisites.every((prereqId) => {
+    if (!node.prerequisites.every((prereqId) => {
         const uid = toUid(node.branch, prereqId)
         return getRanks(allocs, uid) >= 1
-    })
+    })) return false
+    const anyOf = node.prerequisitesAnyOf
+    if (anyOf && anyOf.length > 0) {
+        return anyOf.some((prereqId) => {
+            const uid = toUid(node.branch, prereqId)
+            return getRanks(allocs, uid) >= 1
+        })
+    }
+    return true
+}
+
+/**
+ * Tooltip copy when a node is locked due to missing prereqs (AND list + optional OR group).
+ * Does not cover point-gate-only locks (caller may still show generic locked state).
+ */
+export function skillPrerequisiteLockHint(
+    node: SkillNode,
+    allocs: BuildAllocations,
+    nameForBranchNodeId: (perBranchId: string) => string,
+): string | null {
+    const missingAnd = node.prerequisites.filter(
+        (pid) => getRanks(allocs, toUid(node.branch, pid)) < 1,
+    )
+    if (missingAnd.length > 0) {
+        return `Requires: ${missingAnd.map((id) => nameForBranchNodeId(id)).join(' & ')}`
+    }
+    const orIds = node.prerequisitesAnyOf
+    if (orIds && orIds.length > 0) {
+        const anyMet = orIds.some((pid) => getRanks(allocs, toUid(node.branch, pid)) >= 1)
+        if (!anyMet) {
+            return `Requires: ${orIds.map((id) => nameForBranchNodeId(id)).join(' or ')}`
+        }
+    }
+    return null
 }
 
 /**
@@ -284,9 +328,9 @@ export function applyAllocation(
  * - Single-rank node (maxRanks=1): toggle 0 ↔ 1
  * - Multi-rank node (maxRanks>1):  +1 per call; wraps back to 0 when maxed
  *
- * Returns an `AllocationResult`.  When `denial` is non-null the `allocs` are
- * unchanged and the caller should surface `denial.message` to the user.
- * Cycling a maxed node back to 0 never triggers a cap denial.
+ * Returns an `AllocationResult`. When `denial` is non-null (including `global_cap`),
+ * **`allocs` is unchanged** (same reference) — no stealing or reallocation from other nodes;
+ * surface `denial.message` in the UI. Cycling a maxed node back to 0 never triggers a cap denial.
  *
  * `maxPts` overrides the global cap from `PLANNER_CAPS` — pass the current
  * expedition-tier value (75 / 81 / 86) from the UI.

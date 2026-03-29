@@ -14,6 +14,7 @@ import {
     getRanks,
     cycleNode,
     decrementNode,
+    skillPrerequisiteLockHint,
 } from '@/lib/skills/planner'
 import { SkillNodeBtn } from './SkillNodeBtn'
 
@@ -143,7 +144,7 @@ function NodeDetailStrip({ node, ranks, hex, denial }: DetailStripProps) {
         >
             {showDenial ? (
                 /* ── Cap denial ──────────────────────────────────────────── */
-                <div className="flex items-start gap-2">
+                <div role="status" className="flex items-start gap-2">
                     <svg
                         className="shrink-0 mt-[1px]"
                         width={13} height={13} viewBox="0 0 24 24" fill="none"
@@ -159,11 +160,11 @@ function NodeDetailStrip({ node, ranks, hex, denial }: DetailStripProps) {
                         <p className="text-[11px] font-bold text-amber-300 leading-snug">
                             {denial.message}
                         </p>
-                        <p className="text-[9px] text-amber-400/55 mt-0.5 leading-relaxed">
-                            {denial.kind === 'global_cap'
-                                ? 'Remove ranks from any branch to free up points.'
-                                : 'Remove ranks in this branch to make room.'}
-                        </p>
+                        {denial.kind === 'branch_cap' && (
+                            <p className="text-[9px] text-amber-400/55 mt-0.5 leading-relaxed">
+                                Remove ranks in this branch to make room.
+                            </p>
+                        )}
                     </div>
                 </div>
             ) : node ? (
@@ -228,7 +229,7 @@ function BranchTreeInner({ branch, allocs, onChange, maxPts }: Props) {
         }
     }, [])
 
-    // Cap denial — shown in the detail strip, auto-cleared after 2.5 s.
+    // Cap denial — detail strip; ~4 s auto-clear (match desktop DenialToast)
     const [denial, setDenial] = useState<CapDenial | null>(null)
     const denialTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -237,7 +238,7 @@ function BranchTreeInner({ branch, allocs, onChange, maxPts }: Props) {
         if (result.denial) {
             if (denialTimerRef.current) clearTimeout(denialTimerRef.current)
             setDenial(result.denial)
-            denialTimerRef.current = setTimeout(() => setDenial(null), 2500)
+            denialTimerRef.current = setTimeout(() => setDenial(null), 4000) // ~4 s
         } else {
             // Clear any stale denial when an allocation succeeds
             if (denialTimerRef.current) clearTimeout(denialTimerRef.current)
@@ -317,17 +318,10 @@ function BranchTreeInner({ branch, allocs, onChange, maxPts }: Props) {
                     const state = getNodeState(node, allocs, bpts)
                     const ranks = getRanks(allocs, node.uid)
 
-                    // Compute lock reason — list specific missing prerequisite names
                     let lockReason: string | null = null
                     if (state === 'locked') {
-                        const missingPrereqs = node.prerequisites
-                            .filter((pid) => getRanks(allocs, `${branch}_${pid}`) < 1)
-                        if (missingPrereqs.length > 0) {
-                            const names = missingPrereqs
-                                .map((pid) => nodeById.get(pid)?.name ?? pid)
-                                .join(' & ')
-                            lockReason = `Requires: ${names}`
-                        }
+                        lockReason = skillPrerequisiteLockHint(node, allocs, (pid) =>
+                            nodeById.get(pid)?.name ?? pid)
                     }
 
                     // Tooltip alignment: keep edge-column tooltips inside the canvas

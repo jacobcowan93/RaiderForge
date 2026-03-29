@@ -7,9 +7,8 @@ import { getSiteOrigin } from '@/lib/site/siteOrigin'
 import {
     type BuildAllocations,
     type BuildSummaryRow,
-    branchPoints,
     buildSummary,
-    totalPointsWithCap,
+
     resetAll,
     resetBranch,
     decodeAndNormalizeBuild,
@@ -20,6 +19,10 @@ import { EXPEDITION_CAPS, type ExpeditionLevel } from '@/lib/skills/caps'
 
 interface Props {
     allocs:             BuildAllocations
+    /** From {@link totalPoints} — parent-computed so header matches tree. */
+    spentTotal:         number
+    /** From {@link branchPoints} per branch — parent-computed. */
+    branchSpent:        Record<SkillBranch, number>
     onChange:           (next: BuildAllocations) => void
     maxPts:             number
     expeditionLevel:    ExpeditionLevel
@@ -284,20 +287,11 @@ ImportPanel.displayName = 'ImportPanel'
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 
-function BuildSidebarInner({ allocs, onChange, maxPts, expeditionLevel, onExpeditionChange }: Props) {
+function BuildSidebarInner({ allocs, spentTotal, branchSpent, onChange, maxPts, expeditionLevel, onExpeditionChange }: Props) {
     const [copied, setCopied] = useState(false)
     const summary                       = useMemo(() => buildSummary(allocs), [allocs])
-    const { spent: total, cap: globalCap } = useMemo(
-        () => totalPointsWithCap(allocs, maxPts),
-        [allocs, maxPts],
-    )
-
-    /** Same values as {@link branchPoints} per branch — must match SkillTreePlanner + tree canvas. */
-    const branchTotals = useMemo(() => {
-        const m = {} as Record<SkillBranch, number>
-        for (const b of BRANCHES) m[b] = branchPoints(allocs, b)
-        return m
-    }, [allocs])
+    const total = spentTotal
+    const globalCap = maxPts
 
     const handleShare = async () => {
         /** Canonical `/skill-trees` URL so pasted links match OG metadata and work from any origin. */
@@ -394,7 +388,7 @@ function BuildSidebarInner({ allocs, onChange, maxPts, expeditionLevel, onExpedi
                 {/* Per-branch dots */}
                 <div className="mt-3 flex items-center gap-3">
                     {BRANCHES.map((b) => {
-                        const pts  = branchTotals[b]
+                        const pts  = branchSpent[b]
                         const meta = BRANCH_META[b]
                         return (
                             <div key={b} className="flex items-center gap-1.5">
@@ -414,7 +408,7 @@ function BuildSidebarInner({ allocs, onChange, maxPts, expeditionLevel, onExpedi
                 {summary.map((row) => (
                     <BranchRow
                         key={row.branch}
-                        row={{ ...row, spent: branchTotals[row.branch] }}
+                        row={{ ...row, spent: branchSpent[row.branch] }}
                     />
                 ))}
             </div>
@@ -451,7 +445,7 @@ function BuildSidebarInner({ allocs, onChange, maxPts, expeditionLevel, onExpedi
                 <ImportPanel onImport={onChange} />
 
                 {/* Trial simulation */}
-                <TrialSimulatePanel allocs={allocs} maxPts={maxPts} onApply={onChange} />
+                <TrialSimulatePanel allocs={allocs} maxPts={maxPts} onApply={(next) => onChange({ ...next })} />
 
                 {/* Reset all */}
                 <button
@@ -474,7 +468,7 @@ function BuildSidebarInner({ allocs, onChange, maxPts, expeditionLevel, onExpedi
                 <div className="flex items-center gap-1.5">
                     {BRANCHES.map((b) => {
                         const meta = BRANCH_META[b]
-                        const hasPoints = branchTotals[b] > 0
+                        const hasPoints = branchSpent[b] > 0
                         return (
                             <button
                                 key={b}

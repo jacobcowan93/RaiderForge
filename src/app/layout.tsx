@@ -7,15 +7,12 @@ import Providers from '../components/Providers'
 import DevBanner from '../components/DevBanner'
 import { SiteMain } from '../components/SiteMain'
 
-// Favicon setup (Next.js App Router):
-// 1. Place favicon.ico in src/app/ → Next.js auto-generates <link rel="icon">
-// 2. metadata.icons is backup / override
-// 3. public/favicon.ico kept as static fallback
 export const metadata: Metadata = {
     title: 'RaiderForge • ARC Raiders Command Center',
     description: 'ARC Raiders companion hub — maps, builds, blueprints, and marketplace',
+    // Tab icon uses ARC_Icon from public/images/ARC_Icon.png (via favicon.* in /public).
     icons: {
-        icon: '/favicon.ico',
+        icon: [{ url: '/favicon.png', type: 'image/png' }],
     },
 }
 

@@ -3,10 +3,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 const toolLinks = [
+    { label: 'Skill Tree Planner', href: '/skill-trees' },
     { label: 'Interactive Map',   href: '/maps'        },
     { label: 'Builds',            href: '/builds'      },
     { label: 'Blueprint Tracker', href: '/blueprints'  },
     { label: 'Strategy Guides',   href: '/guides'      },
+    { label: 'Loadouts',          href: '/loadouts'    },
     { label: 'Raider Profile',    href: '/profile'     },
     { label: 'Marketplace',       href: '/marketplace' },
 ]

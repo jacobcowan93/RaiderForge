@@ -1,29 +1,20 @@
 import Link from 'next/link'
+import { HeroBackgroundVideo } from '@/components/HeroBackgroundVideo'
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
+import { SITE_MAIN_HERO_PULL_CLASS, SITE_MAIN_TOP_PAD_CLASS } from '@/components/SiteMain'
 
 export default function Home() {
     return (
         <>
             <div>
-                <section className="relative -mt-16 h-screen overflow-hidden">
+                <section className={`relative ${SITE_MAIN_HERO_PULL_CLASS} h-screen overflow-hidden`}>
                     <div
-                        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
                         style={{ backgroundImage: "url('/images/header/ARC_Header.jpeg')" }}
                     />
-                    <video
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        poster="/images/header/ARC_Header.jpeg"
-                        className="absolute inset-0 h-full w-full object-cover"
-                    >
-                        <source src="/images/ARC_Home.mp4" type="video/mp4" />
-                    </video>
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-rf-bg" />
-                    <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-rf-red/8 to-transparent pointer-events-none" />
+                    <HeroBackgroundVideo poster="/images/header/ARC_Header.jpeg" src="/images/ARC_Home.mp4" />
 
-                    <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center pt-16">
+                    <div className={`relative z-10 flex h-full flex-col items-center justify-center px-4 text-center ${SITE_MAIN_TOP_PAD_CLASS}`}>
                         <span
                             className="hero-enter text-shadow-hero inline-flex items-center gap-2 text-xs uppercase tracking-widest font-semibold mb-4"
                             style={{ animationDelay: '0.05s' }}

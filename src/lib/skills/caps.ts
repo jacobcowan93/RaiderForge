@@ -30,22 +30,22 @@ export type PlannerCaps = {
     branchPoints: Partial<Record<SkillBranch, number | null>>
 }
 
+// 86 total skill points for a Raider who has completed Expedition 1 and Expedition 2
+// (base + 5 from Expedition 1 + 5 from Expedition 2), matching current ARC Raiders design.
+export const MAX_EXPEDITION_POINTS_FULL = 86 as const
+
 /**
- * Expedition-tier point totals.
- *
- * index 0 = base (no expeditions completed)
- * index 1 = after first expedition
- * index 2 = after second expedition
+ * Sidebar presets: index 0 = base only (75), 1 = after Expedition 1 (81), 2 = both (86).
  */
-export const EXPEDITION_CAPS = [75, 81, 86] as const
+export const EXPEDITION_CAPS = [75, 81, MAX_EXPEDITION_POINTS_FULL] as const
 export type  ExpeditionLevel  = 0 | 1 | 2
 
 /**
- * Default planner caps.  Components may override `totalPoints` at runtime
- * by passing a `maxPts` argument to `cycleNode` and friends.
+ * Default global cap matches fully progressed Raider ({@link MAX_EXPEDITION_POINTS_FULL}).
+ * Lower tiers pass `maxPts` from the UI (`EXPEDITION_CAPS[level]`).
  */
 export const PLANNER_CAPS: PlannerCaps = {
-    totalPoints: EXPEDITION_CAPS[0],   // 75 — base tier
+    totalPoints: MAX_EXPEDITION_POINTS_FULL,
     branchPoints: {
         Conditioning: null,   // no per-branch cap (global cap is the constraint)
         Mobility:     null,

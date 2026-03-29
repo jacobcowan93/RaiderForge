@@ -141,8 +141,11 @@ export default async function TrialsPage() {
 
                 <section aria-labelledby="next-week-heading" className="mb-6">
                     <div className="mb-4">
-                        <h2 id="next-week-heading" className="text-[11px] uppercase tracking-[0.2em] text-white/40 font-bold">
-                            Next Week&apos;s Trials
+                        <h2
+                            id="next-week-heading"
+                            className="mt-10 text-xs font-semibold tracking-[0.16em] text-amber-300 sm:text-sm"
+                        >
+                            NEXT WEEK&apos;S TRIALS
                         </h2>
                         <p className="mt-1 text-xs text-white/45">{nextWeek.label}</p>
                         {nextWeek.subtitle ? (
