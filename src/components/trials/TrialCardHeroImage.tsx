@@ -23,7 +23,7 @@ type Props = {
     src: string
     alt: string
     className?: string
-    /** `pill`: small 28×28 icon. `circle`: large badge-style circle. `banner`: fill parent. */
+    /** `pill`: small 28×28 icon. `circle`: centered rectangular card thumbnail. `banner`: fill parent. */
     variant?: 'banner' | 'pill' | 'circle'
 }
 
@@ -70,16 +70,16 @@ export function TrialCardHeroImage({ src, alt, className, variant = 'banner' }: 
     if (variant === 'circle') {
         return (
             <div
-                className={`mx-auto flex h-32 w-32 shrink-0 items-center justify-center rounded-full bg-black/70 shadow-[0_0_0_3px_rgba(255,255,255,0.85)] sm:h-40 sm:w-40 ${className ?? ''}`}
+                className={`mx-auto mb-2 w-full max-w-[220px] overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-sm ${className ?? ''}`}
             >
                 <Image
                     key={`${displaySrc}-${attempt}`}
                     src={displaySrc}
                     alt={alt}
-                    width={144}
-                    height={144}
-                    sizes="(max-width: 640px) 112px, 144px"
-                    className="h-28 w-28 rounded-full object-cover object-center sm:h-36 sm:w-36"
+                    width={320}
+                    height={180}
+                    sizes="(max-width: 640px) 220px, 320px"
+                    className="h-32 w-full object-cover sm:h-40"
                     unoptimized={unoptimized}
                     loading="lazy"
                     onError={() => setAttempt((a) => Math.min(a + 1, candidates.length - 1))}
