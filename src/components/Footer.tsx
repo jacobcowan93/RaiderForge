@@ -13,7 +13,7 @@ const toolLinks = [
 
 export default function Footer() {
     return (
-        <footer className="border-t border-rf-border bg-rf-bg xl:pr-[300px]">
+        <footer className="border-t border-rf-border bg-rf-bg">
             <div className="mx-auto max-w-7xl px-6 py-10">
 
                 {/* Brand row — centered */}
