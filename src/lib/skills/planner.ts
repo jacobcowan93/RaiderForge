@@ -31,8 +31,19 @@ export type BuildAllocations = Record<string, number>
 
 export function emptyBuild(): BuildAllocations { return {} }
 
+/** Normalized rank for UI and point math (handles string/odd JSON values from storage). */
+function allocRank(raw: unknown): number {
+    const n = Math.floor(Number(raw))
+    return Number.isFinite(n) && n > 0 ? n : 0
+}
+
+/**
+ * Single source of truth for reading allocated ranks from a build (`allocs` keyed by node uid).
+ * Canvas, sidebar, caps, and URL codecs should all use this (or aggregate via
+ * {@link branchPoints} / {@link buildSummary}) so rank math stays consistent with {@link allocRank}.
+ */
 export function getRanks(allocs: BuildAllocations, uid: string): number {
-    return allocs[uid] ?? 0
+    return allocRank(allocs[uid])
 }
 
 // ── Cap result types ──────────────────────────────────────────────────────────
@@ -73,12 +84,19 @@ export type NormalizeResult = {
 
 // ── Point counting ────────────────────────────────────────────────────────────
 
-/** Total ranks spent in a specific branch. */
+/**
+ * Single source of truth for per-branch point totals: sums ranks in `allocs` for one branch.
+ * Sidebar summaries, {@link buildSummary}, {@link totalPoints}, and the tree canvas all rely on
+ * this (with per-node reads via {@link getRanks} / {@link allocRank}).
+ */
 export function branchPoints(allocs: BuildAllocations, branch: SkillBranch): number {
-    return getSkillsByBranch(branch).reduce(
-        (sum, n) => sum + (allocs[n.uid] ?? 0),
-        0,
-    )
+    let sum = 0
+    for (const [nodeId, raw] of Object.entries(allocs)) {
+        const node = SKILL_BY_UID.get(nodeId)
+        if (!node || node.branch !== branch) continue
+        sum += allocRank(raw)
+    }
+    return sum
 }
 
 /** Total ranks spent across all branches. */
@@ -97,11 +115,18 @@ export function branchPointsWithCap(
     }
 }
 
-/** Returns spent + configured global cap (null cap = no global limit). */
-export function totalPointsWithCap(allocs: BuildAllocations): { spent: number; cap: number | null } {
+/**
+ * Returns spent + the active global cap.
+ * `maxPts` overrides the default cap from `PLANNER_CAPS` — pass it when using
+ * expedition-tier dynamic caps.
+ */
+export function totalPointsWithCap(
+    allocs:  BuildAllocations,
+    maxPts?: number,
+): { spent: number; cap: number | null } {
     return {
         spent: totalPoints(allocs),
-        cap:   PLANNER_CAPS.totalPoints,
+        cap:   maxPts ?? PLANNER_CAPS.totalPoints,
     }
 }
 
@@ -111,8 +136,15 @@ export function totalPointsWithCap(allocs: BuildAllocations): { spent: number; c
  * Checks whether adding one rank to `node` would violate a hard cap.
  * Returns the first violation found, or null if all caps are clear.
  * Branch cap is checked before global cap.
+ *
+ * `maxPts` overrides `PLANNER_CAPS.totalPoints` when supplied (used for
+ * expedition-tier dynamic caps — e.g. 75, 81, or 86).
  */
-function checkAddRankCaps(allocs: BuildAllocations, node: SkillNode): CapDenial | null {
+function checkAddRankCaps(
+    allocs: BuildAllocations,
+    node:   SkillNode,
+    maxPts?: number,
+): CapDenial | null {
     const branchCap = PLANNER_CAPS.branchPoints[node.branch] ?? null
     if (branchCap !== null) {
         const bpts = branchPoints(allocs, node.branch)
@@ -125,13 +157,14 @@ function checkAddRankCaps(allocs: BuildAllocations, node: SkillNode): CapDenial 
         }
     }
 
-    if (PLANNER_CAPS.totalPoints !== null) {
+    const globalCap = maxPts ?? PLANNER_CAPS.totalPoints
+    if (globalCap !== null) {
         const tpts = totalPoints(allocs)
-        if (tpts >= PLANNER_CAPS.totalPoints) {
+        if (tpts >= globalCap) {
             return {
                 kind:    'global_cap',
-                message: `Maximum of ${PLANNER_CAPS.totalPoints} expedition points reached`,
-                limit:   PLANNER_CAPS.totalPoints,
+                message: `Maximum of ${globalCap} expedition points reached`,
+                limit:   globalCap,
             }
         }
     }
@@ -153,7 +186,7 @@ export function isNodeUnlocked(
     if (node.pointGate > 0 && bpts < node.pointGate) return false
     return node.prerequisites.every((prereqId) => {
         const uid = toUid(node.branch, prereqId)
-        return (allocs[uid] ?? 0) >= 1
+        return getRanks(allocs, uid) >= 1
     })
 }
 
@@ -173,7 +206,7 @@ export function getNodeState(
     allocs: BuildAllocations,
     bpts:   number,
 ): SkillNodeState {
-    const ranks = allocs[node.uid] ?? 0
+    const ranks = getRanks(allocs, node.uid)
     if (!isNodeUnlocked(node, allocs, bpts)) return 'locked'
     if (ranks === 0)             return 'available'
     if (ranks < node.maxRanks)   return 'partial'
@@ -205,7 +238,7 @@ export function getCascadeUIDs(
         changed = false
         for (const n of queue) {
             if (toRemove.has(n.uid))        continue
-            if ((simulated[n.uid] ?? 0) === 0) continue
+            if (getRanks(simulated, n.uid) === 0) continue
             if (!isNodeUnlocked(n, simulated, bpts)) {
                 toRemove.add(n.uid)
                 delete simulated[n.uid]
@@ -254,8 +287,15 @@ export function applyAllocation(
  * Returns an `AllocationResult`.  When `denial` is non-null the `allocs` are
  * unchanged and the caller should surface `denial.message` to the user.
  * Cycling a maxed node back to 0 never triggers a cap denial.
+ *
+ * `maxPts` overrides the global cap from `PLANNER_CAPS` — pass the current
+ * expedition-tier value (75 / 81 / 86) from the UI.
  */
-export function cycleNode(allocs: BuildAllocations, uid: string): AllocationResult {
+export function cycleNode(
+    allocs:  BuildAllocations,
+    uid:     string,
+    maxPts?: number,
+): AllocationResult {
     const node = SKILL_BY_UID.get(uid)
     if (!node) return { allocs, denial: null }
 
@@ -263,7 +303,7 @@ export function cycleNode(allocs: BuildAllocations, uid: string): AllocationResu
     const state = getNodeState(node, allocs, bpts)
     if (state === 'locked') return { allocs, denial: null }
 
-    const current = allocs[uid] ?? 0
+    const current = getRanks(allocs, uid)
 
     // Cycling a maxed node back to 0 — removal never violates a cap
     if (current >= node.maxRanks) {
@@ -271,7 +311,7 @@ export function cycleNode(allocs: BuildAllocations, uid: string): AllocationResu
     }
 
     // Adding a rank — check all caps before applying
-    const denial = checkAddRankCaps(allocs, node)
+    const denial = checkAddRankCaps(allocs, node, maxPts)
     if (denial) return { allocs, denial }
 
     return { allocs: applyAllocation(allocs, uid, current + 1), denial: null }
@@ -282,7 +322,7 @@ export function cycleNode(allocs: BuildAllocations, uid: string): AllocationResu
  * Caps are never checked when removing ranks.
  */
 export function decrementNode(allocs: BuildAllocations, uid: string): BuildAllocations {
-    const current = allocs[uid] ?? 0
+    const current = getRanks(allocs, uid)
     if (current <= 0) return allocs
     return applyAllocation(allocs, uid, current - 1)
 }
@@ -312,10 +352,14 @@ export function resetAll(): BuildAllocations { return {} }
  *
  * This function is the single enforcement point for global + branch caps.
  * It does NOT re-check SkillNode.maxRanks — call `sanitizeBuild` first.
+ *
+ * `maxPts` overrides `PLANNER_CAPS.totalPoints` — pass the current
+ * expedition-tier cap (75 / 81 / 86) when normalizing live builds.
  */
-export function normalizeBuild(allocs: BuildAllocations): NormalizeResult {
+export function normalizeBuild(allocs: BuildAllocations, maxPts?: number): NormalizeResult {
     const out: BuildAllocations = {}
     const changes: string[] = []
+    const globalCap = maxPts ?? PLANNER_CAPS.totalPoints
 
     for (const branch of BRANCHES) {
         const nodes     = getSkillsByBranch(branch)
@@ -323,15 +367,15 @@ export function normalizeBuild(allocs: BuildAllocations): NormalizeResult {
         let   bRunning  = 0
 
         for (const node of nodes) {
-            const rawRanks = allocs[node.uid] ?? 0
-            if (rawRanks <= 0) continue
+            const rawRanks = Math.floor(Number(allocs[node.uid] ?? 0))
+            if (!Number.isFinite(rawRanks) || rawRanks <= 0) continue
 
             let allow = rawRanks
 
             // Global cap
-            if (PLANNER_CAPS.totalPoints !== null) {
+            if (globalCap !== null) {
                 const tRunning  = totalPoints(out)
-                const remaining = PLANNER_CAPS.totalPoints - tRunning
+                const remaining = globalCap - tRunning
                 allow = remaining <= 0 ? 0 : Math.min(allow, remaining)
             }
 
@@ -369,7 +413,7 @@ export function normalizeBuild(allocs: BuildAllocations): NormalizeResult {
  *
  * Safe to call with fully untrusted input (URL params, localStorage, API).
  */
-export function sanitizeBuild(raw: unknown): BuildAllocations {
+export function sanitizeBuild(raw: unknown, maxPts?: number): BuildAllocations {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
     const perNode: BuildAllocations = {}
     for (const [key, val] of Object.entries(raw as Record<string, unknown>)) {
@@ -379,7 +423,7 @@ export function sanitizeBuild(raw: unknown): BuildAllocations {
         if (!Number.isFinite(n) || n <= 0) continue
         perNode[key] = Math.min(n, node.maxRanks)
     }
-    const { allocs } = normalizeBuild(perNode)
+    const { allocs } = normalizeBuild(perNode, maxPts)
     return allocs
 }
 
@@ -426,18 +470,56 @@ function _parseBuildCode(code: string): BuildAllocations {
     return allocs
 }
 
-/** Encodes an allocations object to a compact URL-safe string. */
+/** Canonical app route for the skill tree planner (share links and URL sync). */
+export const SKILL_TREES_ROUTE = '/skill-trees'
+
+/**
+ * Encodes an allocations object to a compact ASCII string (safe inside a single query value).
+ * Uses only `C|M|S`, digits, `:`, `,`, `|` — no spaces. Always run through `encodeURIComponent`
+ * when placing in `?b=` so Discord / Twitter / X do not break pasted links.
+ */
 export function encodeBuildToUrl(allocs: BuildAllocations): string {
     const parts: string[] = []
     for (const branch of BRANCHES) {
         const chunks: string[] = []
         for (const node of getSkillsByBranch(branch)) {
-            const r = allocs[node.uid] ?? 0
+            const r = getRanks(allocs, node.uid)
             if (r > 0) chunks.push(`${BRANCH_CODE[branch]}${node.id}:${r}`)
         }
         if (chunks.length) parts.push(chunks.join(','))
     }
     return parts.join('|')
+}
+
+/**
+ * Absolute URL for copying to clipboard or social previews. Omits `?b` when the build is empty
+ * so the link stays short and clean.
+ *
+ * @param siteOrigin — No trailing slash; use {@link getSiteOrigin} from `@/lib/site/siteOrigin`.
+ */
+export function buildSkillTreeShareUrl(allocs: BuildAllocations, siteOrigin: string): string {
+    const origin = siteOrigin.replace(/\/$/, '')
+    const code = encodeBuildToUrl(allocs)
+    if (!code) return `${origin}${SKILL_TREES_ROUTE}`
+    return `${origin}${SKILL_TREES_ROUTE}?b=${encodeURIComponent(code)}`
+}
+
+/**
+ * Decodes `b` from `URLSearchParams` (or pasted text). Handles optional extra `encodeURIComponent`
+ * layers from broken copy/paste by attempting one safe decode when the string still looks encoded.
+ */
+export function decodeBuildFromUrlParam(raw: string | null | undefined): BuildAllocations {
+    if (raw == null) return {}
+    const trimmed = String(raw).trim()
+    if (!trimmed) return {}
+    let code = trimmed
+    try {
+        const once = decodeURIComponent(trimmed)
+        if (once !== trimmed) code = once
+    } catch {
+        /* use trimmed */
+    }
+    return decodeBuildFromUrl(code)
 }
 
 /**
@@ -481,12 +563,12 @@ export function buildSummary(allocs: BuildAllocations): BuildSummaryRow[] {
         const spent      = branchPoints(allocs, branch)
         const maxPossible = nodes.reduce((s, n) => s + n.maxRanks, 0)
         const selected   = nodes
-            .filter((n) => (allocs[n.uid] ?? 0) > 0)
+            .filter((n) => allocRank(allocs[n.uid]) > 0)
             .map((n) => ({
                 uid:         n.uid,
                 name:        n.name,
                 description: n.description,
-                ranks:       allocs[n.uid] ?? 0,
+                ranks:       allocRank(allocs[n.uid]),
                 maxRanks:    n.maxRanks,
             }))
         return {

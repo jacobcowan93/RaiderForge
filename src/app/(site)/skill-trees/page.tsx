@@ -1,37 +1,58 @@
 import { Suspense } from 'react'
+import type { Metadata } from 'next'
+
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
+import { PlannerSkeleton } from '@/components/ui/Skeleton'
+import { SkillTreeErrorBoundary } from '@/components/skills/SkillTreeErrorBoundary'
 import { SkillTreePlanner } from '@/components/skills/SkillTreePlanner'
+import { getSiteOrigin } from '@/lib/site/siteOrigin'
 
-export const metadata = {
-    title: 'Skill Tree Planner — ARC Raiders | RaiderForge',
-    description:
-        'Plan your ARC Raiders skill build across Conditioning, Mobility, and Survival. ' +
-        'Track points spent, check prerequisites, and share your build with a single link.',
-}
+const origin = getSiteOrigin()
+const ogTitle = 'Skill Tree Planner — ARC Raiders | RaiderForge'
+const ogDescription = (
+    'Plan your ARC Raiders skill build across Conditioning, Mobility, and Survival. ' +
+    'Allocate expedition points, respect prerequisites, and share your build with one link.'
+)
 
-function PlannerSkeleton() {
-    return (
-        <div className="grid lg:grid-cols-3 gap-4 animate-pulse">
-            {[0, 1, 2].map((i) => (
-                <div
-                    key={i}
-                    className="rounded-2xl border border-white/[0.05] p-4"
-                    style={{ background: 'rgba(15,20,27,0.55)', aspectRatio: '3/4.5' }}
-                >
-                    <div className="h-3 bg-white/10 rounded w-1/2 mb-2" />
-                    <div className="h-2 bg-white/[0.05] rounded w-2/3 mb-4" />
-                    <div className="h-full bg-white/[0.03] rounded-xl" />
-                </div>
-            ))}
-        </div>
-    )
+const ogImage = '/images/header/ARC_Header.jpeg'
+
+/** Absolute canonical URL for Discord/Twitter crawlers (requires metadataBase). */
+const skillTreesCanonical = new URL('/skill-trees', `${origin}/`).href
+
+export const metadata: Metadata = {
+    metadataBase: new URL(origin),
+    title: ogTitle,
+    description: ogDescription,
+    alternates: {
+        canonical: '/skill-trees',
+    },
+    openGraph: {
+        title: ogTitle,
+        description: ogDescription,
+        url: skillTreesCanonical,
+        siteName: 'RaiderForge',
+        type: 'website',
+        locale: 'en_US',
+        images: [
+            {
+                url: ogImage,
+                width: 1200,
+                height: 630,
+                alt: 'RaiderForge — ARC Raiders tactical hub',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: ogTitle,
+        description: ogDescription,
+        images: [ogImage],
+    },
 }
 
 export default function SkillTreesPage() {
     return (
         <div className="py-14 px-6 max-w-7xl mx-auto">
-
-            {/* ── Header ──────────────────────────────────────────────────── */}
             <div className="mb-10 pl-1">
                 <div className="border-l-2 border-rf-red pl-5">
                     <span className="text-xs uppercase tracking-widest text-rf-red font-semibold drop-shadow-sm">
@@ -44,39 +65,47 @@ export default function SkillTreesPage() {
                         </h1>
                         <PageMaturityBadge level="beta" />
                     </div>
+                    <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-white/45 leading-relaxed max-w-2xl">
+                        <PageMaturityBadge level="beta" className="!text-[9px] !px-1.5 !py-0 shrink-0" />
+                        <span>Beta – Builds saved via URL for now. Share links work instantly.</span>
+                    </p>
                     <p className="mt-2.5 text-sm max-w-2xl text-white/70 leading-relaxed">
                         Allocate expedition points across three branches —{' '}
                         <span className="text-green-400/80 font-medium">Conditioning</span>,{' '}
                         <span className="text-yellow-400/80 font-medium">Mobility</span>, and{' '}
                         <span className="text-red-400/80 font-medium">Survival</span>.
-                        Click a node to unlock it; right-click to remove a rank.
-                        Share your build with the copy-link button.
+                        Use keyboard or pointer on nodes; copy a share link when you are happy with the build.
                     </p>
 
-                    {/* How-to hint bar */}
                     <div className="mt-4 flex flex-wrap gap-4 text-[11px] text-white/38">
                         <span className="flex items-center gap-1.5">
-                            <span className="w-4 h-4 rounded border border-white/12 inline-flex items-center justify-center text-[9px] text-white/30">1</span>
-                            Multi-rank skills require up to 5 clicks
+                            <span className="w-4 h-4 rounded border border-white/12 inline-flex items-center justify-center text-[9px] text-white/30">
+                                1
+                            </span>
+                            Multi-rank skills: Arrow keys or click to add/remove ranks
                         </span>
                         <span className="flex items-center gap-1.5">
-                            <span className="w-4 h-4 rounded border border-white/12 inline-flex items-center justify-center text-[9px] text-white/30">2</span>
+                            <span className="w-4 h-4 rounded border border-white/12 inline-flex items-center justify-center text-[9px] text-white/30">
+                                2
+                            </span>
                             Keystones unlock at 15 branch points
                         </span>
                         <span className="flex items-center gap-1.5">
-                            <span className="w-4 h-4 rounded border border-white/12 inline-flex items-center justify-center text-[9px] text-white/30">3</span>
+                            <span className="w-4 h-4 rounded border border-white/12 inline-flex items-center justify-center text-[9px] text-white/30">
+                                3
+                            </span>
                             Capstones unlock at 36 branch points
                         </span>
                     </div>
                 </div>
             </div>
 
-            {/* ── Planner (client, Suspense required for useSearchParams) ─── */}
-            <Suspense fallback={<PlannerSkeleton />}>
-                <SkillTreePlanner />
-            </Suspense>
+            <SkillTreeErrorBoundary>
+                <Suspense fallback={<PlannerSkeleton />}>
+                    <SkillTreePlanner />
+                </Suspense>
+            </SkillTreeErrorBoundary>
 
-            {/* ── Footer attribution ───────────────────────────────────────── */}
             <p className="mt-12 text-[11px] text-white/18 leading-relaxed">
                 Skill data sourced from{' '}
                 <a

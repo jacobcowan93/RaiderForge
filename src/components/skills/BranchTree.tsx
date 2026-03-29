@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useId, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useId, useMemo, useRef, useState } from 'react'
 import type { SkillBranch } from '@/data/skillTree'
 import { BRANCH_META, TREE_EDGES } from '@/data/skillTree'
 import {
@@ -11,6 +11,7 @@ import {
     branchPointsWithCap,
     getNodeState,
     getPlannedNodes,
+    getRanks,
     cycleNode,
     decrementNode,
 } from '@/lib/skills/planner'
@@ -92,17 +93,18 @@ function ConnectorLayer({ nodes, allocs, color }: ConnectorLayerProps) {
                 const x2 = COL_PCT[to.col]
                 const y2 = ROW_PCT[to.row as 0|1|2|3|4|5|6]
 
-                const fromAllocated = (allocs[from.uid] ?? 0) > 0
-                const toAllocated   = (allocs[to.uid]   ?? 0) > 0
+                const fromAllocated = getRanks(allocs, from.uid) > 0
+                const toAllocated   = getRanks(allocs, to.uid) > 0
                 const active        = fromAllocated && toAllocated
+                const available     = fromAllocated && !toAllocated
 
                 return (
                     <line
                         key={`${fromId}-${toId}`}
                         x1={x1} y1={y1}
                         x2={x2} y2={y2}
-                        stroke={active ? color : 'rgba(255,255,255,0.07)'}
-                        strokeWidth={active ? 0.9 : 0.5}
+                        stroke={active ? color : available ? `${color}55` : 'rgba(255,255,255,0.07)'}
+                        strokeWidth={active ? 0.9 : available ? 0.65 : 0.5}
                         strokeLinecap="round"
                         strokeOpacity={active ? 0.65 : 1}
                         style={{ transition: 'stroke 0.2s, stroke-width 0.2s' }}
@@ -195,9 +197,10 @@ interface Props {
     branch:   SkillBranch
     allocs:   BuildAllocations
     onChange: (next: BuildAllocations) => void
+    maxPts?:  number
 }
 
-export function BranchTree({ branch, allocs, onChange }: Props) {
+function BranchTreeInner({ branch, allocs, onChange, maxPts }: Props) {
     const meta      = BRANCH_META[branch]
     const nodes     = useMemo(() => getPlannedNodes(branch), [branch])
     const bpts      = useMemo(() => branchPoints(allocs, branch), [allocs, branch])
@@ -230,7 +233,7 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
     const denialTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const handleClick = useCallback((uid: string) => {
-        const result = cycleNode(allocs, uid)
+        const result = cycleNode(allocs, uid, maxPts)
         if (result.denial) {
             if (denialTimerRef.current) clearTimeout(denialTimerRef.current)
             setDenial(result.denial)
@@ -241,7 +244,7 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
             setDenial(null)
             onChange(result.allocs)
         }
-    }, [allocs, onChange])
+    }, [allocs, onChange, maxPts])
 
     return (
         <div
@@ -260,9 +263,9 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
                 </h2>
                 <p className="text-[11px] text-white/38 mt-0.5">{meta.tagline}</p>
                 <div className="mt-1.5 flex items-center gap-2">
-                    {/* branchCap === null means no per-branch cap; use 51 (theoretical max) for visual scaling */}
+                    {/* branchCap === null means no per-branch cap; use per-branch max ranks for visual scaling */}
                     {(() => {
-                        const displayMax = branchCap ?? 51
+                        const displayMax = branchCap ?? nodes.reduce((s, n) => s + n.maxRanks, 0)
                         const atCap = branchCap !== null && bpts >= branchCap
                         return (
                             <>
@@ -312,13 +315,13 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
                 {/* Skill nodes */}
                 {nodes.map((node) => {
                     const state = getNodeState(node, allocs, bpts)
-                    const ranks = allocs[node.uid] ?? 0
+                    const ranks = getRanks(allocs, node.uid)
 
                     // Compute lock reason — list specific missing prerequisite names
                     let lockReason: string | null = null
                     if (state === 'locked') {
                         const missingPrereqs = node.prerequisites
-                            .filter((pid) => !((allocs[`${branch}_${pid}`] ?? 0) >= 1))
+                            .filter((pid) => getRanks(allocs, `${branch}_${pid}`) < 1)
                         if (missingPrereqs.length > 0) {
                             const names = missingPrereqs
                                 .map((pid) => nodeById.get(pid)?.name ?? pid)
@@ -365,10 +368,13 @@ export function BranchTree({ branch, allocs, onChange }: Props) {
             {/* Node detail strip — non-hover description path + cap denial feedback */}
             <NodeDetailStrip
                 node={activeNode}
-                ranks={activeNode ? (allocs[activeNode.uid] ?? 0) : 0}
+                ranks={activeNode ? getRanks(allocs, activeNode.uid) : 0}
                 hex={meta.hex}
                 denial={denial}
             />
         </div>
     )
 }
+
+export const BranchTree = memo(BranchTreeInner)
+BranchTree.displayName = 'BranchTree'

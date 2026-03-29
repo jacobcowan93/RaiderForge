@@ -1,22 +1,29 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import type { SkillBranch } from '@/data/skillTree'
 import { BRANCH_META, BRANCHES } from '@/data/skillTree'
+import { getSiteOrigin } from '@/lib/site/siteOrigin'
 import {
     type BuildAllocations,
     type BuildSummaryRow,
+    branchPoints,
     buildSummary,
     totalPointsWithCap,
     resetAll,
     resetBranch,
-    encodeBuildToUrl,
     decodeAndNormalizeBuild,
+    buildSkillTreeShareUrl,
 } from '@/lib/skills/planner'
+import { TrialSimulatePanel } from '@/components/skills/TrialSimulatePanel'
+import { EXPEDITION_CAPS, type ExpeditionLevel } from '@/lib/skills/caps'
 
 interface Props {
-    allocs:   BuildAllocations
-    onChange: (next: BuildAllocations) => void
+    allocs:             BuildAllocations
+    onChange:           (next: BuildAllocations) => void
+    maxPts:             number
+    expeditionLevel:    ExpeditionLevel
+    onExpeditionChange: (level: ExpeditionLevel) => void
 }
 
 // ── Branch breakdown row ───────────────────────────────────────────────────────
@@ -114,7 +121,7 @@ interface ImportPanelProps {
     onImport: (allocs: BuildAllocations) => void
 }
 
-function ImportPanel({ onImport }: ImportPanelProps) {
+function ImportPanelInner({ onImport }: ImportPanelProps) {
     const [open,         setOpen]        = useState(false)
     const [value,        setValue]       = useState('')
     const [status,       setStatus]      = useState<'idle' | 'ok' | 'clamped' | 'error'>('idle')
@@ -272,16 +279,29 @@ function ImportPanel({ onImport }: ImportPanelProps) {
     )
 }
 
+const ImportPanel = memo(ImportPanelInner)
+ImportPanel.displayName = 'ImportPanel'
+
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 
-export function BuildSidebar({ allocs, onChange }: Props) {
+function BuildSidebarInner({ allocs, onChange, maxPts, expeditionLevel, onExpeditionChange }: Props) {
     const [copied, setCopied] = useState(false)
     const summary                       = useMemo(() => buildSummary(allocs), [allocs])
-    const { spent: total, cap: globalCap } = useMemo(() => totalPointsWithCap(allocs), [allocs])
+    const { spent: total, cap: globalCap } = useMemo(
+        () => totalPointsWithCap(allocs, maxPts),
+        [allocs, maxPts],
+    )
+
+    /** Same values as {@link branchPoints} per branch — must match SkillTreePlanner + tree canvas. */
+    const branchTotals = useMemo(() => {
+        const m = {} as Record<SkillBranch, number>
+        for (const b of BRANCHES) m[b] = branchPoints(allocs, b)
+        return m
+    }, [allocs])
 
     const handleShare = async () => {
-        const encoded = encodeBuildToUrl(allocs)
-        const url = `${window.location.origin}${window.location.pathname}${encoded ? `?b=${encoded}` : ''}`
+        /** Canonical `/skill-trees` URL so pasted links match OG metadata and work from any origin. */
+        const url = buildSkillTreeShareUrl(allocs, getSiteOrigin())
         try {
             await navigator.clipboard.writeText(url)
             setCopied(true)
@@ -297,45 +317,91 @@ export function BuildSidebar({ allocs, onChange }: Props) {
 
     return (
         <aside className="flex flex-col gap-4">
-            {/* Total points */}
+            {/* Total points + expedition tier */}
             <div
                 className="rounded-2xl border border-white/[0.07] px-5 py-4"
                 style={{ background: 'rgba(15,20,27,0.7)' }}
             >
+                {/* Available / spent header */}
                 <p className="text-[10px] uppercase tracking-widest text-white/35 font-semibold mb-1">
-                    Total Points Spent
+                    Available Points
                 </p>
-                <div className="flex items-end gap-2">
+                <div className="flex items-end gap-2 mb-3">
                     <span
                         className="text-4xl font-bold tabular-nums"
                         style={{ color: globalCap !== null && total >= globalCap ? '#f59e0b' : 'white' }}
                     >
                         {total}
                     </span>
-                    {globalCap !== null && (
-                        <span className="text-xl font-semibold tabular-nums text-white/25 mb-0.5">
-                            /{globalCap}
-                        </span>
-                    )}
-                    <span className="text-sm text-white/30 mb-1 font-medium">expedition pts</span>
+                    <span className="text-xl font-semibold tabular-nums text-white/25 mb-0.5">
+                        / {maxPts}
+                    </span>
+                    <span className="text-sm text-white/30 mb-1 font-medium">pts</span>
                 </div>
-                {globalCap !== null && total >= globalCap && (
-                    <p className="text-[9px] text-amber-400/75 mt-1 font-semibold uppercase tracking-wide">
+
+                {/* Progress bar */}
+                <div className="mb-3 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                    <div
+                        className="h-full rounded-full transition-all duration-300"
+                        style={{
+                            width:      `${Math.min(100, (total / maxPts) * 100)}%`,
+                            background: total >= maxPts ? '#f59e0b' : '#ff4040',
+                            opacity:    0.75,
+                        }}
+                    />
+                </div>
+
+                {total >= maxPts && (
+                    <p className="text-[9px] text-amber-400/75 mb-2 font-semibold uppercase tracking-wide">
                         Point cap reached
                     </p>
                 )}
 
+                {/* Expedition tier selector */}
+                <p className="text-[9px] uppercase tracking-widest text-white/25 font-semibold mb-1.5">
+                    Expedition tier
+                </p>
+                <div className="flex gap-1">
+                    {EXPEDITION_CAPS.map((cap, i) => {
+                        const level = i as ExpeditionLevel
+                        const active = level === expeditionLevel
+                        const labels = ['Base', 'Exp 1', 'Exp 2']
+                        return (
+                            <button
+                                key={level}
+                                type="button"
+                                onClick={() => onExpeditionChange(level)}
+                                className="flex-1 rounded-lg px-1.5 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors"
+                                style={{
+                                    background:   active ? 'rgba(255,64,64,0.18)' : 'rgba(255,255,255,0.03)',
+                                    border:       active ? '1px solid rgba(255,64,64,0.45)' : '1px solid rgba(255,255,255,0.08)',
+                                    color:        active ? '#ff4040' : 'rgba(255,255,255,0.35)',
+                                }}
+                                title={`${cap} total points`}
+                            >
+                                <span className="block">{labels[i]}</span>
+                                <span
+                                    className="block text-[8px] font-semibold tabular-nums"
+                                    style={{ color: active ? 'rgba(255,64,64,0.75)' : 'rgba(255,255,255,0.20)' }}
+                                >
+                                    {cap} pts
+                                </span>
+                            </button>
+                        )
+                    })}
+                </div>
+
                 {/* Per-branch dots */}
                 <div className="mt-3 flex items-center gap-3">
                     {BRANCHES.map((b) => {
-                        const row  = summary.find((r) => r.branch === b)!
+                        const pts  = branchTotals[b]
                         const meta = BRANCH_META[b]
                         return (
                             <div key={b} className="flex items-center gap-1.5">
                                 <span className="h-2 w-2 rounded-full" style={{ background: meta.hex, opacity: 0.75 }} />
                                 <span className="text-[10px] tabular-nums font-semibold"
-                                      style={{ color: row.spent > 0 ? meta.hex : 'rgba(255,255,255,0.25)' }}>
-                                    {row.spent}
+                                      style={{ color: pts > 0 ? meta.hex : 'rgba(255,255,255,0.25)' }}>
+                                    {pts}
                                 </span>
                             </div>
                         )
@@ -346,7 +412,10 @@ export function BuildSidebar({ allocs, onChange }: Props) {
             {/* Branch breakdowns */}
             <div className="space-y-2">
                 {summary.map((row) => (
-                    <BranchRow key={row.branch} row={row} />
+                    <BranchRow
+                        key={row.branch}
+                        row={{ ...row, spent: branchTotals[row.branch] }}
+                    />
                 ))}
             </div>
 
@@ -381,6 +450,9 @@ export function BuildSidebar({ allocs, onChange }: Props) {
                 {/* Import */}
                 <ImportPanel onImport={onChange} />
 
+                {/* Trial simulation */}
+                <TrialSimulatePanel allocs={allocs} maxPts={maxPts} onApply={onChange} />
+
                 {/* Reset all */}
                 <button
                     type="button"
@@ -402,7 +474,7 @@ export function BuildSidebar({ allocs, onChange }: Props) {
                 <div className="flex items-center gap-1.5">
                     {BRANCHES.map((b) => {
                         const meta = BRANCH_META[b]
-                        const hasPoints = summary.find((r) => r.branch === b)!.spent > 0
+                        const hasPoints = branchTotals[b] > 0
                         return (
                             <button
                                 key={b}
@@ -442,3 +514,6 @@ export function BuildSidebar({ allocs, onChange }: Props) {
         </aside>
     )
 }
+
+export const BuildSidebar = memo(BuildSidebarInner)
+BuildSidebar.displayName = 'BuildSidebar'

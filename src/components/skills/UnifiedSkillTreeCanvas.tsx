@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useId, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useId, useMemo, useRef, useState } from 'react'
 import { BRANCHES, BRANCH_META } from '@/data/skillTree'
 import type { SkillBranch } from '@/data/skillTree'
 import {
@@ -10,6 +10,7 @@ import {
     branchPoints,
     getNodeState,
     getPlannedNodes,
+    getRanks,
     cycleNode,
     decrementNode,
 } from '@/lib/skills/planner'
@@ -37,17 +38,22 @@ function ConnectorLines({ allocs }: { allocs: BuildAllocations }) {
                 const pos2 = NODE_LAYOUT_MAP.get(toUid)
                 if (!pos1 || !pos2) return null
 
-                const branch = fromUid.split('_')[0] as SkillBranch
-                const color  = BRANCH_META[branch].hex
-                const active = (allocs[fromUid] ?? 0) > 0 && (allocs[toUid] ?? 0) > 0
+                const branch        = fromUid.split('_')[0] as SkillBranch
+                const color         = BRANCH_META[branch].hex
+                const fromAllocated = getRanks(allocs, fromUid) > 0
+                const toAllocated   = getRanks(allocs, toUid) > 0
+                // active = both ends allocated (full bright)
+                // available = source allocated, destination not yet (dim branch color)
+                const active    = fromAllocated && toAllocated
+                const available = fromAllocated && !toAllocated
 
                 return (
                     <line
                         key={`${fromUid}-${toUid}`}
                         x1={pos1.x} y1={pos1.y}
                         x2={pos2.x} y2={pos2.y}
-                        stroke={active ? color : 'rgba(255,255,255,0.09)'}
-                        strokeWidth={active ? 1.8 : 0.9}
+                        stroke={active ? color : available ? `${color}55` : 'rgba(255,255,255,0.09)'}
+                        strokeWidth={active ? 1.8 : available ? 1.3 : 0.9}
                         strokeLinecap="round"
                         strokeOpacity={active ? 0.65 : 1}
                         style={{ transition: 'stroke 0.2s, stroke-width 0.2s' }}
@@ -126,9 +132,10 @@ function BranchLabel({ branch, bpts }: { branch: SkillBranch; bpts: number }) {
 interface Props {
     allocs:   BuildAllocations
     onChange: (next: BuildAllocations) => void
+    maxPts?:  number
 }
 
-export function UnifiedSkillTreeCanvas({ allocs, onChange }: Props) {
+function UnifiedSkillTreeCanvasInner({ allocs, onChange, maxPts }: Props) {
     const headingId = useId()
 
     // Per-branch point totals + node lists (memoised on allocs)
@@ -159,7 +166,7 @@ export function UnifiedSkillTreeCanvas({ allocs, onChange }: Props) {
     const denialRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const handleClick = useCallback((uid: string) => {
-        const result = cycleNode(allocs, uid)
+        const result = cycleNode(allocs, uid, maxPts)
         if (result.denial) {
             if (denialRef.current) clearTimeout(denialRef.current)
             setDenial(result.denial)
@@ -169,7 +176,7 @@ export function UnifiedSkillTreeCanvas({ allocs, onChange }: Props) {
             setDenial(null)
             onChange(result.allocs)
         }
-    }, [allocs, onChange])
+    }, [allocs, onChange, maxPts])
 
     return (
         <section
@@ -214,13 +221,13 @@ export function UnifiedSkillTreeCanvas({ allocs, onChange }: Props) {
                 const { x, y, tooltipSide, tooltipAlign } = layout
                 const { bpts, nodeById } = branchData[node.branch]
                 const state  = getNodeState(node, allocs, bpts)
-                const ranks  = allocs[node.uid] ?? 0
+                const ranks  = getRanks(allocs, node.uid)
 
                 // Lock reason: list names of missing prerequisites
                 let lockReason: string | null = null
                 if (state === 'locked') {
                     const missing = node.prerequisites.filter(
-                        (pid) => !((allocs[`${node.branch}_${pid}`] ?? 0) >= 1)
+                        (pid) => getRanks(allocs, `${node.branch}_${pid}`) < 1
                     )
                     if (missing.length > 0) {
                         const names = missing
@@ -260,3 +267,6 @@ export function UnifiedSkillTreeCanvas({ allocs, onChange }: Props) {
         </section>
     )
 }
+
+export const UnifiedSkillTreeCanvas = memo(UnifiedSkillTreeCanvasInner)
+UnifiedSkillTreeCanvas.displayName = 'UnifiedSkillTreeCanvas'

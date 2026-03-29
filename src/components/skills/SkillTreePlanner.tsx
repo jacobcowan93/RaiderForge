@@ -1,20 +1,34 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import type { SkillBranch } from '@/data/skillTree'
 import { BRANCH_META, BRANCHES } from '@/data/skillTree'
 import {
     type BuildAllocations,
+    branchPoints,
     emptyBuild,
-    decodeBuildFromUrl,
+    decodeBuildFromUrlParam,
+    encodeBuildToUrl,
     sanitizeBuild,
+    normalizeBuild,
     totalPointsWithCap,
 } from '@/lib/skills/planner'
+import { EXPEDITION_CAPS, type ExpeditionLevel } from '@/lib/skills/caps'
 import { loadSkillTreeSave, saveSkillTreeSave } from '@/lib/skill-tree/skillTreeSaveStorage'
 import { BranchTree } from './BranchTree'
 import { BuildSidebar } from './BuildSidebar'
 import { UnifiedSkillTreeCanvas } from './UnifiedSkillTreeCanvas'
+
+const EXPEDITION_LEVEL_KEY = 'raiderforge.expedition-level.v1'
+
+function loadExpeditionLevel(): ExpeditionLevel {
+    if (typeof window === 'undefined') return 0
+    const raw = localStorage.getItem(EXPEDITION_LEVEL_KEY)
+    const n   = Number(raw)
+    if (n === 1 || n === 2) return n
+    return 0
+}
 
 // ── Branch tab selector ───────────────────────────────────────────────────────
 
@@ -23,7 +37,7 @@ interface TabBarProps {
     onChange: (b: SkillBranch) => void
 }
 
-function BranchTabBar({ active, onChange }: TabBarProps) {
+const BranchTabBar = memo(function BranchTabBar({ active, onChange }: TabBarProps) {
     return (
         <div
             role="tablist"
@@ -43,7 +57,7 @@ function BranchTabBar({ active, onChange }: TabBarProps) {
                         onClick={() => onChange(b)}
                         className="flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-150"
                         style={{
-                            color:      isActive ? meta.hex : 'rgba(255,255,255,0.35)',
+                            color:      isActive ? meta.hex : 'rgba(255,255,255,0.72)',
                             background: isActive ? `${meta.hex}15` : 'transparent',
                             border:     isActive ? `1px solid ${meta.hex}40` : '1px solid transparent',
                         }}
@@ -54,13 +68,33 @@ function BranchTabBar({ active, onChange }: TabBarProps) {
             })}
         </div>
     )
-}
+})
+
+BranchTabBar.displayName = 'BranchTabBar'
 
 // ── Main planner ──────────────────────────────────────────────────────────────
 
+/**
+ * Skill tree planner — single source of truth for `allocs` in React state.
+ *
+ * **URL sync (no replace loop):** The effect that calls `router.replace` only runs when
+ * `pathname + search` would differ from the URL implied by `encodeBuildToUrl(allocs)`. After
+ * `replace`, the URL matches state, so the condition stays false until `allocs` changes again.
+ *
+ * **searchParams effect:** Handles back/forward and pasted links; skips the first run so we
+ * do not clobber hydration. When `?b` updates, we decode into state.
+ */
+
 export function SkillTreePlanner() {
     const searchParams = useSearchParams()
+    const router = useRouter()
+    const pathname = usePathname()
     const initRef      = useRef(false)
+
+    // Expedition level — determines how many total points are available
+    const [expeditionLevel, setExpeditionLevel] = useState<ExpeditionLevel>(loadExpeditionLevel)
+
+    const maxPts = EXPEDITION_CAPS[expeditionLevel]
 
     // Initialise from URL ?b= param, then fall back to localStorage
     const [allocs, setAllocs] = useState<BuildAllocations>(() => {
@@ -68,15 +102,14 @@ export function SkillTreePlanner() {
             ? new URLSearchParams(window.location.search).get('b')
             : null
         if (urlParam) {
-            const decoded = decodeBuildFromUrl(urlParam)
+            const decoded = decodeBuildFromUrlParam(urlParam)
             if (Object.keys(decoded).length > 0) return decoded
         }
         if (typeof window === 'undefined') return emptyBuild()
         const saved = loadSkillTreeSave()
-        return sanitizeBuild(saved.allocations)
+        return sanitizeBuild(saved.allocations, EXPEDITION_CAPS[loadExpeditionLevel()])
     })
 
-    // Re-read URL param if searchParams changes (back/forward nav, external link)
     useEffect(() => {
         if (!initRef.current) {
             initRef.current = true
@@ -84,16 +117,41 @@ export function SkillTreePlanner() {
         }
         const b = searchParams.get('b')
         if (b) {
-            const decoded = decodeBuildFromUrl(b)
+            const decoded = decodeBuildFromUrlParam(b)
             if (Object.keys(decoded).length > 0) setAllocs(decoded)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams])
 
-    // Persist to localStorage on every change
+    // Persist allocations to localStorage on every change
     useEffect(() => {
         saveSkillTreeSave({ version: 1, allocations: allocs })
     }, [allocs])
+
+    /**
+     * Sync `?b=` with live allocations (relative URL). Uses the same encoding as
+     * `buildSkillTreeShareUrl` in planner.ts — copy/share uses `getSiteOrigin()` + that helper
+     * for absolute URLs on the clipboard.
+     */
+    useEffect(() => {
+        const code = encodeBuildToUrl(allocs)
+        const search = code ? `?b=${encodeURIComponent(code)}` : ''
+        const next = `${pathname}${search}`
+        if (typeof window !== 'undefined' && window.location.pathname + window.location.search !== next) {
+            router.replace(next, { scroll: false })
+        }
+    }, [allocs, pathname, router])
+
+    // Persist expedition level + re-clamp build when level decreases
+    const handleExpeditionChange = useCallback((level: ExpeditionLevel) => {
+        setExpeditionLevel(level)
+        localStorage.setItem(EXPEDITION_LEVEL_KEY, String(level))
+        const newMax = EXPEDITION_CAPS[level]
+        setAllocs((prev) => {
+            const { allocs: clamped } = normalizeBuild(prev, newMax)
+            return clamped
+        })
+    }, [])
 
     // Mobile: which branch tab is active
     const [activeBranch, setActiveBranch] = useState<SkillBranch>('Conditioning')
@@ -102,11 +160,33 @@ export function SkillTreePlanner() {
         setAllocs(next)
     }, [])
 
-    // Sidebar visibility state (mobile collapsible)
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const toggleMobileBuildSidebar = useCallback(() => {
+        setSidebarOpen((v) => !v)
+    }, [])
 
     // Live point total + cap for the aria-live announcement
-    const { spent: total, cap: globalCap } = useMemo(() => totalPointsWithCap(allocs), [allocs])
+    const { spent: total, cap: globalCap } = useMemo(
+        () => totalPointsWithCap(allocs, maxPts),
+        [allocs, maxPts],
+    )
+
+    // Dev-only: header total must equal sum of per-branch totals (same math as BuildSidebar / planner).
+    useEffect(() => {
+        if (process.env.NODE_ENV !== 'development') return
+        const totalSpent = total
+        const branchConditioning = branchPoints(allocs, 'Conditioning')
+        const branchMobility     = branchPoints(allocs, 'Mobility')
+        const branchSurvival     = branchPoints(allocs, 'Survival')
+        if (totalSpent !== branchConditioning + branchMobility + branchSurvival) {
+            console.warn('Skill tree total mismatch', {
+                totalSpent,
+                branchConditioning,
+                branchMobility,
+                branchSurvival,
+            })
+        }
+    }, [allocs, total])
 
     return (
         <div className="flex flex-col gap-6 overflow-x-hidden">
@@ -135,7 +215,7 @@ export function SkillTreePlanner() {
                 </div>
                 <button
                     type="button"
-                    onClick={() => setSidebarOpen((v) => !v)}
+                    onClick={toggleMobileBuildSidebar}
                     aria-expanded={sidebarOpen}
                     aria-controls="mobile-build-summary"
                     className="flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/50 hover:text-white/70 transition-colors shrink-0"
@@ -156,7 +236,13 @@ export function SkillTreePlanner() {
             {/* ── Mobile sidebar (collapsible) ─────────────────────────────── */}
             {sidebarOpen && (
                 <div id="mobile-build-summary" className="lg:hidden">
-                    <BuildSidebar allocs={allocs} onChange={handleChange} />
+                    <BuildSidebar
+                        allocs={allocs}
+                        onChange={handleChange}
+                        maxPts={maxPts}
+                        expeditionLevel={expeditionLevel}
+                        onExpeditionChange={handleExpeditionChange}
+                    />
                 </div>
             )}
 
@@ -169,18 +255,24 @@ export function SkillTreePlanner() {
                         className="rounded-2xl border border-white/[0.06] p-4"
                         style={{ background: 'rgba(15,20,27,0.55)' }}
                     >
-                        <BranchTree branch={activeBranch} allocs={allocs} onChange={handleChange} />
+                        <BranchTree branch={activeBranch} allocs={allocs} onChange={handleChange} maxPts={maxPts} />
                     </div>
                 </div>
 
                 {/* Desktop: unified fan-layout canvas — full width */}
                 <div className="hidden lg:block">
-                    <UnifiedSkillTreeCanvas allocs={allocs} onChange={handleChange} />
+                    <UnifiedSkillTreeCanvas allocs={allocs} onChange={handleChange} maxPts={maxPts} />
                 </div>
 
                 {/* Desktop sidebar — full width, below the canvas */}
                 <div id="build-summary" className="hidden lg:block">
-                    <BuildSidebar allocs={allocs} onChange={handleChange} />
+                    <BuildSidebar
+                        allocs={allocs}
+                        onChange={handleChange}
+                        maxPts={maxPts}
+                        expeditionLevel={expeditionLevel}
+                        onExpeditionChange={handleExpeditionChange}
+                    />
                 </div>
             </div>
 
@@ -206,7 +298,7 @@ export function SkillTreePlanner() {
                           style={{ background: 'rgba(245,158,11,0.2)', border: '1px solid rgba(245,158,11,0.5)' }}/>
                     Selected / partial ranks
                 </span>
-                <span className="text-white/18">Right-click or − key to remove one rank</span>
+                <span className="text-white/18">Keyboard: ArrowUp/Right/+ add rank · ArrowDown/Left/−/Backspace remove · Right-click −1</span>
             </div>
         </div>
     )

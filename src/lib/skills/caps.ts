@@ -31,13 +31,21 @@ export type PlannerCaps = {
 }
 
 /**
- * Edit these numbers to adjust caps.  Everything else updates automatically.
+ * Expedition-tier point totals.
  *
- * totalPoints = 51  →  one fully-maxed branch worth of points across all
- *                       three branches combined.  Forces meaningful choices.
+ * index 0 = base (no expeditions completed)
+ * index 1 = after first expedition
+ * index 2 = after second expedition
+ */
+export const EXPEDITION_CAPS = [75, 81, 86] as const
+export type  ExpeditionLevel  = 0 | 1 | 2
+
+/**
+ * Default planner caps.  Components may override `totalPoints` at runtime
+ * by passing a `maxPts` argument to `cycleNode` and friends.
  */
 export const PLANNER_CAPS: PlannerCaps = {
-    totalPoints: 51,
+    totalPoints: EXPEDITION_CAPS[0],   // 75 — base tier
     branchPoints: {
         Conditioning: null,   // no per-branch cap (global cap is the constraint)
         Mobility:     null,
