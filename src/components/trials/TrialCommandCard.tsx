@@ -3,31 +3,31 @@ import Link from 'next/link'
 import { TrialCardHeroImage } from '@/components/trials/TrialCardHeroImage'
 import type { TrialBrief } from '@/lib/trials/trialsData'
 
-const TIER_STYLES: Record<TrialBrief['difficultyTier'], string> = {
-    Easy: 'border-emerald-500/35 bg-emerald-500/[0.12] text-emerald-200/95',
-    Medium: 'border-amber-500/35 bg-amber-500/[0.1] text-amber-200/95',
-    Hard: 'border-red-500/40 bg-red-950/40 text-red-200/95',
-}
-
 const TIER_STAR_COUNT: Record<TrialBrief['difficultyTier'], number> = {
     Easy: 1,
     Medium: 2,
     Hard: 3,
 }
 
-function TrialDifficultyPillMeta({ tier }: { tier: TrialBrief['difficultyTier'] }) {
+function formatMaxShort(n: number): string {
+    if (n >= 1000) return `${Math.round(n / 1000)}k`
+    return String(n)
+}
+
+/** Stars + compact max badge over the circular art (in-game style). */
+function ShieldImageOverlay({ tier, maxPoints }: { tier: TrialBrief['difficultyTier']; maxPoints: number }) {
     const n = TIER_STAR_COUNT[tier]
-    const tierClass = TIER_STYLES[tier]
+    const short = formatMaxShort(maxPoints)
     return (
-        <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5">
-            <span className="flex shrink-0 items-center gap-px" aria-label={`${tier} difficulty`}>
+        <div className="pointer-events-none absolute bottom-1.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1">
+            <span className="flex items-center gap-px drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" aria-label={`${tier} difficulty`}>
                 {[0, 1, 2].map((i) => (
                     <span
                         key={i}
                         className={
                             i < n
-                                ? 'text-[10px] leading-none text-amber-400/95'
-                                : 'text-[10px] leading-none text-white/15'
+                                ? 'text-[11px] leading-none text-stone-200/95'
+                                : 'text-[11px] leading-none text-stone-600/95'
                         }
                         aria-hidden
                     >
@@ -35,10 +35,8 @@ function TrialDifficultyPillMeta({ tier }: { tier: TrialBrief['difficultyTier'] 
                     </span>
                 ))}
             </span>
-            <span
-                className={`inline-flex shrink-0 rounded border px-1 py-px text-[8px] font-extrabold uppercase tracking-wider ${tierClass}`}
-            >
-                {tier}
+            <span className="flex h-5 min-w-[1.35rem] items-center justify-center rounded-full bg-white px-1 text-[9px] font-black tabular-nums text-stone-800 shadow-md ring-1 ring-black/15">
+                {short}
             </span>
         </div>
     )
@@ -56,71 +54,68 @@ export function TrialCommandCard({ trial }: Props) {
 
     const maxPts = new Intl.NumberFormat('en-US').format(trial.maxPoints)
 
+    const titleBase =
+        'block px-1 text-center text-xs font-black uppercase leading-tight tracking-wide text-white line-clamp-4 sm:text-sm'
+
     return (
-        <article className="rf-card group relative flex h-full flex-col overflow-hidden rounded-lg border border-blue-950/45 border-l-[3px] border-l-rf-red bg-[#050810]/60 shadow-md shadow-black/50 transition-all hover:border-rf-red/25 hover:shadow-[0_0_28px_-8px_rgba(239,68,68,0.35)]">
-            <div className="relative flex flex-1 flex-col px-1.5 py-1.5 sm:px-2 sm:py-1.5">
-                <div className="mb-3 flex flex-col items-center">
-                    <TrialCardHeroImage
-                        variant="circle"
-                        src={trial.imageUrl}
-                        alt={trial.name}
-                        className="opacity-95 transition-opacity duration-300 ease-out group-hover:opacity-100"
-                    />
-                    <div className="mt-1 w-full">
-                        <TrialDifficultyPillMeta tier={trial.difficultyTier} />
-                    </div>
-                </div>
-
-                <div className="mb-0.5 flex flex-wrap items-start gap-0.5 gap-y-0.5">
-                    <div className="min-w-0 flex-1">
-                        {detailHref ? (
-                            <Link
-                                href={detailHref}
-                                className="block text-sm font-semibold leading-snug text-white line-clamp-2 tracking-tight transition-colors hover:text-rf-red"
-                            >
-                                {trial.name}
-                            </Link>
-                        ) : (
-                            <h3 className="text-sm font-semibold leading-snug text-white line-clamp-2 tracking-tight">
-                                {trial.name}
-                            </h3>
-                        )}
-                        <p className="mt-1 text-xs leading-snug text-white/55 line-clamp-3">{trial.description}</p>
-                    </div>
-                    <div className="shrink-0 rounded border border-rf-red/80 bg-gradient-to-br from-rf-red/28 to-red-950/60 px-0.5 py-px text-right shadow-[0_0_10px_-3px_rgba(239,68,68,0.5)] ring-1 ring-rf-red/40">
-                        <p className="text-[4px] font-extrabold uppercase tracking-[0.08em] text-red-200/95 leading-none">
-                            Max
-                        </p>
-                        <p className="font-mono text-[9px] font-black tabular-nums leading-none text-white sm:text-[10px]">
-                            {maxPts}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="mb-1 border-t border-white/[0.06] pt-0.5">
-                    <p className="mb-px text-[6px] font-bold uppercase tracking-[0.1em] text-sky-200/40 leading-none">
-                        How to max
+        <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0a0a0a] shadow-lg shadow-black/50 transition-colors hover:border-white/[0.15]">
+            <div className="flex h-full min-h-0 flex-1 flex-col pb-1.5 sm:pb-2">
+                <div className="relative shrink-0 rounded-t-[14px] rounded-b-[2.35rem] bg-[#e8e4da] px-3 pb-4 pt-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                    <p className="mb-3 text-center text-[10px] font-medium leading-snug tracking-tight text-stone-800 line-clamp-3 sm:text-[11px]">
+                        {trial.description}
                     </p>
-                    <ul className="grid gap-px text-[7px] leading-[1.08] text-white/[0.72] sm:text-[7.5px] sm:leading-[1.12]">
-                        {trial.tips.map((tip, i) => (
-                            <li key={i} className="flex gap-0.5">
-                                <span
-                                    className="mt-[2px] h-0.5 w-0.5 shrink-0 rounded-[1px] bg-rf-red shadow-[0_0_4px_rgba(255,64,64,0.5)]"
-                                    aria-hidden
-                                />
-                                <span className="min-w-0">{tip}</span>
-                            </li>
-                        ))}
-                    </ul>
+                    <div className="relative mx-auto flex w-full max-w-[168px] justify-center">
+                        <TrialCardHeroImage
+                            variant="shield"
+                            src={trial.imageUrl}
+                            alt={trial.name}
+                            className="opacity-[0.98] transition-opacity duration-300 ease-out group-hover:opacity-100"
+                        />
+                        <ShieldImageOverlay tier={trial.difficultyTier} maxPoints={trial.maxPoints} />
+                    </div>
                 </div>
 
-                <div className="mt-auto flex flex-wrap gap-0.5 pt-px">
+                <div className="mt-3 flex min-h-0 flex-1 flex-col px-2 sm:px-2.5">
+                    {detailHref ? (
+                        <Link href={detailHref} className={`${titleBase} transition-colors hover:text-amber-100`}>
+                            {trial.name}
+                        </Link>
+                    ) : (
+                        <h3 className={titleBase}>{trial.name}</h3>
+                    )}
+
+                    <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                        <div className="shrink-0 rounded-full border border-white/15 bg-white/[0.06] px-2 py-0.5 text-center">
+                            <p className="text-[6px] font-extrabold uppercase tracking-[0.12em] text-white/50 leading-none">Max</p>
+                            <p className="font-mono text-[10px] font-black tabular-nums leading-none text-white/90">{maxPts}</p>
+                        </div>
+                    </div>
+
+                    <div className="mt-2 border-t border-white/[0.08] pt-1.5">
+                        <p className="mb-0.5 text-center text-[6px] font-bold uppercase tracking-[0.12em] text-sky-200/35 leading-none">
+                            How to max
+                        </p>
+                        <ul className="grid gap-px text-[7px] leading-[1.08] text-white/[0.68] sm:text-[7.5px] sm:leading-[1.12]">
+                            {trial.tips.map((tip, i) => (
+                                <li key={i} className="flex gap-0.5">
+                                    <span
+                                        className="mt-[2px] h-0.5 w-0.5 shrink-0 rounded-[1px] bg-white/40"
+                                        aria-hidden
+                                    />
+                                    <span className="min-w-0">{tip}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="mt-auto flex shrink-0 flex-wrap gap-0.5 px-2 pt-1 sm:px-2.5">
                     {external ? (
                         <a
                             href={guide}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex min-h-[30px] flex-1 min-w-[5rem] items-center justify-center gap-0.5 rounded-md border border-rf-red/50 bg-rf-red px-1 py-0.5 text-center text-[7px] font-bold uppercase tracking-wide text-white shadow-[0_0_12px_-6px_rgba(239,68,68,0.55)] transition-colors hover:bg-[#e02020] sm:min-h-[32px] sm:flex-initial sm:px-1.5 sm:text-[8px]"
+                            className="inline-flex min-h-[30px] flex-1 min-w-[5rem] items-center justify-center gap-0.5 rounded-md border border-white/15 bg-white/[0.08] px-1 py-0.5 text-center text-[7px] font-bold uppercase tracking-wide text-white/95 transition-colors hover:bg-white/[0.12] sm:min-h-[32px] sm:flex-initial sm:px-1.5 sm:text-[8px]"
                         >
                             {guideLabel}
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-2 w-2 opacity-90" aria-hidden>
@@ -139,7 +134,7 @@ export function TrialCommandCard({ trial }: Props) {
                     ) : (
                         <Link
                             href={guide}
-                            className="inline-flex min-h-[30px] flex-1 min-w-[5rem] items-center justify-center rounded-md border border-rf-red/50 bg-rf-red px-1 py-0.5 text-center text-[7px] font-bold uppercase tracking-wide text-white shadow-[0_0_12px_-6px_rgba(239,68,68,0.55)] transition-colors hover:bg-[#e02020] sm:min-h-[32px] sm:flex-initial sm:px-1.5 sm:text-[8px]"
+                            className="inline-flex min-h-[30px] flex-1 min-w-[5rem] items-center justify-center rounded-md border border-white/15 bg-white/[0.08] px-1 py-0.5 text-center text-[7px] font-bold uppercase tracking-wide text-white/95 transition-colors hover:bg-white/[0.12] sm:min-h-[32px] sm:flex-initial sm:px-1.5 sm:text-[8px]"
                         >
                             {guideLabel}
                         </Link>
@@ -147,7 +142,7 @@ export function TrialCommandCard({ trial }: Props) {
                     {detailHref ? (
                         <Link
                             href={detailHref}
-                            className="inline-flex min-h-[30px] flex-1 min-w-[5rem] items-center justify-center rounded-md border border-white/10 bg-white/[0.04] px-1 py-0.5 text-center text-[7px] font-semibold text-white/85 transition-colors hover:border-white/18 hover:bg-white/[0.07] sm:min-h-[32px] sm:flex-initial sm:px-1.5 sm:text-[8px]"
+                            className="inline-flex min-h-[30px] flex-1 min-w-[5rem] items-center justify-center rounded-md border border-white/10 bg-white/[0.04] px-1 py-0.5 text-center text-[7px] font-semibold text-white/80 transition-colors hover:border-white/18 hover:bg-white/[0.07] sm:min-h-[32px] sm:flex-initial sm:px-1.5 sm:text-[8px]"
                         >
                             Briefing
                         </Link>

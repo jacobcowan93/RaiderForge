@@ -23,8 +23,8 @@ type Props = {
     src: string
     alt: string
     className?: string
-    /** `pill`: small 28×28 icon. `circle`: centered rectangular card thumbnail. `banner`: fill parent. */
-    variant?: 'banner' | 'pill' | 'circle'
+    /** `pill`: small 28×28 icon. `circle`: rectangular thumbnail. `shield`: circular art + white ring (in-game badge). `banner`: fill parent. */
+    variant?: 'banner' | 'pill' | 'circle' | 'shield'
 }
 
 /**
@@ -69,17 +69,35 @@ export function TrialCardHeroImage({ src, alt, className, variant = 'banner' }: 
 
     if (variant === 'circle') {
         return (
+            <Image
+                key={`${displaySrc}-${attempt}`}
+                src={displaySrc}
+                alt={alt}
+                width={400}
+                height={225}
+                sizes="(max-width: 640px) 260px, 400px"
+                className={`mb-4 h-44 w-full max-w-[260px] rounded-xl object-cover sm:h-52 ${className ?? ''}`}
+                unoptimized={unoptimized}
+                loading="lazy"
+                onError={() => setAttempt((a) => Math.min(a + 1, candidates.length - 1))}
+                priority={false}
+            />
+        )
+    }
+
+    if (variant === 'shield') {
+        return (
             <div
-                className={`mx-auto mb-2 w-full max-w-[220px] overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-sm ${className ?? ''}`}
+                className={`relative mx-auto aspect-square h-[7.25rem] w-[7.25rem] shrink-0 overflow-hidden rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.28)] ring-[3px] ring-white sm:h-[8.25rem] sm:w-[8.25rem] ${className ?? ''}`}
             >
                 <Image
                     key={`${displaySrc}-${attempt}`}
                     src={displaySrc}
                     alt={alt}
-                    width={320}
-                    height={180}
-                    sizes="(max-width: 640px) 220px, 320px"
-                    className="h-32 w-full object-cover sm:h-40"
+                    width={200}
+                    height={200}
+                    sizes="(max-width: 640px) 116px, 132px"
+                    className="h-full w-full rounded-full object-cover object-center"
                     unoptimized={unoptimized}
                     loading="lazy"
                     onError={() => setAttempt((a) => Math.min(a + 1, candidates.length - 1))}

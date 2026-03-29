@@ -140,10 +140,14 @@ export default async function TrialsPage() {
                 </section>
 
                 <section aria-labelledby="next-week-heading" className="mb-6">
-                    <div className="mb-4">
+                    <div
+                        className="mt-10 h-1 w-full rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-400"
+                        aria-hidden
+                    />
+                    <div className="mb-4 mt-4">
                         <h2
                             id="next-week-heading"
-                            className="mt-10 text-xs font-semibold tracking-[0.16em] text-amber-300 sm:text-sm"
+                            className="text-xs font-semibold tracking-[0.16em] text-amber-300 sm:text-sm"
                         >
                             NEXT WEEK&apos;S TRIALS
                         </h2>
