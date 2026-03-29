@@ -24,8 +24,7 @@ import { formatLocalTimestampFull } from '@/lib/live-data/formatTimestamp'
 import { METAFORGE_ATTRIBUTION } from '@/lib/live-data/attribution'
 import { getEventStyle, EVENT_ICONS, getEventDescription } from '../lib/events/eventsConfig'
 import { MAPS } from '../data/maps'
-import { getZoneThumbnailUrlOrFallback } from '@/lib/maps/mapCovers'
-import { MapCoverImage } from '@/components/maps/MapCoverImage'
+import { encodeLocalPublicPath, getZoneThumbnailUrlOrFallback } from '@/lib/maps/mapCovers'
 import { hubUrlForMapId } from '@/lib/maps/maps-hub-zone'
 
 // Risk level -> display style
@@ -67,8 +66,8 @@ function MapConditionCard({
   upstreamOk: boolean | null
 }) {
   const conditions = getLiveMapConditions(map.id, now, events, upstreamOk)
-  /** Same shipped thumbnails as Maps command center (`buildTcnoZoneVMs` / `mapZoneThumbnails`). */
-  const thumb = getZoneThumbnailUrlOrFallback(map.id)
+  /** Same shipped thumbnails as command center; plain `img` avoids Image optimizer quirks on encoded `/images/...` paths. */
+  const thumb = encodeLocalPublicPath(getZoneThumbnailUrlOrFallback(map.id))
   const risk = RISK_STYLE[map.risk] ?? RISK_STYLE.Medium
   const hasLiveEvent = conditions.minor || conditions.major
 
@@ -78,12 +77,13 @@ function MapConditionCard({
     <div className="rounded-lg overflow-hidden border border-white/5 hover:border-white/15 transition-all bg-black/20">
       <Link href={hubHref} className="group block">
         <div className="relative h-16 bg-rf-bgSoft overflow-hidden">
-          <MapCoverImage
+          {/* eslint-disable-next-line @next/next/no-img-element -- match tactical/grid art; stable on narrow rails */}
+          <img
             src={thumb}
             alt={`${map.displayName} — zone preview`}
-            fill
-            sizes="280px"
-            className="object-cover opacity-60 group-hover:opacity-75 transition-opacity"
+            className="absolute inset-0 h-full w-full object-cover opacity-60 group-hover:opacity-75 transition-opacity"
+            loading="lazy"
+            decoding="async"
           />
           <span className={`absolute top-1.5 right-1.5 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider ${risk.classes}`}>
             {risk.label}

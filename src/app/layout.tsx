@@ -3,7 +3,7 @@ import NavBar from '../components/NavBar'
 import Footer from '../components/Footer'
 import Providers from '../components/Providers'
 import DevBanner from '../components/DevBanner'
-import LivePanel from '../components/LivePanel'
+import { SiteMain } from '../components/SiteMain'
 
 export const metadata = {
     title: 'Raider Forge',
@@ -18,10 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <div className="flex min-h-screen flex-col">
                         <NavBar />
                         <DevBanner />
-                        <main className="relative flex-1 min-w-0 pt-16 pb-[3.25rem] xl:pb-0 xl:pr-[300px]">
-                            <LivePanel />
-                            {children}
-                        </main>
+                        <SiteMain>{children}</SiteMain>
                         <Footer />
                     </div>
                 </Providers>

@@ -1,6 +1,10 @@
+import Image from 'next/image'
+
 /**
  * Maps section layout — full-viewport skill tree art (`public/images/ARC_Raiders_Main_SkillTree.png`)
  * plus a light uniform tint (~20% black) so copy and cards stay readable.
+ *
+ * Uses `next/image` so the asset is always requested through the app (avoids stale CSS-only URLs on some deploys).
  *
  * Stacking context notes:
  *   - Site layout watermark: fixed, z-0 in root stacking context
@@ -11,12 +15,17 @@
  */
 export default function MapsLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="relative">
-            <div
-                className="pointer-events-none fixed inset-0 z-[5] bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: "url('/images/ARC_Raiders_Main_SkillTree.png')" }}
-                aria-hidden="true"
-            />
+        <div className="relative min-h-[100dvh]">
+            <div className="pointer-events-none fixed inset-0 z-[5]" aria-hidden>
+                <Image
+                    src="/images/ARC_Raiders_Main_SkillTree.png"
+                    alt=""
+                    fill
+                    className="object-cover object-center"
+                    sizes="100vw"
+                    priority
+                />
+            </div>
             <div
                 className="pointer-events-none fixed inset-0 z-[5] bg-black/20"
                 aria-hidden="true"
