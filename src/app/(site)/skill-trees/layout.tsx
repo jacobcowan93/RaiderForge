@@ -9,7 +9,7 @@ import { normalizePublicAssetUrl } from '@/lib/site/publicAssetUrl'
 export default function SkillTreesLayout({ children }: { children: React.ReactNode }) {
     return (
         <div className="relative min-h-[100dvh]">
-            {/* Background: in-game skill tree art, inverted for dark mode */}
+            {/* Background: in-game skill tree art — dark source image, dimmed further */}
             <div className="pointer-events-none fixed inset-0 z-[5]" aria-hidden>
                 <Image
                     src={normalizePublicAssetUrl('/images/ARC_Skilltree.png')}
@@ -17,8 +17,8 @@ export default function SkillTreesLayout({ children }: { children: React.ReactNo
                     fill
                     className="object-cover object-center"
                     style={{
-                        filter:   'invert(1) brightness(0.12) saturate(0)',
-                        opacity:  0.85,
+                        filter:  'brightness(0.18) saturate(0.6)',
+                        opacity: 0.9,
                     }}
                     priority
                     sizes="100vw"

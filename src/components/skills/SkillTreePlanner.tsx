@@ -161,29 +161,25 @@ export function SkillTreePlanner() {
             )}
 
             {/* ── Main layout ─────────────────────────────────────────────── */}
-            <div className="flex gap-6 items-start">
+            <div className="flex flex-col gap-6">
 
-                {/* Branch trees */}
-                <div className="flex-1 min-w-0">
-
-                    {/* Desktop: unified fan-layout canvas (all 3 branches together) */}
-                    <div className="hidden lg:block">
-                        <UnifiedSkillTreeCanvas allocs={allocs} onChange={handleChange} />
-                    </div>
-
-                    {/* Mobile: single active branch */}
-                    <div className="lg:hidden">
-                        <div
-                            className="rounded-2xl border border-white/[0.06] p-4"
-                            style={{ background: 'rgba(15,20,27,0.55)' }}
-                        >
-                            <BranchTree branch={activeBranch} allocs={allocs} onChange={handleChange} />
-                        </div>
+                {/* Mobile: single active branch */}
+                <div className="lg:hidden">
+                    <div
+                        className="rounded-2xl border border-white/[0.06] p-4"
+                        style={{ background: 'rgba(15,20,27,0.55)' }}
+                    >
+                        <BranchTree branch={activeBranch} allocs={allocs} onChange={handleChange} />
                     </div>
                 </div>
 
-                {/* Desktop sidebar */}
-                <div id="build-summary" className="hidden lg:block w-72 shrink-0 sticky top-24">
+                {/* Desktop: unified fan-layout canvas — full width */}
+                <div className="hidden lg:block">
+                    <UnifiedSkillTreeCanvas allocs={allocs} onChange={handleChange} />
+                </div>
+
+                {/* Desktop sidebar — full width, below the canvas */}
+                <div id="build-summary" className="hidden lg:block">
                     <BuildSidebar allocs={allocs} onChange={handleChange} />
                 </div>
             </div>
