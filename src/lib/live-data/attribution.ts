@@ -1,6 +1,6 @@
 /**
  * Shared attribution snippets for MetaForge, TroubleChute / tcno, ARDB.
- * Use in Maps, LivePanel footers, Blueprints, Marketplace footers for consistency.
+ * Use in Maps, Blueprints, Marketplace footers for consistency.
  */
 
 export const METAFORGE_ATTRIBUTION = {

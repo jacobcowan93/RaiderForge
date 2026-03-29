@@ -46,9 +46,9 @@ export default function SkillTreesPage() {
                     </div>
                     <p className="mt-2.5 text-sm max-w-2xl text-white/70 leading-relaxed">
                         Allocate expedition points across three branches —{' '}
-                        <span className="text-amber-400/80 font-medium">Conditioning</span>,{' '}
-                        <span className="text-sky-400/80 font-medium">Mobility</span>, and{' '}
-                        <span className="text-emerald-400/80 font-medium">Survival</span>.
+                        <span className="text-green-400/80 font-medium">Conditioning</span>,{' '}
+                        <span className="text-yellow-400/80 font-medium">Mobility</span>, and{' '}
+                        <span className="text-red-400/80 font-medium">Survival</span>.
                         Click a node to unlock it; right-click to remove a rank.
                         Share your build with the copy-link button.
                     </p>

@@ -5,7 +5,13 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 
 import { ARDB_CATALOG_ATTRIBUTION } from '@/lib/marketplace/catalog-types'
-import { fetchListings, type ListingRow, type ListingsError } from '@/lib/marketplace/listings-api'
+import {
+    fetchListings,
+    fetchMarketplacePersistenceStatus,
+    type ListingRow,
+    type ListingsError,
+} from '@/lib/marketplace/listings-api'
+import { MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 
 import type { ListingStatus, MarketplaceTabId } from './_lib/marketplace-types'
 import { btnPrimary, MY_LISTINGS_LIMIT } from './_lib/marketplace-constants'
@@ -13,17 +19,32 @@ import { MarketplaceBrowseTab } from './_components/MarketplaceBrowseTab'
 import { MarketplaceHeader } from './_components/MarketplaceHeader'
 import { MarketplaceMyListingsTab } from './_components/MarketplaceMyListingsTab'
 import { MarketplaceOrdersTab } from './_components/MarketplaceOrdersTab'
+import { MarketplacePersistenceBanner } from './_components/MarketplacePersistenceBanner'
 import { MarketplaceSellTab } from './_components/MarketplaceSellTab'
 import { MarketplaceTabs } from './_components/MarketplaceTabs'
 import { Divider, Spinner } from './_components/MarketplaceShared'
 
-function MarketplaceAuthenticatedSell({ userId }: { userId: string }) {
+function MarketplaceAuthenticatedSell({
+    userId,
+    persistenceEnabled,
+}: {
+    userId: string
+    persistenceEnabled: boolean
+}) {
     const [myListings, setMyListings] = useState<ListingRow[]>([])
     const [loadingMyListings, setLoadingMyListings] = useState(false)
     const [myListingsError, setMyListingsError] = useState<string | null>(null)
 
     useEffect(() => {
         let cancelled = false
+        if (!persistenceEnabled) {
+            setLoadingMyListings(false)
+            setMyListings([])
+            setMyListingsError(MARKETPLACE_PERSISTENCE_UNAVAILABLE)
+            return () => {
+                cancelled = true
+            }
+        }
         ;(async () => {
             setLoadingMyListings(true)
             setMyListingsError(null)
@@ -36,7 +57,7 @@ function MarketplaceAuthenticatedSell({ userId }: { userId: string }) {
         return () => {
             cancelled = true
         }
-    }, [userId])
+    }, [userId, persistenceEnabled])
 
     function handleDelete(id: string) {
         setMyListings((prev) => prev.filter((l) => l.id !== id))
@@ -62,20 +83,42 @@ function MarketplaceAuthenticatedSell({ userId }: { userId: string }) {
 
             <Divider label="Create Listing" />
 
-            <MarketplaceSellTab userId={userId} onListingPosted={handleListingPosted} />
+            <MarketplaceSellTab
+                userId={userId}
+                onListingPosted={handleListingPosted}
+                persistenceDisabled={!persistenceEnabled}
+            />
         </div>
     )
 }
 
 export default function MarketplacePage() {
     const [tab, setTab] = useState<MarketplaceTabId>('browse')
+    const [persistence, setPersistence] = useState<'unknown' | 'on' | 'off'>('unknown')
     const { data: session, status: sessionStatus } = useSession()
     const userId = (session?.user as { id?: string } | undefined)?.id
+
+    useEffect(() => {
+        let cancelled = false
+        void (async () => {
+            const r = await fetchMarketplacePersistenceStatus()
+            if (cancelled) return
+            if (!r.ok || !r.listingsEnabled) setPersistence('off')
+            else setPersistence('on')
+        })()
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
+    const persistenceEnabled = persistence === 'on'
 
     return (
         <div className="relative max-w-7xl mx-auto py-8 md:py-10 px-4 sm:px-5">
             <div className="space-y-4 md:space-y-5">
                 <MarketplaceHeader />
+
+                {persistence === 'off' ? <MarketplacePersistenceBanner /> : null}
 
                 <MarketplaceTabs activeTab={tab} onTabChange={setTab} />
 
@@ -108,8 +151,16 @@ export default function MarketplacePage() {
                                     Sign in
                                 </a>
                             </div>
+                        ) : persistence === 'unknown' ? (
+                            <div className="flex items-center justify-center py-20 gap-2.5 text-rf-textSoft/60">
+                                <Spinner size={20} />
+                                <span className="text-sm">Checking marketplace…</span>
+                            </div>
                         ) : (
-                            <MarketplaceAuthenticatedSell userId={userId} />
+                            <MarketplaceAuthenticatedSell
+                                userId={userId}
+                                persistenceEnabled={persistenceEnabled}
+                            />
                         ))}
                     {tab === 'orders' &&
                         (sessionStatus === 'loading' ? (
@@ -138,8 +189,13 @@ export default function MarketplacePage() {
                                     Sign in
                                 </a>
                             </div>
+                        ) : persistence === 'unknown' ? (
+                            <div className="flex items-center justify-center py-20 gap-2.5 text-rf-textSoft/60">
+                                <Spinner size={20} />
+                                <span className="text-sm">Checking marketplace…</span>
+                            </div>
                         ) : (
-                            <MarketplaceOrdersTab userId={userId} />
+                            <MarketplaceOrdersTab userId={userId} persistenceEnabled={persistenceEnabled} />
                         ))}
                 </div>
 

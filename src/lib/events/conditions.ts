@@ -1,7 +1,7 @@
 /**
  * conditions.ts
  *
- * Calculates active map conditions for the LivePanel and map pages.
+ * Calculates active map conditions for map pages and the command center.
  *
  * Source priority:
  *   1. MetaForge /events-schedule API (primary — live data)
@@ -50,7 +50,7 @@ export type MapConditions = {
   source: 'api' | 'rotation-fallback'
   /**
    * When MetaForge supplies endTime on active rows, earliest end among matching events (epoch ms).
-   * Used for "modifier ends in" countdown in LivePanel.
+   * Used for "modifier ends in" countdown on command center zone cards when sourced from MetaForge.
    */
   eventEndsAtMs: number | null
 }

@@ -70,10 +70,10 @@ export const BRANCH_META: Record<SkillBranch, {
     Survival: {
         label:       'Survival',
         tagline:     'Looting, crafting, and carry capacity',
-        accentClass: 'text-orange-400',
-        borderClass: 'border-orange-500/60',
-        bgClass:     'bg-orange-500/15',
-        hex:         '#f97316',
+        accentClass: 'text-red-400',
+        borderClass: 'border-red-500/60',
+        bgClass:     'bg-red-500/15',
+        hex:         '#ef4444',
     },
 }
 

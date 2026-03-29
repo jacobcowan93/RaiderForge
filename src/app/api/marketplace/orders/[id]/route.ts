@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth/options'
 import { getPrisma } from '@/lib/prisma'
+import { logMarketplacePersistenceMissing, MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -35,7 +36,10 @@ const SELLER_TRANSITIONS: Record<string, string[]> = {
 
 export async function GET(_req: NextRequest, ctx: RouteContext) {
     const prisma = getPrisma()
-    if (!prisma) return jsonError(503, 'service_unavailable', 'Orders require DATABASE_URL.')
+    if (!prisma) {
+        logMarketplacePersistenceMissing('GET /api/marketplace/orders/[id]')
+        return jsonError(503, 'service_unavailable', MARKETPLACE_PERSISTENCE_UNAVAILABLE)
+    }
 
     const session = await getServerSession(authOptions)
     const userId = (session?.user as { id?: string } | undefined)?.id
@@ -71,7 +75,10 @@ export async function GET(_req: NextRequest, ctx: RouteContext) {
 
 export async function PATCH(req: NextRequest, ctx: RouteContext) {
     const prisma = getPrisma()
-    if (!prisma) return jsonError(503, 'service_unavailable', 'Orders require DATABASE_URL.')
+    if (!prisma) {
+        logMarketplacePersistenceMissing('PATCH /api/marketplace/orders/[id]')
+        return jsonError(503, 'service_unavailable', MARKETPLACE_PERSISTENCE_UNAVAILABLE)
+    }
 
     const session = await getServerSession(authOptions)
     const userId = (session?.user as { id?: string } | undefined)?.id

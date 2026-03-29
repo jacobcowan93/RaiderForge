@@ -18,6 +18,7 @@ export function MarketplaceListingForm({
     submitting,
     submitError,
     canSubmit,
+    fieldsDisabled,
 }: {
     price: string
     currency: string
@@ -31,7 +32,10 @@ export function MarketplaceListingForm({
     submitting: boolean
     submitError: string | null
     canSubmit: boolean
+    /** When true (e.g. DB unavailable), all fields and submit are disabled. */
+    fieldsDisabled?: boolean
 }) {
+    const locked = Boolean(fieldsDisabled) || submitting
     return (
         <form onSubmit={onSubmit} className="space-y-5">
             <div className="space-y-1.5">
@@ -47,7 +51,7 @@ export function MarketplaceListingForm({
                             placeholder="0.00"
                             value={price}
                             onChange={(e) => onPriceChange(e.target.value)}
-                            disabled={submitting}
+                            disabled={locked}
                         />
                     </div>
                     <div className="space-y-1">
@@ -56,7 +60,7 @@ export function MarketplaceListingForm({
                             className={selectCls}
                             value={currency}
                             onChange={(e) => onCurrencyChange(e.target.value)}
-                            disabled={submitting}
+                            disabled={locked}
                         >
                             {LISTING_CURRENCIES.map((c) => (
                                 <option key={c} value={c}>{c}</option>
@@ -77,7 +81,7 @@ export function MarketplaceListingForm({
                         placeholder="1"
                         value={quantity}
                         onChange={(e) => onQuantityChange(e.target.value)}
-                        disabled={submitting}
+                        disabled={locked}
                     />
                 </div>
                 <div className="space-y-1">
@@ -87,7 +91,7 @@ export function MarketplaceListingForm({
                         placeholder="Condition, trade details, or other notes…"
                         value={notes}
                         onChange={(e) => onNotesChange(e.target.value)}
-                        disabled={submitting}
+                        disabled={locked}
                         maxLength={500}
                     />
                 </div>
@@ -95,7 +99,7 @@ export function MarketplaceListingForm({
 
             {submitError && <ErrorMsg msg={submitError} />}
 
-            <button type="submit" className={btnPrimary + ' w-full py-2.5'} disabled={submitting || !canSubmit}>
+            <button type="submit" className={btnPrimary + ' w-full py-2.5'} disabled={locked || !canSubmit}>
                 {submitting ? <><Spinner size={14} /> Posting…</> : 'Post Listing'}
             </button>
         </form>

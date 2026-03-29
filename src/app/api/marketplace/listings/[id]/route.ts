@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth/options'
 import { getPrisma } from '@/lib/prisma'
+import { logMarketplacePersistenceMissing, MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -22,7 +23,8 @@ type RouteContext = { params: Promise<{ id: string }> }
 export async function PATCH(req: NextRequest, ctx: RouteContext) {
     const prisma = getPrisma()
     if (!prisma) {
-        return jsonError(503, 'service_unavailable', 'Marketplace listings require DATABASE_URL.')
+        logMarketplacePersistenceMissing('PATCH /api/marketplace/listings/[id]')
+        return jsonError(503, 'service_unavailable', MARKETPLACE_PERSISTENCE_UNAVAILABLE)
     }
 
     const session = await getServerSession(authOptions)
@@ -108,7 +110,8 @@ export async function PATCH(req: NextRequest, ctx: RouteContext) {
 export async function DELETE(_req: NextRequest, ctx: RouteContext) {
     const prisma = getPrisma()
     if (!prisma) {
-        return jsonError(503, 'service_unavailable', 'Marketplace listings require DATABASE_URL.')
+        logMarketplacePersistenceMissing('DELETE /api/marketplace/listings/[id]')
+        return jsonError(503, 'service_unavailable', MARKETPLACE_PERSISTENCE_UNAVAILABLE)
     }
 
     const session = await getServerSession(authOptions)

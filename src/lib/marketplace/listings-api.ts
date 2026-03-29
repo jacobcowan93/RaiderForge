@@ -5,6 +5,27 @@
  */
 
 const BASE = '/api/marketplace/listings'
+const STATUS = '/api/marketplace/status'
+
+export type MarketplacePersistenceStatusResult =
+    | { ok: true; listingsEnabled: boolean; ordersEnabled: boolean }
+    | { ok: false }
+
+/** Whether native listings/orders APIs can talk to the database (probe before posting). */
+export async function fetchMarketplacePersistenceStatus(): Promise<MarketplacePersistenceStatusResult> {
+    try {
+        const res = await fetch(STATUS, { cache: 'no-store' })
+        if (!res.ok) return { ok: false }
+        const j = (await res.json()) as { listingsEnabled?: boolean; ordersEnabled?: boolean }
+        return {
+            ok: true,
+            listingsEnabled: Boolean(j.listingsEnabled),
+            ordersEnabled: Boolean(j.ordersEnabled),
+        }
+    } catch {
+        return { ok: false }
+    }
+}
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 

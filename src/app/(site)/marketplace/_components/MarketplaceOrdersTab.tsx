@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { fetchOrders, type OrderRow, type OrdersError } from '@/lib/marketplace/orders-api'
+import { MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 
 import { MY_ORDERS_LIMIT } from '../_lib/marketplace-constants'
 import { sortOrdersForDisplay } from '../_lib/marketplace-view-models'
@@ -12,7 +13,13 @@ import { MarketplaceEmptyState } from './MarketplaceEmptyState'
 
 type RoleFilter = 'buyer' | 'seller'
 
-export function MarketplaceOrdersTab({ userId }: { userId: string }) {
+export function MarketplaceOrdersTab({
+    userId,
+    persistenceEnabled,
+}: {
+    userId: string
+    persistenceEnabled: boolean
+}) {
     const [roleFilter, setRoleFilter] = useState<RoleFilter>('buyer')
     const [orders, setOrders] = useState<OrderRow[]>([])
     const [loading, setLoading] = useState(false)
@@ -32,8 +39,14 @@ export function MarketplaceOrdersTab({ userId }: { userId: string }) {
     }, [])
 
     useEffect(() => {
+        if (!persistenceEnabled) {
+            setLoading(false)
+            setError(MARKETPLACE_PERSISTENCE_UNAVAILABLE)
+            setOrders([])
+            return
+        }
         void load(roleFilter)
-    }, [roleFilter, load])
+    }, [roleFilter, load, persistenceEnabled])
 
     function handleStatusUpdated(orderId: string, newStatus: string) {
         setOrders((prev) =>

@@ -9,6 +9,7 @@ import {
     type ListingRow,
     type ListingsError,
 } from '@/lib/marketplace/listings-api'
+import { MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 
 import { sectionHeading } from '../_lib/marketplace-constants'
 import { Divider, ErrorMsg, Spinner, Toast } from './MarketplaceShared'
@@ -19,9 +20,12 @@ import { MarketplaceListingForm } from './MarketplaceListingForm'
 export function MarketplaceSellTab({
     userId,
     onListingPosted,
+    persistenceDisabled,
 }: {
     userId: string
     onListingPosted: (listing: ListingRow) => void
+    /** When true, posting is blocked and the form is read-only (DB not configured). */
+    persistenceDisabled: boolean
 }) {
     const [catalogItems, setCatalogItems] = useState<CatalogItemSummary[]>([])
     const [catalogLoading, setCatalogLoading] = useState(false)
@@ -57,6 +61,10 @@ export function MarketplaceSellTab({
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault()
+        if (persistenceDisabled) {
+            setSubmitError(MARKETPLACE_PERSISTENCE_UNAVAILABLE)
+            return
+        }
         if (!selectedItem) { setSubmitError('Select an item first.'); return }
         const priceVal = parseFloat(price)
         if (!Number.isFinite(priceVal) || priceVal <= 0) { setSubmitError('Enter a valid price.'); return }
@@ -112,7 +120,7 @@ export function MarketplaceSellTab({
                             items={catalogItems}
                             value={selectedItem}
                             onChange={setSelectedItem}
-                            disabled={submitting}
+                            disabled={submitting || persistenceDisabled}
                         />
                         {catalogSyncedAt && (
                             <p className="text-[9px] text-rf-textSoft/35">
@@ -146,7 +154,8 @@ export function MarketplaceSellTab({
                 onSubmit={handleSubmit}
                 submitting={submitting}
                 submitError={submitError}
-                canSubmit={!!selectedItem}
+                canSubmit={Boolean(selectedItem) && !persistenceDisabled}
+                fieldsDisabled={persistenceDisabled}
             />
         </div>
     )

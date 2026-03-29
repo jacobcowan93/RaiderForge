@@ -1,5 +1,5 @@
 /**
- * Server-oriented helpers for MetaForge live events (maps / LivePanel).
+ * Server-oriented helpers for MetaForge live events (maps command center, etc.).
  * Base URL: https://metaforge.app/api/arc-raiders (events-schedule; event-timers deprecated upstream).
  */
 

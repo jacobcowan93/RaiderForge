@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth/options'
 import { getPrisma } from '@/lib/prisma'
 import { readCatalogStore } from '@/lib/marketplace/ardb/catalog-store'
+import { logMarketplacePersistenceMissing, MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -27,7 +28,8 @@ function jsonError(status: number, error: string, message: string) {
 export async function GET(req: NextRequest) {
     const prisma = getPrisma()
     if (!prisma) {
-        return jsonError(503, 'service_unavailable', 'Marketplace listings require DATABASE_URL.')
+        logMarketplacePersistenceMissing('GET /api/marketplace/listings')
+        return jsonError(503, 'service_unavailable', MARKETPLACE_PERSISTENCE_UNAVAILABLE)
     }
 
     const { searchParams } = new URL(req.url)
@@ -110,7 +112,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     const prisma = getPrisma()
     if (!prisma) {
-        return jsonError(503, 'service_unavailable', 'Marketplace listings require DATABASE_URL.')
+        logMarketplacePersistenceMissing('POST /api/marketplace/listings')
+        return jsonError(503, 'service_unavailable', MARKETPLACE_PERSISTENCE_UNAVAILABLE)
     }
 
     const session = await getServerSession(authOptions)

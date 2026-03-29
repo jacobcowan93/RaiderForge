@@ -16,7 +16,7 @@ type Props = {
     polledEventCount: number
     loading: boolean
     className?: string
-    /** When set (e.g. LivePanel 1s tick), chip/stale logic follows parent clock; no internal timer. */
+    /** When set, chip/stale logic follows parent clock; no internal timer. */
     now?: Date
 }
 

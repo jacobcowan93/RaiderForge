@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth/options'
 import { getPrisma } from '@/lib/prisma'
+import { logMarketplacePersistenceMissing, MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 import { readCatalogStore } from '@/lib/marketplace/ardb/catalog-store'
 
 export const runtime = 'nodejs'
@@ -82,7 +83,10 @@ function serializeOrder(order: {
 
 export async function GET(req: NextRequest) {
     const prisma = getPrisma()
-    if (!prisma) return jsonError(503, 'service_unavailable', 'Orders require DATABASE_URL.')
+    if (!prisma) {
+        logMarketplacePersistenceMissing('GET /api/marketplace/orders')
+        return jsonError(503, 'service_unavailable', MARKETPLACE_PERSISTENCE_UNAVAILABLE)
+    }
 
     const session = await getServerSession(authOptions)
     const userId = (session?.user as { id?: string } | undefined)?.id
@@ -124,7 +128,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     const prisma = getPrisma()
-    if (!prisma) return jsonError(503, 'service_unavailable', 'Orders require DATABASE_URL.')
+    if (!prisma) {
+        logMarketplacePersistenceMissing('POST /api/marketplace/orders')
+        return jsonError(503, 'service_unavailable', MARKETPLACE_PERSISTENCE_UNAVAILABLE)
+    }
 
     const session = await getServerSession(authOptions)
     const buyerId = (session?.user as { id?: string } | undefined)?.id
