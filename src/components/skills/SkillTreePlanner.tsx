@@ -14,6 +14,7 @@ import {
 import { loadSkillTreeSave, saveSkillTreeSave } from '@/lib/skill-tree/skillTreeSaveStorage'
 import { BranchTree } from './BranchTree'
 import { BuildSidebar } from './BuildSidebar'
+import { UnifiedSkillTreeCanvas } from './UnifiedSkillTreeCanvas'
 
 // ── Branch tab selector ───────────────────────────────────────────────────────
 
@@ -165,20 +166,9 @@ export function SkillTreePlanner() {
                 {/* Branch trees */}
                 <div className="flex-1 min-w-0">
 
-                    {/* Desktop: all 3 branches side by side */}
-                    <div className="hidden lg:grid lg:grid-cols-3 gap-4">
-                        {BRANCHES.map((b) => (
-                            <div
-                                key={b}
-                                className="rounded-2xl border border-white/[0.06] p-4 transition-colors"
-                                style={{
-                                    background:  'rgba(15,20,27,0.55)',
-                                    borderColor: 'rgba(255,255,255,0.06)',
-                                }}
-                            >
-                                <BranchTree branch={b} allocs={allocs} onChange={handleChange} />
-                            </div>
-                        ))}
+                    {/* Desktop: unified fan-layout canvas (all 3 branches together) */}
+                    <div className="hidden lg:block">
+                        <UnifiedSkillTreeCanvas allocs={allocs} onChange={handleChange} />
                     </div>
 
                     {/* Mobile: single active branch */}
