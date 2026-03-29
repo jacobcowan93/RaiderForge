@@ -68,11 +68,18 @@ export default async function TrialsPage() {
                             />
                         </div>
 
-                        <div className="mt-4 flex flex-col gap-1 border-t border-white/[0.06] pt-4 text-[10px] sm:text-[11px] text-white/45">
-                            <p className="font-medium text-white/70">{formatUtcWeekOfLabel(now)}</p>
-                            <p className="tabular-nums text-white/40">{formatLastUpdated(now)}</p>
-                            <p className="text-white/35">
-                                Active rotation: <span className="text-white/55">{featured.label}</span>
+                        <div
+                            className="mx-auto mt-4 h-[3px] max-w-2xl rounded-full bg-gradient-to-r from-transparent via-rf-red/90 to-transparent shadow-[0_0_16px_-2px_rgba(239,68,68,0.45)]"
+                            aria-hidden
+                        />
+
+                        <div className="mt-5 flex flex-col gap-1.5 border-t border-white/[0.08] pt-5">
+                            <p className="text-sm font-semibold leading-snug text-white/92 sm:text-base">
+                                {formatUtcWeekOfLabel(now)}
+                            </p>
+                            <p className="text-xs tabular-nums text-white/65 sm:text-sm">{formatLastUpdated(now)}</p>
+                            <p className="text-xs text-white/50 sm:text-[13px]">
+                                Active rotation: <span className="font-medium text-white/80">{featured.label}</span>
                             </p>
                         </div>
                     </div>
