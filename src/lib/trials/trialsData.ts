@@ -23,7 +23,7 @@ export type TrialBrief = {
     description: string
     maxPoints: number
     tips: string[]
-    /** Card hero image (zone cover or future `/images/trials/*.jpg` art). */
+    /** Thematic card art under `/public/images/trials/` (SVG now; swap to same-basename `.jpg` later if desired). */
     imageUrl: string
     guideUrl?: string
     guideLabel?: string
@@ -35,11 +35,6 @@ export type TrialWeekPresentation = {
     label: string
     subtitle?: string
     trials: TrialBrief[]
-}
-
-/** Zone cover placeholders per trial until bespoke `/images/trials/*.jpg` assets ship. */
-function zoneThumb(mapRfId: string): string {
-    return getZoneThumbnailUrlOrFallback(mapRfId)
 }
 
 /** Extra fields keyed by `WeeklyTrial.id` — merged onto catalog trials for the tactical cards. */
@@ -57,7 +52,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
 > = {
     'trial-hornet-havoc': {
         maxPoints: 15_000,
-        imageUrl: zoneThumb('dam-battlegrounds'),
+        imageUrl: '/images/trials/hornet-havoc.svg',
         tips: [
             'Loadout: mag size + reload perks (Conditioning); bring one stagger tool (grenade/shotgun) so swarms never reset your chain.',
             'Position: hold elevated spillways with a rear exit — never dead-end in a pipe when the wave thickens.',
@@ -70,7 +65,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
     },
     'trial-carriable-dash': {
         maxPoints: 12_500,
-        imageUrl: zoneThumb('spaceport'),
+        imageUrl: '/images/trials/carriable-relay.svg',
         tips: [
             'Loadout: Mobility + stamina; light armor — weight saves seconds on every pad. Skip “raid” DPS unless you’re on escort duty.',
             'Route: one dry run in daylight to map pad order, then run “hot” with only scripted heal stops.',
@@ -82,7 +77,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
     },
     'trial-bombardier-siege': {
         maxPoints: 18_000,
-        imageUrl: zoneThumb('burial-city'),
+        imageUrl: '/images/trials/bombardier-siege.svg',
         tips: [
             'Loadout: sustain + splash resist (Survival); avoid glass cannons — one downed player tanks the whole squad multiplier.',
             'Position: diagonal rotations between blocks after each salvo; never stand on rooftops longer than one magazine.',
@@ -95,7 +90,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
     },
     'trial-lightning-gauntlet': {
         maxPoints: 16_500,
-        imageUrl: zoneThumb('blue-gate'),
+        imageUrl: '/images/trials/lightning-gauntlet.svg',
         tips: [
             'Loadout: Mobility + burst Conditioning — dump damage only in the 1–2s after a strike, not while paint is active.',
             'Callouts: one voice calls “paint” / “clear” so everyone pivots on the same frame.',
@@ -108,7 +103,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
     },
     'trial-flying-arc-hunt': {
         maxPoints: 14_000,
-        imageUrl: zoneThumb('spaceport'),
+        imageUrl: '/images/trials/flying-arc-hunt.svg',
         tips: [
             'Loadout: mid-range precision + spare ammo box — flyers are the score; ground ARC are distraction tax.',
             'Position: gantries and towers with pre-aimed travel lanes; lead shots when drones commit to a hover “scan” window.',
@@ -121,7 +116,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
     },
     'trial-frostline': {
         maxPoints: 17_500,
-        imageUrl: zoneThumb('stella-montis'),
+        imageUrl: '/images/trials/frostline-endurance.svg',
         tips: [
             'Loadout: thermal sustain + pull discipline (Survival); melee/rush builds lose time to exposure and patrol adds.',
             'Route: indoor loop through heated interiors; never double-back into wind tunnels.',

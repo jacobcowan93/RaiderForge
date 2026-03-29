@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150" width="200" height="150">
+  <defs>
+    <linearGradient id="frostBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#050810"/>
+    </linearGradient>
+  </defs>
+  <rect fill="url(#frostBg)" width="200" height="150"/>
+  <rect x="10" y="10" width="180" height="130" fill="none" stroke="rgba(56,189,248,0.55)" stroke-width="1.25"/>
+  <path fill="rgba(186,230,253,0.35)" d="M100 38l4 12h12l-10 7 4 12-10-7-10 7 4-12-10-7h12l4-12zm0 52l3.5 10h10l-8 6 3.5 10-8.5-6-8.5 6 3.5-10-8-6h10l3.5-10z"/>
+</svg>
