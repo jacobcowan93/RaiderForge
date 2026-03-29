@@ -10,7 +10,12 @@ import {
 import { DIFFICULTY_LABEL } from '@/data/learningShared'
 import { useLearningProgress } from '@/lib/progression/learningProgressContext'
 
-export function RecommendedTracksSection() {
+type RecommendedTracksSectionProps = {
+    /** Section heading (e.g. “Starter playlists” on Guides). */
+    heading?: string
+}
+
+export function RecommendedTracksSection({ heading = 'Recommended tracks' }: RecommendedTracksSectionProps) {
     const { hydrated, pathCompletion, resetAll } = useLearningProgress()
     const paths = getHubRecommendedPaths()
 
@@ -24,7 +29,7 @@ export function RecommendedTracksSection() {
         <section aria-labelledby="recommended-tracks-heading" className="mb-12">
             <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
                 <h2 id="recommended-tracks-heading" className="text-xs uppercase tracking-[0.2em] text-white/40 font-bold">
-                    Recommended tracks
+                    {heading}
                 </h2>
                 <button
                     type="button"

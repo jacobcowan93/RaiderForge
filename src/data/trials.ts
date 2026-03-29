@@ -5,6 +5,7 @@
 
 import type { LearningDifficulty, LearningTag } from '@/data/learningShared'
 import type { MapCoverRfId } from '@/lib/maps/mapCovers'
+import { getUtcMondayMidnightOfCurrentWeekMs } from '@/lib/trials/weeklyReset'
 
 export type TrialBranch = 'conditioning' | 'mobility' | 'survival'
 
@@ -191,15 +192,19 @@ export const TRIAL_WEEK_EXAMPLES: TrialWeekBundle[] = [
     },
 ]
 
-export function getFeaturedTrialWeek(): TrialWeekBundle {
+/**
+ * Featured rotation for the UTC calendar week containing `now`.
+ * Uses the Monday 00:00 UTC of that week as a stable index (aligned with Trials “week of” display).
+ */
+export function getFeaturedTrialWeek(now: Date = new Date()): TrialWeekBundle {
     const w = TRIAL_WEEK_EXAMPLES
     if (w.length === 0) {
         return { weekId: 'empty', label: 'No trial data', trials: [] }
     }
-    const t = new Date()
-    const start = Date.UTC(t.getUTCFullYear(), 0, 1)
-    const weekNo = Math.floor((Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate()) - start) / 86400000 / 7)
-    return w[weekNo % w.length]!
+    const mondayMs = getUtcMondayMidnightOfCurrentWeekMs(now)
+    const weekIndex = Math.floor(mondayMs / (7 * 24 * 60 * 60 * 1000))
+    const i = ((weekIndex % w.length) + w.length) % w.length
+    return w[i]!
 }
 
 export function getAlternateTrialWeeks(): TrialWeekBundle[] {

@@ -5,7 +5,8 @@
 
 import type { LearningDifficulty } from '@/data/learningShared'
 import type { TrialWeekBundle, WeeklyTrial } from '@/data/trials'
-import { getAlternateTrialWeeks, getFeaturedTrialWeek } from '@/data/trials'
+import { getFeaturedTrialWeek } from '@/data/trials'
+import { getZoneThumbnailUrlOrFallback } from '@/lib/maps/mapCovers'
 
 /** Player-facing tier for cards (maps catalog onboarding → Easy, casual → Medium, advanced → Hard). */
 export type TrialDifficultyTier = 'Easy' | 'Medium' | 'Hard'
@@ -22,6 +23,8 @@ export type TrialBrief = {
     description: string
     maxPoints: number
     tips: string[]
+    /** Card hero image (zone cover or future `/images/trials/*.jpg` art). */
+    imageUrl: string
     guideUrl?: string
     guideLabel?: string
     difficultyTier: TrialDifficultyTier
@@ -34,12 +37,18 @@ export type TrialWeekPresentation = {
     trials: TrialBrief[]
 }
 
+/** Zone cover placeholders per trial until bespoke `/images/trials/*.jpg` assets ship. */
+function zoneThumb(mapRfId: string): string {
+    return getZoneThumbnailUrlOrFallback(mapRfId)
+}
+
 /** Extra fields keyed by `WeeklyTrial.id` — merged onto catalog trials for the tactical cards. */
 export const TRIAL_COMMAND_BRIEFS: Record<
     string,
     {
         maxPoints: number
         tips: string[]
+        imageUrl: string
         guideUrl?: string
         guideLabel?: string
         /** Overrides card description when set; else `WeeklyTrial.shortDescription` */
@@ -48,6 +57,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
 > = {
     'trial-hornet-havoc': {
         maxPoints: 15_000,
+        imageUrl: zoneThumb('dam-battlegrounds'),
         tips: [
             'Loadout: mag size + reload perks (Conditioning); bring one stagger tool (grenade/shotgun) so swarms never reset your chain.',
             'Position: hold elevated spillways with a rear exit — never dead-end in a pipe when the wave thickens.',
@@ -60,6 +70,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
     },
     'trial-carriable-dash': {
         maxPoints: 12_500,
+        imageUrl: zoneThumb('spaceport'),
         tips: [
             'Loadout: Mobility + stamina; light armor — weight saves seconds on every pad. Skip “raid” DPS unless you’re on escort duty.',
             'Route: one dry run in daylight to map pad order, then run “hot” with only scripted heal stops.',
@@ -71,6 +82,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
     },
     'trial-bombardier-siege': {
         maxPoints: 18_000,
+        imageUrl: zoneThumb('burial-city'),
         tips: [
             'Loadout: sustain + splash resist (Survival); avoid glass cannons — one downed player tanks the whole squad multiplier.',
             'Position: diagonal rotations between blocks after each salvo; never stand on rooftops longer than one magazine.',
@@ -83,6 +95,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
     },
     'trial-lightning-gauntlet': {
         maxPoints: 16_500,
+        imageUrl: zoneThumb('blue-gate'),
         tips: [
             'Loadout: Mobility + burst Conditioning — dump damage only in the 1–2s after a strike, not while paint is active.',
             'Callouts: one voice calls “paint” / “clear” so everyone pivots on the same frame.',
@@ -95,6 +108,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
     },
     'trial-flying-arc-hunt': {
         maxPoints: 14_000,
+        imageUrl: zoneThumb('spaceport'),
         tips: [
             'Loadout: mid-range precision + spare ammo box — flyers are the score; ground ARC are distraction tax.',
             'Position: gantries and towers with pre-aimed travel lanes; lead shots when drones commit to a hover “scan” window.',
@@ -107,6 +121,7 @@ export const TRIAL_COMMAND_BRIEFS: Record<
     },
     'trial-frostline': {
         maxPoints: 17_500,
+        imageUrl: zoneThumb('stella-montis'),
         tips: [
             'Loadout: thermal sustain + pull discipline (Survival); melee/rush builds lose time to exposure and patrol adds.',
             'Route: indoor loop through heated interiors; never double-back into wind tunnels.',
@@ -136,6 +151,7 @@ function trialToBrief(t: WeeklyTrial): TrialBrief {
         description: extra?.description ?? t.shortDescription,
         maxPoints: extra?.maxPoints ?? 12_000,
         tips: tips.length > 0 ? tips : ['See full briefing for scoring focus.'],
+        imageUrl: extra?.imageUrl ?? (t.mapRfId ? getZoneThumbnailUrlOrFallback(t.mapRfId) : getZoneThumbnailUrlOrFallback('dam-battlegrounds')),
         guideUrl: extra?.guideUrl,
         guideLabel: extra?.guideLabel,
         difficultyTier: DIFFICULTY_TO_TIER[t.difficulty],
@@ -151,13 +167,11 @@ export function mergeWeekBundle(bundle: TrialWeekBundle): TrialWeekPresentation 
     }
 }
 
-export function getThisWeekPresentation(): TrialWeekPresentation {
-    return mergeWeekBundle(getFeaturedTrialWeek())
+export function getThisWeekPresentation(now: Date = new Date()): TrialWeekPresentation {
+    return mergeWeekBundle(getFeaturedTrialWeek(now))
 }
 
-export function getNextWeekPresentation(): TrialWeekPresentation {
-    const alts = getAlternateTrialWeeks()
-    const next = alts[0]
-    if (next) return mergeWeekBundle(next)
-    return mergeWeekBundle(getFeaturedTrialWeek())
+/** Next calendar week (UTC), same indexing as `getFeaturedTrialWeek`. */
+export function getNextWeekPresentation(now: Date = new Date()): TrialWeekPresentation {
+    return mergeWeekBundle(getFeaturedTrialWeek(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)))
 }

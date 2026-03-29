@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { GuidesHubClient } from '@/components/learning/GuidesHubClient'
+import { ProgressThisWeekSummary } from '@/components/learning/ProgressThisWeekSummary'
 import { RecommendedTracksSection } from '@/components/learning/RecommendedTracksSection'
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
+import { getFeaturedTrialWeek } from '@/data/trials'
 import { GUIDE_ARTICLES, GUIDE_HUB_SHORTCUTS } from '@/data/guides'
 import { fetchMetaforgeGuidesSnapshot } from '@/lib/data/metaforge-guides'
 import { METAFORGE_GUIDES_ATTRIBUTION } from '@/lib/live-data/attribution'
@@ -14,6 +16,7 @@ export const metadata = {
 
 export default async function GuidesPage() {
     const snapshot = await fetchMetaforgeGuidesSnapshot()
+    const featuredTrialsWeek = getFeaturedTrialWeek()
 
     return (
         <div className="py-10 px-4 sm:px-6 max-w-6xl mx-auto">
@@ -44,7 +47,12 @@ export default async function GuidesPage() {
                 </p>
             </header>
 
-            <RecommendedTracksSection />
+            <ProgressThisWeekSummary
+                weekLabel={featuredTrialsWeek.label}
+                featuredTrialIds={featuredTrialsWeek.trials.map((t) => t.id)}
+            />
+
+            <RecommendedTracksSection heading="Starter playlists" />
 
             <section aria-labelledby="shortcuts-heading" className="mb-12">
                 <h2 id="shortcuts-heading" className="text-xs uppercase tracking-[0.2em] text-white/40 font-bold mb-4">
