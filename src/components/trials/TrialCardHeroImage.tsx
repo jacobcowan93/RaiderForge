@@ -23,7 +23,7 @@ type Props = {
     src: string
     alt: string
     className?: string
-    /** `pill`: small 28×28 icon. `circle`: rectangular thumbnail. `shield`: circular art + white ring (in-game badge). `banner`: fill parent. */
+    /** `pill`: small 28×28 icon. `circle`: rectangular thumbnail. `shield`: flat hero art (no frame). `banner`: fill parent. */
     variant?: 'banner' | 'pill' | 'circle' | 'shield'
 }
 
@@ -87,23 +87,19 @@ export function TrialCardHeroImage({ src, alt, className, variant = 'banner' }: 
 
     if (variant === 'shield') {
         return (
-            <div
-                className={`relative mx-auto flex aspect-square h-[7.75rem] w-[7.75rem] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#cfc8bc] shadow-[0_4px_16px_rgba(0,0,0,0.28)] ring-[3px] ring-white sm:h-[9rem] sm:w-[9rem] ${className ?? ''}`}
-            >
-                <Image
-                    key={`${displaySrc}-${attempt}`}
-                    src={displaySrc}
-                    alt={alt}
-                    width={240}
-                    height={240}
-                    sizes="(max-width: 640px) 124px, 144px"
-                    className="h-full w-full rounded-full object-contain object-center p-0.5"
-                    unoptimized={unoptimized}
-                    loading="lazy"
-                    onError={() => setAttempt((a) => Math.min(a + 1, candidates.length - 1))}
-                    priority={false}
-                />
-            </div>
+            <Image
+                key={`${displaySrc}-${attempt}`}
+                src={displaySrc}
+                alt={alt}
+                width={240}
+                height={240}
+                sizes="(max-width: 640px) 180px, 216px"
+                className={`mx-auto h-auto w-full max-w-[180px] object-contain object-center sm:max-w-[216px] ${className ?? ''}`}
+                unoptimized={unoptimized}
+                loading="lazy"
+                onError={() => setAttempt((a) => Math.min(a + 1, candidates.length - 1))}
+                priority={false}
+            />
         )
     }
 

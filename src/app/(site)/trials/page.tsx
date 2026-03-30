@@ -63,26 +63,28 @@ export default async function TrialsPage() {
                 className="pointer-events-none fixed inset-0 z-0 opacity-[0.45] bg-[linear-gradient(rgba(56,189,248,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.04)_1px,transparent_1px)] bg-[length:32px_32px]"
                 aria-hidden
             />
-            <div className="relative z-10 py-8 px-4 sm:px-6 max-w-7xl mx-auto">
+            <div className="relative z-10 py-8 px-4 sm:px-6 max-w-7xl mx-auto pb-14 sm:pb-20">
                 <header className="relative mb-8 overflow-hidden rounded-2xl border border-blue-950/35 border-t-rf-red/30 bg-[#050810]/75 shadow-2xl shadow-black/50">
                     <div
                         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-rf-red/10 via-transparent to-sky-950/10"
                         aria-hidden
                     />
                     <div className="relative px-5 py-6 sm:px-8 sm:py-8">
-                        <div className="flex flex-wrap items-center gap-3 mb-3">
-                            <p className="text-[10px] uppercase tracking-[0.2em] text-rf-red font-bold">Operations</p>
-                            <PageMaturityBadge level={TRIALS_PAGE_MATURITY} />
-                        </div>
-                        <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-rf-red drop-shadow-[0_2px_24px_rgba(255,64,64,0.25)]">
-                            Weekly Trials
-                        </h1>
-                        <p className="mt-2 max-w-2xl text-xs sm:text-sm text-white/65 leading-relaxed">
-                            This week&apos;s rotation and the next — max-score focus, no extra clutter.
-                        </p>
-
-                        <div className="mt-6">
+                        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+                            <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-3 mb-3">
+                                    <p className="text-[10px] uppercase tracking-[0.2em] text-rf-red font-bold">Operations</p>
+                                    <PageMaturityBadge level={TRIALS_PAGE_MATURITY} />
+                                </div>
+                                <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.45)]">
+                                    Weekly Trials
+                                </h1>
+                                <p className="mt-2 max-w-2xl text-xs sm:text-sm text-white/65 leading-relaxed">
+                                    This week&apos;s rotation and the next — max-score focus, no extra clutter.
+                                </p>
+                            </div>
                             <TrialsHeroCountdown
+                                compact
                                 targetEpochMs={countdown.targetEpochMs}
                                 countdownVariant={countdown.variant}
                                 targetIsoUtc={countdown.targetIso}
@@ -91,12 +93,7 @@ export default async function TrialsPage() {
                             />
                         </div>
 
-                        <div
-                            className="mx-auto mt-4 h-[3px] max-w-2xl rounded-full bg-gradient-to-r from-transparent via-rf-red/90 to-transparent shadow-[0_0_16px_-2px_rgba(239,68,68,0.45)]"
-                            aria-hidden
-                        />
-
-                        <div className="mt-5 flex flex-col gap-1.5 border-t border-white/[0.08] pt-5">
+                        <div className="mt-6 flex flex-col gap-1.5 lg:mt-8">
                             <p className="text-sm font-semibold leading-snug text-white/92 sm:text-base">
                                 {formatUtcWeekOfLabel(now)}
                             </p>
@@ -123,20 +120,23 @@ export default async function TrialsPage() {
                     </div>
                 </header>
 
-                <section aria-labelledby="this-week-heading" className="mb-0">
+                <section
+                    aria-labelledby="this-week-heading"
+                    className="mb-0 border-t-4 border-red-500 pt-6"
+                >
                     <div className="mb-4">
-                        <h2
+                        <h3
                             id="this-week-heading"
-                            className="text-sm font-black uppercase tracking-[0.18em] text-[#CF3213] drop-shadow-[0_0_20px_rgba(207,50,19,0.35)] sm:text-base"
+                            className="text-sm font-black uppercase tracking-[0.18em] text-yellow-400 sm:text-base"
                         >
                             This Week&apos;s Trials
-                        </h2>
+                        </h3>
                         <p className="mt-1 text-xs text-white/45">{thisWeek.label}</p>
                         {thisWeek.subtitle ? (
                             <p className="mt-0.5 text-[11px] text-white/35">{thisWeek.subtitle}</p>
                         ) : null}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 pb-12 sm:pb-16">
                         {thisWeek.trials.map((trial, i) => (
                             <TrialCommandCard
                                 key={trial.sourceRowId ?? trial.trialId ?? `this-${trial.name}-${i}`}
@@ -146,26 +146,17 @@ export default async function TrialsPage() {
                     </div>
                 </section>
 
-                <div className="w-full py-8 sm:py-10" role="presentation">
-                    <div className="h-[3px] w-full rounded-full bg-[#3711B8]" aria-hidden />
-                </div>
-
-                <section aria-labelledby="next-week-heading" className="mb-6">
-                    <div
-                        className="mt-6 h-1.5 w-full rounded-full bg-gradient-to-r from-sky-400 via-cyan-400 to-blue-500"
-                        aria-hidden
-                    />
-                    <div
-                        className="mt-2 h-1 w-full rounded-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-400"
-                        aria-hidden
-                    />
-                    <div className="mb-4 mt-4">
-                        <h2
+                <section
+                    aria-labelledby="next-week-heading"
+                    className="mb-6 border-t-4 border-orange-500 pt-6"
+                >
+                    <div className="mb-4">
+                        <h3
                             id="next-week-heading"
-                            className="text-xs font-semibold tracking-[0.16em] text-amber-300 sm:text-sm"
+                            className="text-sm font-black uppercase tracking-[0.18em] text-yellow-400 sm:text-base"
                         >
                             NEXT WEEK&apos;S TRIALS
-                        </h2>
+                        </h3>
                         <p className="mt-1 text-xs text-white/45">{nextWeek.label}</p>
                         {nextWeek.subtitle ? (
                             <p className="mt-0.5 text-[11px] text-white/35">{nextWeek.subtitle}</p>

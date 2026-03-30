@@ -1,4 +1,4 @@
-export type MarketplaceTabId = 'browse' | 'sell' | 'orders'
+export type MarketplaceTabId = 'buy' | 'sell'
 
 export type ListingStatus = 'active' | 'sold' | 'cancelled'
 

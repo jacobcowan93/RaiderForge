@@ -27,6 +27,8 @@ type Props = {
     trialsScheduleSynced: boolean
     /** Separate: live map events endpoint (modifiers, etc.). */
     eventsUpstreamOk: boolean
+    /** Narrow utility block for header corner; full-width hero when false. */
+    compact?: boolean
 }
 
 export function TrialsHeroCountdown({
@@ -35,6 +37,7 @@ export function TrialsHeroCountdown({
     targetIsoUtc,
     trialsScheduleSynced,
     eventsUpstreamOk,
+    compact = false,
 }: Props) {
     const [left, setLeft] = useState(() => Math.max(0, targetEpochMs - Date.now()))
 
@@ -71,6 +74,62 @@ export function TrialsHeroCountdown({
             : countdownVariant === 'metaforge-next-start' && targetIsoUtc
               ? `Next rotation starts ${fmtCaptionUtc(targetIsoUtc)} · MetaForge weekly-trials`
               : 'Next UTC Monday 00:00 · estimate when MetaForge schedule is unavailable'
+
+    if (compact) {
+        return (
+            <div className="w-full max-w-[15.5rem] shrink-0 rounded-lg border border-white/25 bg-[#03050c]/90 p-3 shadow-[0_0_0_1px_rgba(239,68,68,0.35),inset_0_1px_0_rgba(255,255,255,0.06)] sm:max-w-[20rem] lg:max-w-[22rem] lg:ml-auto">
+                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-rf-red sm:text-[11px]">{headline}</p>
+                <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-white/50 sm:line-clamp-none sm:text-[10px]">{subcopy}</p>
+
+                <div className="mt-2 grid grid-cols-4 gap-1.5 sm:gap-2">
+                    {cells.map((c) => (
+                        <div
+                            key={c.label}
+                            className="relative overflow-hidden rounded-md border border-white/18 bg-[#050810] px-0.5 py-2 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-1 sm:py-2.5"
+                        >
+                            <div
+                                className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rf-red/40 to-transparent"
+                                aria-hidden
+                            />
+                            <div className="font-mono text-xl font-black tabular-nums leading-none tracking-tight text-white sm:text-2xl">
+                                {c.value}
+                            </div>
+                            <div className="mt-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-sky-200/50 sm:text-[8px]">
+                                {c.label}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="mt-2 space-y-1 border-t border-white/15 pt-2 text-[8px] leading-snug text-white/38">
+                    <p>
+                        {trialsScheduleSynced ? (
+                            <>
+                                Timer uses{' '}
+                                <span className="text-white/55 [word-break:break-word]">
+                                    metaforge.app/api/arc-raiders/weekly-trials
+                                </span>{' '}
+                                window times.
+                            </>
+                        ) : (
+                            <>
+                                Weekly trial rows are a local fallback — timer uses{' '}
+                                <span className="text-white/50">UTC Monday 00:00</span> until MetaForge returns a full
+                                schedule.
+                            </>
+                        )}
+                    </p>
+                    <p
+                        className={
+                            eventsUpstreamOk ? 'font-semibold text-emerald-400/90' : 'font-semibold text-amber-200/75'
+                        }
+                    >
+                        Map events API: {eventsUpstreamOk ? 'synced' : 'offline'}
+                    </p>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="w-full max-w-2xl">

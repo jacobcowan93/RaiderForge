@@ -31,9 +31,8 @@ export const btnGreen =
 export const sectionHeading = 'text-[10px] uppercase tracking-[0.2em] text-rf-textSoft font-semibold'
 
 export const MARKETPLACE_TABS: { id: MarketplaceTabId; label: string }[] = [
-    { id: 'browse', label: 'Catalog' },
-    { id: 'sell', label: 'Sell' },
-    { id: 'orders', label: 'My Orders' },
+    { id: 'buy', label: 'Buy' },
+    { id: 'sell', label: 'List an Item' },
 ]
 
 export const LISTING_CURRENCIES = ['USD', 'EUR', 'GBP', 'AUD', 'CAD', 'SGD'] as const

@@ -15,10 +15,9 @@ import { MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 
 import type { ListingStatus, MarketplaceTabId } from './_lib/marketplace-types'
 import { btnPrimary, MY_LISTINGS_LIMIT } from './_lib/marketplace-constants'
-import { MarketplaceBrowseTab } from './_components/MarketplaceBrowseTab'
+import { MarketplaceBuyTab } from './_components/MarketplaceBuyTab'
 import { MarketplaceHeader } from './_components/MarketplaceHeader'
 import { MarketplaceMyListingsTab } from './_components/MarketplaceMyListingsTab'
-import { MarketplaceOrdersTab } from './_components/MarketplaceOrdersTab'
 import { MarketplacePersistenceBanner } from './_components/MarketplacePersistenceBanner'
 import { MarketplaceSellTab } from './_components/MarketplaceSellTab'
 import { MarketplaceTabs } from './_components/MarketplaceTabs'
@@ -93,7 +92,7 @@ function MarketplaceAuthenticatedSell({
 }
 
 export default function MarketplacePage() {
-    const [tab, setTab] = useState<MarketplaceTabId>('browse')
+    const [tab, setTab] = useState<MarketplaceTabId>('buy')
     const [persistence, setPersistence] = useState<'unknown' | 'on' | 'off'>('unknown')
     const { data: session, status: sessionStatus } = useSession()
     const userId = (session?.user as { id?: string } | undefined)?.id
@@ -123,7 +122,7 @@ export default function MarketplacePage() {
                 <MarketplaceTabs activeTab={tab} onTabChange={setTab} />
 
                 <div>
-                    {tab === 'browse' && <MarketplaceBrowseTab />}
+                    {tab === 'buy' && <MarketplaceBuyTab />}
                     {tab === 'sell' &&
                         (sessionStatus === 'loading' ? (
                             <div className="flex items-center justify-center py-20 gap-2.5 text-rf-textSoft/60">
@@ -161,41 +160,6 @@ export default function MarketplacePage() {
                                 userId={userId}
                                 persistenceEnabled={persistenceEnabled}
                             />
-                        ))}
-                    {tab === 'orders' &&
-                        (sessionStatus === 'loading' ? (
-                            <div className="flex items-center justify-center py-20 gap-2.5 text-rf-textSoft/60">
-                                <Spinner size={20} />
-                                <span className="text-sm">Loading…</span>
-                            </div>
-                        ) : !userId ? (
-                            <div className="flex flex-col items-center justify-center py-24 gap-4 text-rf-textSoft/60">
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    width="40"
-                                    height="40"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                    aria-hidden
-                                >
-                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
-                                </svg>
-                                <p className="text-sm font-medium text-rf-textSoft">Sign in to view orders</p>
-                                <p className="text-xs text-center max-w-xs text-rf-textSoft/50">
-                                    Sign in to track your purchases and manage incoming orders.
-                                </p>
-                                <a href="/auth/signin" className={btnPrimary}>
-                                    Sign in
-                                </a>
-                            </div>
-                        ) : persistence === 'unknown' ? (
-                            <div className="flex items-center justify-center py-20 gap-2.5 text-rf-textSoft/60">
-                                <Spinner size={20} />
-                                <span className="text-sm">Checking marketplace…</span>
-                            </div>
-                        ) : (
-                            <MarketplaceOrdersTab userId={userId} persistenceEnabled={persistenceEnabled} />
                         ))}
                 </div>
 
