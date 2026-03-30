@@ -12,7 +12,7 @@ export default function SkillTreesLayout({ children }: { children: React.ReactNo
             {/* Background: in-game skill tree art — dark source image, dimmed further */}
             <div className="pointer-events-none fixed inset-0 z-[5]" aria-hidden>
                 <Image
-                    src={normalizePublicAssetUrl('/images/ARC_Skilltree.png')}
+                    src={normalizePublicAssetUrl('/images/ARC_Raiders_Main_SkillTree.png')}
                     alt=""
                     fill
                     className="object-cover object-center"
