@@ -98,6 +98,14 @@ export function MarketplaceSellTab({
         <div className="space-y-6">
             {toast && <Toast msg={toast} onDone={() => setToast(null)} />}
 
+            {/* Live status banner */}
+            <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3">
+                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <p className="text-sm text-emerald-400/90 font-medium">
+                    Native listings are live — post your item now and it will appear in the Browse tab immediately.
+                </p>
+            </div>
+
             <MarketplaceG2gPlaceholder />
 
             <div className="space-y-1.5">
