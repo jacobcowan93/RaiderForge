@@ -17,8 +17,8 @@ export default function SkillTreesLayout({ children }: { children: React.ReactNo
                     fill
                     className="object-cover object-center"
                     style={{
-                        filter:  'brightness(0.18) saturate(0.6)',
-                        opacity: 0.9,
+                        filter:  'brightness(0.35) saturate(0.7)',
+                        opacity: 0.95,
                     }}
                     priority
                     sizes="100vw"

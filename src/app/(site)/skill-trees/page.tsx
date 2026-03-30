@@ -62,33 +62,29 @@ export default function SkillTreesPage() {
                         </h1>
                         <PageMaturityBadge level="beta" />
                     </div>
-                    <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-white/45 leading-relaxed max-w-2xl">
-                        <PageMaturityBadge level="beta" className="!text-[9px] !px-1.5 !py-0 shrink-0" />
-                        <span>Beta – Builds saved via URL for now. Share links work instantly.</span>
-                    </p>
-                    <p className="mt-2.5 text-sm max-w-2xl text-white/70 leading-relaxed">
+                    <p className="mt-2.5 text-sm max-w-2xl text-white/85 leading-relaxed">
                         Allocate expedition points across three branches —{' '}
-                        <span className="text-green-400/80 font-medium">Conditioning</span>,{' '}
-                        <span className="text-yellow-400/80 font-medium">Mobility</span>, and{' '}
-                        <span className="text-red-400/80 font-medium">Survival</span>.
-                        Use keyboard or pointer on nodes; copy a share link when you are happy with the build.
+                        <span className="text-green-400 font-semibold">Conditioning</span>,{' '}
+                        <span className="text-yellow-400 font-semibold">Mobility</span>, and{' '}
+                        <span className="text-red-400 font-semibold">Survival</span>.
+                        Click nodes to allocate points, then share your build with one link.
                     </p>
 
-                    <div className="mt-4 flex flex-wrap gap-4 text-[11px] text-white/38">
+                    <div className="mt-4 flex flex-wrap gap-4 text-[11px] text-white/60">
                         <span className="flex items-center gap-1.5">
-                            <span className="w-4 h-4 rounded border border-white/12 inline-flex items-center justify-center text-[9px] text-white/30">
+                            <span className="w-4 h-4 rounded border border-white/25 inline-flex items-center justify-center text-[9px] text-white/55">
                                 1
                             </span>
                             Multi-rank skills: Arrow keys or click to add/remove ranks
                         </span>
                         <span className="flex items-center gap-1.5">
-                            <span className="w-4 h-4 rounded border border-white/12 inline-flex items-center justify-center text-[9px] text-white/30">
+                            <span className="w-4 h-4 rounded border border-white/25 inline-flex items-center justify-center text-[9px] text-white/55">
                                 2
                             </span>
                             Keystones unlock at 15 branch points
                         </span>
                         <span className="flex items-center gap-1.5">
-                            <span className="w-4 h-4 rounded border border-white/12 inline-flex items-center justify-center text-[9px] text-white/30">
+                            <span className="w-4 h-4 rounded border border-white/25 inline-flex items-center justify-center text-[9px] text-white/55">
                                 3
                             </span>
                             Capstones unlock at 36 branch points

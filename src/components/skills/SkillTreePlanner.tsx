@@ -88,7 +88,13 @@ BranchTabBar.displayName = 'BranchTabBar'
  * do not clobber hydration. When `?b` updates, we decode into state.
  */
 
-export function SkillTreePlanner({ onBuildShared }: { onBuildShared?: (build: SharedBuild) => void }) {
+export function SkillTreePlanner({
+    onBuildShared,
+    onAllocsChange,
+}: {
+    onBuildShared?: (build: SharedBuild) => void
+    onAllocsChange?: (allocs: BuildAllocations, spentTotal: number) => void
+}) {
     const searchParams = useSearchParams()
     const router = useRouter()
     const pathname = usePathname()
@@ -125,6 +131,11 @@ export function SkillTreePlanner({ onBuildShared }: { onBuildShared?: (build: Sh
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams])
+
+    // Notify parent of alloc changes (for the top-level share button)
+    useEffect(() => {
+        onAllocsChange?.(allocs, totalPoints(allocs))
+    }, [allocs, onAllocsChange])
 
     // Persist allocations to localStorage on every change
     useEffect(() => {
