@@ -28,12 +28,12 @@ type NavLinkItem = {
 
 const navLinks: NavLinkItem[] = [
     { href: '/', label: 'Home' },
-    { href: '/maps', label: 'Maps' },
-    { href: '/skill-trees', label: 'Skill Tree Planner', badge: 'beta', emphasis: 'planner' },
-    { href: '/blueprints', label: 'Blueprints' },
-    { href: '/trials', label: 'Trials', badge: 'live' },
     { href: '/marketplace', label: 'Marketplace' },
-    { href: '/profile', label: 'Profile' },
+    { href: '/blueprints', label: 'Blueprints' },
+    { href: '/skill-trees', label: 'Skill Tree', badge: 'beta', emphasis: 'planner' },
+    { href: '/maps', label: 'Maps' },
+    { href: '/trials', label: 'Trials', badge: 'live' },
+    { href: '/guides', label: 'Guides' },
 ]
 
 function navIsActive(pathname: string, href: string): boolean {
