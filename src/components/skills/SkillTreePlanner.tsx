@@ -19,6 +19,7 @@ import { loadSkillTreeSave, saveSkillTreeSave } from '@/lib/skill-tree/skillTree
 import { BranchTree } from './BranchTree'
 import { BuildSidebar } from './BuildSidebar'
 import { UnifiedSkillTreeCanvas } from './UnifiedSkillTreeCanvas'
+import type { SharedBuild } from './SharedBuildsGallery'
 
 const EXPEDITION_LEVEL_KEY = 'raiderforge.expedition-level.v1'
 
@@ -87,7 +88,7 @@ BranchTabBar.displayName = 'BranchTabBar'
  * do not clobber hydration. When `?b` updates, we decode into state.
  */
 
-export function SkillTreePlanner() {
+export function SkillTreePlanner({ onBuildShared }: { onBuildShared?: (build: SharedBuild) => void }) {
     const searchParams = useSearchParams()
     const router = useRouter()
     const pathname = usePathname()
@@ -250,6 +251,7 @@ export function SkillTreePlanner() {
                         maxPts={maxPts}
                         expeditionLevel={expeditionLevel}
                         onExpeditionChange={handleExpeditionChange}
+                        onBuildShared={onBuildShared ?? (() => {})}
                     />
                 </div>
             )}
@@ -282,6 +284,7 @@ export function SkillTreePlanner() {
                         maxPts={maxPts}
                         expeditionLevel={expeditionLevel}
                         onExpeditionChange={handleExpeditionChange}
+                        onBuildShared={onBuildShared ?? (() => {})}
                     />
                 </div>
             </div>

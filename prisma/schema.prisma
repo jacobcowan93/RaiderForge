@@ -48,6 +48,7 @@ model User {
   listings            MarketplaceListing[]
   buyerOrders         MarketplaceOrder[]     @relation("BuyerOrders")
   sellerOrders        MarketplaceOrder[]     @relation("SellerOrders")
+  sharedBuilds        SharedSkillTreeBuild[]
 }
 
 /// Versioned JSON: per-map POI visit flags (quests / containers / loot areas).
@@ -86,6 +87,22 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// Publicly-shared skill tree build — visible to everyone, deletable only by the owner.
+model SharedSkillTreeBuild {
+  id        String   @id @default(cuid())
+  userId    String
+  userName  String?
+  buildName String
+  buildCode String
+  totalPts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 /// RaiderForge-native marketplace listing backed by an ARDB item reference.

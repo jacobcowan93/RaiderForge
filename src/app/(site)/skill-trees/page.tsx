@@ -1,10 +1,7 @@
-import { Suspense } from 'react'
 import type { Metadata } from 'next'
 
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
-import { PlannerSkeleton } from '@/components/ui/Skeleton'
-import { SkillTreeErrorBoundary } from '@/components/skills/SkillTreeErrorBoundary'
-import { SkillTreePlanner } from '@/components/skills/SkillTreePlanner'
+import { SkillTreesClientSection } from '@/components/skills/SkillTreesClientSection'
 import { getSiteOrigin } from '@/lib/site/siteOrigin'
 
 const origin = getSiteOrigin()
@@ -100,11 +97,7 @@ export default function SkillTreesPage() {
                 </div>
             </div>
 
-            <SkillTreeErrorBoundary>
-                <Suspense fallback={<PlannerSkeleton />}>
-                    <SkillTreePlanner />
-                </Suspense>
-            </SkillTreeErrorBoundary>
+            <SkillTreesClientSection />
 
             <p className="mt-12 text-[11px] text-white/18 leading-relaxed">
                 Skill data sourced from{' '}

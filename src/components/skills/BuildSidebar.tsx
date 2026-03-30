@@ -15,7 +15,9 @@ import {
     buildSkillTreeShareUrl,
 } from '@/lib/skills/planner'
 import { TrialSimulatePanel } from '@/components/skills/TrialSimulatePanel'
+import { ShareToGalleryPanel } from '@/components/skills/ShareToGalleryPanel'
 import { EXPEDITION_CAPS, type ExpeditionLevel } from '@/lib/skills/caps'
+import type { SharedBuild } from './SharedBuildsGallery'
 
 interface Props {
     allocs:             BuildAllocations
@@ -27,6 +29,7 @@ interface Props {
     maxPts:             number
     expeditionLevel:    ExpeditionLevel
     onExpeditionChange: (level: ExpeditionLevel) => void
+    onBuildShared:      (build: SharedBuild) => void
 }
 
 // ── Branch breakdown row ───────────────────────────────────────────────────────
@@ -287,7 +290,7 @@ ImportPanel.displayName = 'ImportPanel'
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 
-function BuildSidebarInner({ allocs, spentTotal, branchSpent, onChange, maxPts, expeditionLevel, onExpeditionChange }: Props) {
+function BuildSidebarInner({ allocs, spentTotal, branchSpent, onChange, maxPts, expeditionLevel, onExpeditionChange, onBuildShared }: Props) {
     const [copied, setCopied] = useState(false)
     const summary                       = useMemo(() => buildSummary(allocs), [allocs])
     const total = spentTotal
@@ -440,6 +443,9 @@ function BuildSidebarInner({ allocs, spentTotal, branchSpent, onChange, maxPts, 
                         </>
                     )}
                 </button>
+
+                {/* Share to community gallery */}
+                <ShareToGalleryPanel allocs={allocs} spentTotal={spentTotal} onShared={onBuildShared} />
 
                 {/* Import */}
                 <ImportPanel onImport={onChange} />
