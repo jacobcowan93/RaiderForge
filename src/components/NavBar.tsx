@@ -30,7 +30,7 @@ const navLinks: NavLinkItem[] = [
     { href: '/', label: 'Home' },
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/blueprints', label: 'Blueprints' },
-    { href: '/skill-trees', label: 'Skill Tree', badge: 'beta', emphasis: 'planner' },
+    { href: '/skill-trees', label: 'Skill Tree', badge: 'beta' },
     { href: '/maps', label: 'Maps' },
     { href: '/trials', label: 'Trials', badge: 'live' },
     { href: '/guides', label: 'Guides' },
