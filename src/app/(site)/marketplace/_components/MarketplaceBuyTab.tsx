@@ -69,7 +69,7 @@ export function MarketplaceBuyTab() {
             {/* Search + Type filter */}
             <div className="flex flex-col lg:flex-row lg:items-end gap-3 lg:justify-between">
                 <div className="flex-1 min-w-0">
-                    <label htmlFor="mp-buy-search" className="text-xs uppercase tracking-wider text-rf-textSoft block mb-1.5">
+                    <label htmlFor="mp-buy-search" className="text-xs uppercase tracking-wider text-white/70 font-semibold block mb-1.5">
                         Search
                     </label>
                     <div className="relative">
@@ -95,7 +95,7 @@ export function MarketplaceBuyTab() {
                 </div>
                 {typeOptions.length > 0 && (
                     <div className="sm:w-56">
-                        <label htmlFor="mp-buy-type" className="text-xs uppercase tracking-wider text-rf-textSoft block mb-1.5">
+                        <label htmlFor="mp-buy-type" className="text-xs uppercase tracking-wider text-white/70 font-semibold block mb-1.5">
                             Type
                         </label>
                         <select
@@ -114,16 +114,16 @@ export function MarketplaceBuyTab() {
             </div>
 
             {loading ? (
-                <div className="rf-card rounded-xl px-4 py-10 flex items-center justify-center gap-2.5 text-rf-textSoft/60 border border-white/[0.06]" aria-busy="true">
+                <div className="rounded-xl px-4 py-10 flex items-center justify-center gap-2.5 text-white/60 border border-white/[0.15] bg-black/30 backdrop-blur-sm" aria-busy="true">
                     <Spinner size={18} />
                     <span className="text-sm">Loading listings…</span>
                 </div>
             ) : error ? (
-                <div className="rf-card rounded-xl px-6 py-10 text-center border border-rf-red/25">
+                <div className="rounded-xl px-6 py-10 text-center border border-red-500/30 bg-black/30">
                     <ErrorMsg msg={error} />
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="rf-card rounded-xl px-6 py-8 text-center border border-white/[0.06] border-l-rf-red/20">
+                <div className="rounded-xl px-6 py-8 text-center border border-white/[0.15] bg-black/30 backdrop-blur-sm">
                     <MarketplaceEmptyState
                         compact
                         title={listings.length === 0 ? 'No listings yet' : 'No matches'}

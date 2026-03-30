@@ -17,7 +17,7 @@ export default function MarketplaceLayout({ children }: { children: React.ReactN
                     priority
                 />
             </div>
-            <div className="pointer-events-none fixed inset-0 z-[5] bg-black/80" aria-hidden="true" />
+            <div className="pointer-events-none fixed inset-0 z-[5] bg-black/60" aria-hidden="true" />
             <div className="relative z-[6]">{children}</div>
         </div>
     )

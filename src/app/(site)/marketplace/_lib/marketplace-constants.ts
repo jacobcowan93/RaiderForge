@@ -1,9 +1,9 @@
 import type { MarketplaceTabId, OrderStatus } from './marketplace-types'
 
 export const inputCls =
-    'w-full px-3 py-2.5 bg-black/50 border border-rf-border rounded-lg text-sm text-rf-text ' +
-    'placeholder:text-rf-textSoft/40 focus-visible:border-rf-blue/45 focus-visible:ring-2 ' +
-    'focus-visible:ring-rf-blue/[0.08] outline-none transition-colors ' +
+    'w-full px-3 py-2.5 bg-white/[0.06] border border-white/20 rounded-lg text-sm text-white ' +
+    'placeholder:text-white/35 focus-visible:border-yellow-400/60 focus-visible:ring-2 ' +
+    'focus-visible:ring-yellow-400/[0.12] outline-none transition-colors ' +
     'disabled:opacity-40 disabled:cursor-not-allowed'
 
 export const selectCls = `${inputCls} cursor-pointer`

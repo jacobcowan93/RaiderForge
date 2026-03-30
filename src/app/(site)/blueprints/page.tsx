@@ -286,12 +286,12 @@ export default function BlueprintsPage() {
                 }}
             />
             <div className="print:hidden space-y-4 md:space-y-5">
-                <header className="rf-card rounded-xl px-4 py-4 sm:px-5 border border-white/[0.06] border-l-2 border-l-rf-red/70">
+                <header className="rf-card rounded-xl px-4 py-4 sm:px-5 border border-white/[0.06] border-l-2 border-l-blue-500/70">
                     <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 lg:gap-6">
                         <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-3">
                                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                                    Blueprint <span className="text-rf-red">Tracker</span>
+                                    Blueprint <span className="text-blue-500">Tracker</span>
                                 </h1>
                                 <PageMaturityBadge level="beta" />
                             </div>
