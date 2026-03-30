@@ -9,7 +9,7 @@ export default function MarketplaceLayout({ children }: { children: React.ReactN
         <div className="relative min-h-[100dvh]">
             <div className="pointer-events-none fixed inset-0 z-[5]" aria-hidden>
                 <Image
-                    src={normalizePublicAssetUrl('/images/ARC_Raiders_Main_SkillTree.png')}
+                    src={normalizePublicAssetUrl('/images/ARC_Marketplace.jpg')}
                     alt=""
                     fill
                     className="object-cover object-center"
@@ -17,7 +17,7 @@ export default function MarketplaceLayout({ children }: { children: React.ReactN
                     priority
                 />
             </div>
-            <div className="pointer-events-none fixed inset-0 z-[5] bg-black/20" aria-hidden="true" />
+            <div className="pointer-events-none fixed inset-0 z-[5] bg-black/80" aria-hidden="true" />
             <div className="relative z-[6]">{children}</div>
         </div>
     )
