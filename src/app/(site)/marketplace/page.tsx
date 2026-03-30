@@ -1,10 +1,8 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 
-import { ARDB_CATALOG_ATTRIBUTION } from '@/lib/marketplace/catalog-types'
 import {
     fetchListings,
     fetchMarketplacePersistenceStatus,
@@ -16,12 +14,17 @@ import { MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 import type { ListingStatus, MarketplaceTabId } from './_lib/marketplace-types'
 import { btnPrimary, MY_LISTINGS_LIMIT } from './_lib/marketplace-constants'
 import { MarketplaceBuyTab } from './_components/MarketplaceBuyTab'
+import { MarketplaceFooterCredits } from './_components/MarketplaceFooterCredits'
 import { MarketplaceHeader } from './_components/MarketplaceHeader'
 import { MarketplaceMyListingsTab } from './_components/MarketplaceMyListingsTab'
 import { MarketplacePersistenceBanner } from './_components/MarketplacePersistenceBanner'
 import { MarketplaceSellTab } from './_components/MarketplaceSellTab'
-import { MarketplaceTabs } from './_components/MarketplaceTabs'
 import { Divider, Spinner } from './_components/MarketplaceShared'
+
+const TABS: { id: MarketplaceTabId; label: string }[] = [
+    { id: 'buy', label: 'Browse Listings' },
+    { id: 'sell', label: 'Sell / List Item' },
+]
 
 function MarketplaceAuthenticatedSell({
     userId,
@@ -113,16 +116,41 @@ export default function MarketplacePage() {
     const persistenceEnabled = persistence === 'on'
 
     return (
-        <div className="relative max-w-7xl mx-auto py-8 md:py-10 px-4 sm:px-5">
-            <div className="space-y-4 md:space-y-5">
+        <div className="min-h-screen pb-20">
+            <div className="max-w-screen-2xl mx-auto px-4 sm:px-5 pt-8 md:pt-10">
                 <MarketplaceHeader />
 
-                {persistence === 'off' ? <MarketplacePersistenceBanner /> : null}
+                {persistence === 'off' ? (
+                    <div className="mt-4">
+                        <MarketplacePersistenceBanner />
+                    </div>
+                ) : null}
 
-                <MarketplaceTabs activeTab={tab} onTabChange={setTab} />
+                {/* Tabs */}
+                <div className="mt-6 flex border-b border-white/[0.15]">
+                    {TABS.map(({ id, label }) => (
+                        <button
+                            key={id}
+                            type="button"
+                            onClick={() => setTab(id)}
+                            className={`relative px-8 py-4 text-sm font-semibold transition-colors ${
+                                tab === id
+                                    ? 'text-white'
+                                    : 'text-white/50 hover:text-white/80'
+                            }`}
+                        >
+                            {label}
+                            {tab === id && (
+                                <span className="absolute bottom-0 inset-x-0 h-[2px] bg-yellow-400 rounded-t-full" />
+                            )}
+                        </button>
+                    ))}
+                </div>
 
-                <div>
-                    {tab === 'buy' && <MarketplaceBuyTab />}
+                {/* Tab content */}
+                <div className="mt-8">
+                    {tab === 'buy' && <MarketplaceBuyTab onGoToSell={() => setTab('sell')} />}
+
                     {tab === 'sell' &&
                         (sessionStatus === 'loading' ? (
                             <div className="flex items-center justify-center py-20 gap-2.5 text-rf-textSoft/60">
@@ -163,21 +191,7 @@ export default function MarketplacePage() {
                         ))}
                 </div>
 
-                <footer className="pt-6 pb-2 space-y-2 border-t border-white/[0.05] mt-6">
-                    <p className="text-center text-[11px] text-white/60 max-w-xl mx-auto leading-relaxed">
-                        Marketplace catalog from{' '}
-                        <Link href={ARDB_CATALOG_ATTRIBUTION.providerUrl} className="text-rf-red/90 hover:underline">
-                            ardb.app
-                        </Link>{' '}
-                        • Trading powered by G2G (planned)
-                    </p>
-                    <p className="text-center text-[11px] text-rf-textSoft/70 max-w-xl mx-auto leading-relaxed">
-                        {ARDB_CATALOG_ATTRIBUTION.providerName} item metadata — verify in-game where it matters.{' '}
-                        <Link href={ARDB_CATALOG_ATTRIBUTION.providerUrl} className="text-rf-blue hover:underline">
-                            {ARDB_CATALOG_ATTRIBUTION.providerUrl.replace(/^https?:\/\//, '')}
-                        </Link>
-                    </p>
-                </footer>
+                <MarketplaceFooterCredits />
             </div>
         </div>
     )

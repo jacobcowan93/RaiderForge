@@ -23,7 +23,7 @@ function uniqueItemTypes(listings: ListingRow[]): string[] {
 const btnReset =
     'inline-flex items-center justify-center rounded-lg border border-white/15 bg-rf-bg/80 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-rf-text hover:border-rf-red/40 hover:bg-white/5 hover:text-white transition-colors'
 
-export function MarketplaceBuyTab() {
+export function MarketplaceBuyTab({ onGoToSell }: { onGoToSell?: () => void }) {
     const [listings, setListings] = useState<ListingRow[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -132,6 +132,7 @@ export function MarketplaceBuyTab() {
                                 ? 'No items are listed for sale yet. Be the first to list one!'
                                 : 'Try adjusting your search or type filter.'
                         }
+                        onSellClick={listings.length === 0 ? onGoToSell : undefined}
                     />
                     {listings.length > 0 && (search || typeFilter !== '__all__') && (
                         <div className="mt-2 flex flex-wrap justify-center gap-2">

@@ -2,16 +2,33 @@ import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 
 export function MarketplaceHeader() {
     return (
-        <header className="rf-card rounded-xl px-4 py-4 sm:px-5 border border-white/[0.12] border-l-2 border-l-yellow-400/80 bg-black/40 backdrop-blur-sm">
-            <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                    Market<span className="text-yellow-400">place</span>
-                </h1>
-                <PageMaturityBadge level="beta" />
+        <header className="rf-card rounded-2xl px-6 py-6 border border-white/10 bg-black/60 backdrop-blur-md">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-3xl font-bold tracking-tighter text-white">
+                            Market<span className="text-yellow-400">place</span>
+                        </h1>
+                        <PageMaturityBadge level="beta" />
+                    </div>
+                    <p className="mt-1 text-sm text-white/60 max-w-lg">
+                        Browse real listings · List your gear with AI help ·{' '}
+                        G2G-powered secure trading &amp; buyer protection coming soon
+                    </p>
+                </div>
+
+                {/* Trust signals */}
+                <div className="flex items-center gap-6 text-xs">
+                    <div className="flex items-center gap-1.5 text-emerald-400">
+                        <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                        Live
+                    </div>
+                    <div className="flex items-center gap-1 text-white/70">
+                        <span className="font-semibold">AI Optimizer</span>
+                        <span className="rounded bg-yellow-400/10 px-2 py-px text-yellow-300 text-[10px] font-bold">NEW</span>
+                    </div>
+                </div>
             </div>
-            <p className="mt-2 text-xs text-white/60 max-w-2xl leading-relaxed">
-                Browse items • Sign in to list items for sale • Use the AI optimizer to write better listings • G2G-powered trading coming soon
-            </p>
         </header>
     )
 }
