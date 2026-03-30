@@ -47,21 +47,20 @@ export default function Home() {
                         >
                             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full max-w-lg sm:max-w-none sm:w-auto">
                                 <Link
-                                    href="/maps"
-                                    className="inline-flex w-full sm:w-auto justify-center items-center rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm sm:text-base font-bold px-8 py-3.5 sm:px-10 sm:py-4 border border-red-400/30 shadow-lg shadow-red-950/40 transition-colors"
+                                    href="/blueprints"
+                                    className="inline-flex w-full sm:w-auto justify-center items-center rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm sm:text-base font-bold px-8 py-3.5 sm:px-10 sm:py-4 border border-blue-400/30 shadow-lg shadow-blue-950/40 transition-colors"
                                 >
-                                    Enter Maps Command Center
+                                    Blueprint Tracker
                                 </Link>
                                 <Link
-                                    href="/trials"
-                                    className="inline-flex w-full sm:w-auto justify-center items-center rounded-xl border border-white/20 bg-black/20 hover:bg-white/10 text-white text-sm sm:text-base font-bold px-8 py-3.5 sm:px-10 sm:py-4 backdrop-blur-sm transition-colors"
+                                    href="/marketplace"
+                                    className="inline-flex w-full sm:w-auto justify-center items-center rounded-xl bg-yellow-500 hover:bg-yellow-400 text-black text-sm sm:text-base font-bold px-8 py-3.5 sm:px-10 sm:py-4 border border-yellow-300/30 shadow-lg shadow-yellow-950/40 transition-colors"
                                 >
-                                    Weekly Trials briefing
+                                    Marketplace
                                 </Link>
                             </div>
                             <p className="text-xs sm:text-sm text-white/50 max-w-md leading-relaxed">
-                                Start with maps for live zones — or jump into this week&apos;s rotation, max-score tips, and reset
-                                countdown.
+                                Track your blueprints — or browse and list items in the marketplace.
                             </p>
                         </div>
                     </div>
