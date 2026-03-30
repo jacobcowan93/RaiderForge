@@ -19,10 +19,12 @@ function BuildShareRow({
     allocs,
     spentTotal,
     onShared,
+    onReset,
 }: {
     allocs:     BuildAllocations
     spentTotal: number
     onShared:   (build: SharedBuild) => void
+    onReset:    () => void
 }) {
     const [copied,       setCopied]      = useState(false)
     const [galleryOpen,  setGalleryOpen] = useState(false)
@@ -144,6 +146,27 @@ function BuildShareRow({
                         </svg>
                         Share to community
                     </button>
+
+                    {/* Reset — small, destructive-tinted */}
+                    <button
+                        type="button"
+                        onClick={onReset}
+                        disabled={empty}
+                        title="Reset all points"
+                        className={compactBtn}
+                        style={empty ? {} : {
+                            color:       'rgba(255,100,100,0.6)',
+                            borderColor: 'rgba(255,100,100,0.15)',
+                        }}
+                    >
+                        <svg width={12} height={12} viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" strokeWidth={2.5}
+                             strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <polyline points="1 4 1 10 7 10"/>
+                            <path d="M3.51 15a9 9 0 1 0 .49-3.58"/>
+                        </svg>
+                        Reset
+                    </button>
                 </div>
             </div>
 
@@ -231,24 +254,34 @@ function BuildShareRow({
 // ── Main client section ────────────────────────────────────────────────────────
 
 export function SkillTreesClientSection() {
-    const [newBuild,  setNewBuild]  = useState<SharedBuild | null>(null)
-    const [allocs,    setAllocs]    = useState<BuildAllocations>({})
+    const [newBuild,   setNewBuild]   = useState<SharedBuild | null>(null)
+    const [allocs,     setAllocs]     = useState<BuildAllocations>({})
     const [spentTotal, setSpentTotal] = useState(0)
+    const [resetKey,   setResetKey]   = useState(0)
 
     const handleAllocsChange = useCallback((a: BuildAllocations, pts: number) => {
         setAllocs(a)
         setSpentTotal(pts)
     }, [])
 
+    const handleReset = useCallback(() => {
+        setResetKey((k) => k + 1)
+    }, [])
+
     return (
         <>
-            {/* ── Share row: copy link + share to community ────────────────── */}
-            <BuildShareRow allocs={allocs} spentTotal={spentTotal} onShared={setNewBuild} />
+            {/* ── Share row: copy link + share to community + reset ─────────── */}
+            <BuildShareRow
+                allocs={allocs}
+                spentTotal={spentTotal}
+                onShared={setNewBuild}
+                onReset={handleReset}
+            />
 
             {/* ── Planner ─────────────────────────────────────────────────── */}
             <SkillTreeErrorBoundary>
                 <Suspense fallback={<PlannerSkeleton />}>
-                    <SkillTreePlanner onAllocsChange={handleAllocsChange} />
+                    <SkillTreePlanner onAllocsChange={handleAllocsChange} resetKey={resetKey} />
                 </Suspense>
             </SkillTreeErrorBoundary>
         </>

@@ -6,7 +6,6 @@ import type { SkillBranch } from '@/data/skillTree'
 import { BRANCH_META, BRANCHES } from '@/data/skillTree'
 import {
     type BuildAllocations,
-    branchPoints,
     emptyBuild,
     decodeBuildFromUrlParam,
     encodeBuildToUrl,
@@ -89,8 +88,10 @@ BranchTabBar.displayName = 'BranchTabBar'
 
 export function SkillTreePlanner({
     onAllocsChange,
+    resetKey = 0,
 }: {
     onAllocsChange?: (allocs: BuildAllocations, spentTotal: number) => void
+    resetKey?: number
 }) {
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -128,6 +129,13 @@ export function SkillTreePlanner({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams])
+
+    // External reset trigger — when resetKey increments, wipe all allocs
+    useEffect(() => {
+        if (!resetKey) return
+        setAllocs(emptyBuild())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [resetKey])
 
     // Notify parent of alloc changes (for the top-level share button)
     useEffect(() => {
@@ -176,32 +184,7 @@ export function SkillTreePlanner({
         setSidebarOpen((v) => !v)
     }, [])
 
-    /** Header + branch panels: one computation from `allocs`, passed to BuildSidebar (matches tree). */
     const spentTotal = useMemo(() => totalPoints(allocs), [allocs])
-    const branchSpent = useMemo(() => {
-        const m = {} as Record<SkillBranch, number>
-        for (const b of BRANCHES) m[b] = branchPoints(allocs, b)
-        return m
-    }, [allocs])
-
-    useEffect(() => {
-        if (process.env.NODE_ENV !== 'development') return
-        const branchConditioning = branchSpent.Conditioning
-        const branchMobility     = branchSpent.Mobility
-        const branchSurvival     = branchSpent.Survival
-        const sumBranches        = branchConditioning + branchMobility + branchSurvival
-        if (spentTotal !== sumBranches) {
-            console.warn('Skill tree total mismatch', {
-                totalSpent: spentTotal,
-                branchConditioning,
-                branchMobility,
-                branchSurvival,
-                sumBranches,
-                allocKeys: Object.keys(allocs),
-                allocs,
-            })
-        }
-    }, [allocs, branchSpent, spentTotal])
 
     return (
         <div className="flex flex-col gap-6 overflow-x-hidden">
@@ -252,14 +235,11 @@ export function SkillTreePlanner({
             {sidebarOpen && (
                 <div id="mobile-build-summary" className="lg:hidden">
                     <BuildSidebar
-                        allocs={allocs}
                         spentTotal={spentTotal}
-                        branchSpent={branchSpent}
-                        onChange={handleChange}
                         maxPts={maxPts}
                         expeditionLevel={expeditionLevel}
                         onExpeditionChange={handleExpeditionChange}
-                                            />
+                    />
                 </div>
             )}
 
@@ -284,14 +264,11 @@ export function SkillTreePlanner({
                 {/* Desktop sidebar — full width, below the canvas */}
                 <div id="build-summary" className="hidden lg:block">
                     <BuildSidebar
-                        allocs={allocs}
                         spentTotal={spentTotal}
-                        branchSpent={branchSpent}
-                        onChange={handleChange}
                         maxPts={maxPts}
                         expeditionLevel={expeditionLevel}
                         onExpeditionChange={handleExpeditionChange}
-                                            />
+                    />
                 </div>
             </div>
 
