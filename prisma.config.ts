@@ -10,15 +10,14 @@ import { defineConfig, env } from "prisma/config";
 loadEnv({ path: resolve(process.cwd(), ".env") });
 loadEnv({ path: resolve(process.cwd(), ".env.local"), override: true });
 
+// DIRECT_URL: Neon direct (non-pooled) URL for Prisma CLI operations (migrate, db push).
+// Falls back to DATABASE_URL if DIRECT_URL is not set (e.g. on Vercel where only DATABASE_URL is configured).
+const cliDatabaseUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
   },
-  datasource: {
-    // Next.js uses pooled `DATABASE_URL` at runtime (`src/lib/prisma.ts`).
-    // Prisma CLI (migrate, db push, introspect) uses this URL — Neon’s direct TCP string
-    // (same role as the old schema `directUrl`).
-    url: env("DIRECT_URL"),
-  },
+  ...(cliDatabaseUrl ? { datasource: { url: cliDatabaseUrl } } : {}),
 });
