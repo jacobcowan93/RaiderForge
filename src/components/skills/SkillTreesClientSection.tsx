@@ -187,8 +187,8 @@ function BuildShareRow({
                             <a
                                 href="/auth/signin"
                                 className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-semibold
-                                           rounded-lg px-3 py-1.5 bg-rf-red/10 border border-rf-red/30
-                                           text-rf-red hover:bg-rf-red/20 transition-colors"
+                                           rounded-lg px-3 py-1.5 bg-green-700/20 border border-green-600/40
+                                           text-green-500 hover:bg-green-700/30 transition-colors"
                             >
                                 Sign in
                             </a>
@@ -230,8 +230,8 @@ function BuildShareRow({
                                     onClick={handlePost}
                                     disabled={!name.trim() || posting}
                                     className="shrink-0 text-[11px] font-semibold rounded-lg px-3 py-1.5
-                                               border border-rf-red/30 bg-rf-red/10 text-rf-red
-                                               hover:bg-rf-red/20 hover:border-rf-red/50 transition-colors
+                                               border border-green-600/40 bg-green-700/20 text-green-500
+                                               hover:bg-green-700/30 hover:border-green-500/60 transition-colors
                                                disabled:opacity-30 disabled:cursor-not-allowed"
                                 >
                                     {posting ? 'Posting…' : 'Post build'}

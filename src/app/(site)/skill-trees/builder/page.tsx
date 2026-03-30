@@ -44,7 +44,7 @@ export default function SkillTreeBuilderPage() {
 
             {/* ── Page header ───────────────────────────────────────────────── */}
             <div className="mb-10 pl-1">
-                <div className="border-l-2 border-rf-red pl-5">
+                <div className="border-l-2 border-green-600 pl-5">
                     {/* Back to gallery */}
                     <Link
                         href="/skill-trees"
@@ -59,13 +59,13 @@ export default function SkillTreeBuilderPage() {
                         Community builds
                     </Link>
 
-                    <span className="text-xs uppercase tracking-widest text-rf-red font-semibold drop-shadow-sm">
+                    <span className="text-xs uppercase tracking-widest text-green-600 font-semibold drop-shadow-sm">
                         Character
                     </span>
                     <div className="mt-2 flex flex-wrap items-center gap-3">
                         <h1 className="text-3xl font-bold tracking-tight text-white text-shadow-hero">
                             Skill Tree{' '}
-                            <span className="text-rf-red">Builder</span>
+                            <span className="text-green-500">Builder</span>
                         </h1>
                         <PageMaturityBadge level="beta" />
                     </div>
