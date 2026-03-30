@@ -1,5 +1,17 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import { normalizePublicAssetUrl } from '@/lib/site/publicAssetUrl'
+
+export const metadata: Metadata = {
+    title: 'Skill Tree Planner',
+    description:
+        'Plan and share ARC Raiders skill tree builds. Allocate expedition points across Conditioning, Mobility, and Survival — then share your build with a link.',
+    openGraph: {
+        title: 'ARC Raiders Skill Tree Planner • RaiderForge',
+        description:
+            'Build and share ARC Raiders skill trees. Allocate points across Conditioning, Mobility, and Survival and share your build with a link.',
+    },
+}
 
 /**
  * Skill Trees section layout — the actual ARC Raiders skill tree art as a

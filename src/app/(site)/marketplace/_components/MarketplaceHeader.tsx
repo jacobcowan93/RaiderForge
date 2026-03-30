@@ -7,10 +7,10 @@ export function MarketplaceHeader() {
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                     Market<span className="text-yellow-400">place</span>
                 </h1>
-                <PageMaturityBadge level="in-development" />
+                <PageMaturityBadge level="beta" />
             </div>
             <p className="mt-2 text-xs text-white/60 max-w-2xl leading-relaxed">
-                Browse items • List items to sell • Reputation-based trading coming soon
+                Browse items • Sign in to list items for sale • Use the AI optimizer to write better listings • G2G-powered trading coming soon
             </p>
         </header>
     )

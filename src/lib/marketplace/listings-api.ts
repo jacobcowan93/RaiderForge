@@ -154,6 +154,16 @@ export type CatalogItemSummary = {
     foundIn: string[]
 }
 
+export type OptimizeListingBody = {
+    item: CatalogItemSummary
+    price?: number | null
+    currency?: string | null
+    quantity?: number | null
+    notes?: string | null
+}
+
+export type OptimizeListingResult = { ok: true; output: string; model: string } | ListingsError
+
 export type FetchCatalogResult =
     | { ok: true; items: CatalogItemSummary[]; syncedAt: string | null }
     | ListingsError
@@ -185,4 +195,15 @@ export async function fetchCatalogItems(): Promise<FetchCatalogResult> {
         foundIn: it.foundIn ?? [],
     }))
     return { ok: true, items, syncedAt: payload.syncedAt ?? null }
+}
+
+export async function optimizeListingCopy(body: OptimizeListingBody): Promise<OptimizeListingResult> {
+    const res = await fetch('/api/marketplace/optimize-listing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    })
+    if (!res.ok) return parseError(res)
+    const json = await res.json() as { output: string; model: string }
+    return { ok: true, output: json.output, model: json.model }
 }

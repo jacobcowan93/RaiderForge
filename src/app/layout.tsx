@@ -8,8 +8,27 @@ import DevBanner from '../components/DevBanner'
 import { SiteMain } from '../components/SiteMain'
 
 export const metadata: Metadata = {
-    title: 'RaiderForge • ARC Raiders Command Center',
-    description: 'ARC Raiders companion hub — maps, builds, blueprints, and marketplace',
+    title: {
+        default: 'RaiderForge • ARC Raiders Toolkit',
+        template: '%s • RaiderForge',
+    },
+    description:
+        'The all-in-one ARC Raiders companion — interactive maps, skill tree planner, blueprint tracker, loadout builder, and a live marketplace with AI-powered listing tools.',
+    keywords: ['ARC Raiders', 'ARC Raiders map', 'ARC Raiders skill tree', 'ARC Raiders blueprints', 'ARC Raiders marketplace', 'ARC Raiders loadouts', 'extraction shooter'],
+    openGraph: {
+        siteName: 'RaiderForge',
+        title: 'RaiderForge • ARC Raiders Toolkit',
+        description:
+            'The all-in-one ARC Raiders companion — maps, skill trees, blueprints, loadouts, and a live marketplace.',
+        type: 'website',
+        locale: 'en_US',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'RaiderForge • ARC Raiders Toolkit',
+        description:
+            'The all-in-one ARC Raiders companion — maps, skill trees, blueprints, loadouts, and a live marketplace.',
+    },
     // Tab icon uses ARC_Icon from public/images/ARC_Icon.png (via favicon.* in /public).
     icons: {
         icon: [{ url: '/favicon.png', type: 'image/png' }],

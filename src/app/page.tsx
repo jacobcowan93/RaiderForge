@@ -38,7 +38,7 @@ export default function Home() {
                             className="hero-enter text-shadow-hero mt-6 max-w-lg text-sm sm:text-base font-medium text-white/85 leading-relaxed"
                             style={{ animationDelay: '0.32s' }}
                         >
-                            Honest ARC Raiders companion hub: live maps and MetaForge conditions today — more systems shipping next.
+                            The all-in-one ARC Raiders toolkit — live maps, skill planner, loadouts, blueprints, and a live marketplace with AI-powered listing tools.
                         </p>
 
                         <div
@@ -245,19 +245,19 @@ export default function Home() {
                                 </span>
                             </Link>
 
-                            {/* Marketplace — catalog browse; G2G planned */}
+                            {/* Marketplace — live listings + AI optimizer; G2G trading coming */}
                             <Link
                                 href="/marketplace"
-                                className="group flex flex-col rounded-xl border border-white/12 bg-gradient-to-b from-[#0a0f18]/90 to-black/45 p-6
-                                           hover:border-rf-red/35 hover:shadow-[0_0_36px_-12px_rgba(239,68,68,0.22)] transition-all hover:-translate-y-0.5"
+                                className="group flex flex-col rounded-xl border border-yellow-500/25 bg-gradient-to-b from-yellow-950/15 to-black/40 p-6
+                                           hover:border-yellow-500/45 hover:shadow-[0_0_36px_-10px_rgba(234,179,8,0.25)] transition-all hover:-translate-y-0.5"
                             >
                                 <div className="flex items-center justify-between gap-2 mb-3">
-                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-rf-red/85">
+                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-yellow-300/85">
                                         Marketplace
                                     </span>
-                                    <PageMaturityBadge level="in-development" />
+                                    <PageMaturityBadge level="beta" />
                                 </div>
-                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-rf-red/10 text-rf-red/90 border border-rf-red/20">
+                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/12 text-yellow-300/90 border border-yellow-500/20">
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         fill="none"
@@ -273,11 +273,11 @@ export default function Home() {
                                         />
                                     </svg>
                                 </div>
-                                <h3 className="font-semibold text-white mb-2">Browse the catalog</h3>
-                                <p className="text-sm text-white/60 leading-relaxed flex-1">
-                                    Read-only item browser powered by ardb.app. Reputation-based trading and G2G checkout are planned.
+                                <h3 className="font-semibold text-white mb-2">Browse &amp; list items</h3>
+                                <p className="text-sm text-white/65 leading-relaxed flex-1">
+                                    Browse the item catalog, list gear for sale, and use the AI listing optimizer to write better titles and descriptions. G2G-powered trading coming soon.
                                 </p>
-                                <span className="mt-5 inline-flex items-center justify-center rounded-lg bg-rf-red/90 group-hover:bg-rf-red text-white text-sm font-bold py-2.5 px-4 border border-rf-red/30 transition-colors">
+                                <span className="mt-5 inline-flex items-center justify-center rounded-lg bg-yellow-600/90 group-hover:bg-yellow-500 text-white text-sm font-bold py-2.5 px-4 border border-yellow-400/25 transition-colors">
                                     Open Marketplace
                                 </span>
                             </Link>

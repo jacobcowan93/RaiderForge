@@ -1,5 +1,17 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import { normalizePublicAssetUrl } from '@/lib/site/publicAssetUrl'
+
+export const metadata: Metadata = {
+    title: 'Marketplace',
+    description:
+        'Browse ARC Raiders items, post listings, and use the AI listing optimizer to write buyer-ready titles, tags, and descriptions. G2G-powered trading coming soon.',
+    openGraph: {
+        title: 'ARC Raiders Marketplace • RaiderForge',
+        description:
+            'Browse ARC Raiders items, post listings, and use the AI listing optimizer. G2G-powered trading coming soon.',
+    },
+}
 
 /**
  * Marketplace section — same full-viewport background as Maps (skill tree art + light tint).

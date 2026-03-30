@@ -16,6 +16,7 @@ import { Divider, ErrorMsg, Spinner, Toast } from './MarketplaceShared'
 import { MarketplaceG2gPlaceholder } from './MarketplaceG2gPlaceholder'
 import { MarketplaceItemPicker } from './MarketplaceItemPicker'
 import { MarketplaceListingForm } from './MarketplaceListingForm'
+import { MarketplaceListingOptimizer } from './MarketplaceListingOptimizer'
 
 export function MarketplaceSellTab({
     userId,
@@ -139,6 +140,17 @@ export function MarketplaceSellTab({
                     </>
                 )}
             </div>
+
+            <Divider />
+
+            <MarketplaceListingOptimizer
+                item={selectedItem}
+                price={price}
+                currency={currency}
+                quantity={quantity}
+                notes={notes}
+                disabled={submitting || persistenceDisabled}
+            />
 
             <Divider />
 

@@ -1,5 +1,17 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import { normalizePublicAssetUrl } from '@/lib/site/publicAssetUrl'
+
+export const metadata: Metadata = {
+    title: 'Interactive Maps',
+    description:
+        'Explore all ARC Raiders zones with live MetaForge conditions, interactive maps, location filters, and icon legends — powered by maps.tcno.co and MetaForge data.',
+    openGraph: {
+        title: 'ARC Raiders Interactive Maps • RaiderForge',
+        description:
+            'Live MetaForge conditions, interactive zone maps, and location filters for every ARC Raiders map.',
+    },
+}
 
 /**
  * Maps section layout — full-viewport skill tree art (`public/images/ARC_Raiders_Main_SkillTree.png`)
