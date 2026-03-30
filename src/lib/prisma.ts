@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { PrismaNeon } from '@prisma/adapter-neon'
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
@@ -7,9 +8,8 @@ export function getPrisma(): PrismaClient | undefined {
     if (!url) return undefined
 
     if (!globalForPrisma.prisma) {
-        globalForPrisma.prisma = new PrismaClient({
-            log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-        })
+        const adapter = new PrismaNeon({ connectionString: url })
+        globalForPrisma.prisma = new PrismaClient({ adapter })
     }
     return globalForPrisma.prisma
 }
