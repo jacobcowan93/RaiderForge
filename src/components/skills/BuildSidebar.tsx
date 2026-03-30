@@ -3,21 +3,14 @@
 import { memo, useMemo, useState } from 'react'
 import type { SkillBranch } from '@/data/skillTree'
 import { BRANCH_META, BRANCHES } from '@/data/skillTree'
-import { getSiteOrigin } from '@/lib/site/siteOrigin'
 import {
     type BuildAllocations,
     type BuildSummaryRow,
     buildSummary,
-
     resetAll,
     resetBranch,
-    decodeAndNormalizeBuild,
-    buildSkillTreeShareUrl,
 } from '@/lib/skills/planner'
-import { TrialSimulatePanel } from '@/components/skills/TrialSimulatePanel'
-import { ShareToGalleryPanel } from '@/components/skills/ShareToGalleryPanel'
 import { EXPEDITION_CAPS, type ExpeditionLevel } from '@/lib/skills/caps'
-import type { SharedBuild } from './SharedBuildsGallery'
 
 interface Props {
     allocs:             BuildAllocations
@@ -29,7 +22,6 @@ interface Props {
     maxPts:             number
     expeditionLevel:    ExpeditionLevel
     onExpeditionChange: (level: ExpeditionLevel) => void
-    onBuildShared:      (build: SharedBuild) => void
 }
 
 // ── Branch breakdown row ───────────────────────────────────────────────────────
@@ -119,194 +111,12 @@ function BranchRow({ row }: { row: BuildSummaryRow }) {
     )
 }
 
-// ── Import panel ───────────────────────────────────────────────────────────────
-// Accepts a full URL (extracts ?b=…) or a raw compact code (e.g. "C1:3|M2l:1").
-// Validates, applies, then collapses.
-
-interface ImportPanelProps {
-    onImport: (allocs: BuildAllocations) => void
-}
-
-function ImportPanelInner({ onImport }: ImportPanelProps) {
-    const [open,         setOpen]        = useState(false)
-    const [value,        setValue]       = useState('')
-    const [status,       setStatus]      = useState<'idle' | 'ok' | 'clamped' | 'error'>('idle')
-    const [errMsg,       setErrMsg]      = useState('')
-    const [clampChanges, setClampChanges] = useState<string[]>([])
-
-    const handleApply = () => {
-        const raw = value.trim()
-        if (!raw) return
-
-        // Extract ?b= from a full URL if present; otherwise treat as raw code
-        let code = raw
-        try {
-            const url = new URL(raw)
-            const b   = url.searchParams.get('b')
-            if (b) code = b
-        } catch {
-            // Not a URL — treat as raw compact code
-        }
-
-        const result = decodeAndNormalizeBuild(code)
-
-        if (Object.keys(result.allocs).length === 0) {
-            setStatus('error')
-            setErrMsg('Could not parse build code. Check the link and try again.')
-            return
-        }
-
-        onImport(result.allocs)
-        setValue('')
-
-        if (result.clamped) {
-            setStatus('clamped')
-            setClampChanges(result.changes)
-            // Keep open so user can read the clamp report; they close manually
-        } else {
-            setStatus('ok')
-            setTimeout(() => { setOpen(false); setStatus('idle') }, 1200)
-        }
-    }
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault()
-            handleApply()
-        }
-        if (e.key === 'Escape') {
-            setOpen(false)
-            setStatus('idle')
-            setValue('')
-        }
-    }
-
-    return (
-        <div className="rounded-xl border border-white/[0.07] overflow-hidden"
-             style={{ background: 'rgba(15,20,27,0.65)' }}>
-            {/* Toggle header */}
-            <button
-                type="button"
-                onClick={() => { setOpen((v) => !v); setStatus('idle') }}
-                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-white/[0.03] transition-colors"
-            >
-                <div className="flex items-center gap-2">
-                    <svg width={12} height={12} viewBox="0 0 24 24" fill="none"
-                         stroke="rgba(255,255,255,0.35)" strokeWidth={2}
-                         strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <span className="text-[11px] font-semibold text-white/40">Import build</span>
-                </div>
-                <svg
-                    className="transition-transform duration-200"
-                    style={{ transform: open ? 'rotate(180deg)' : 'rotate(0)' }}
-                    width={11} height={11} viewBox="0 0 24 24" fill="none"
-                    stroke="rgba(255,255,255,0.25)" strokeWidth={2.5}
-                    strokeLinecap="round" strokeLinejoin="round"
-                >
-                    <polyline points="6 9 12 15 18 9"/>
-                </svg>
-            </button>
-
-            {/* Expandable body */}
-            {open && (
-                <div className="px-3 pb-3 flex flex-col gap-2">
-                    <p className="text-[10px] text-white/30 leading-relaxed">
-                        Paste a share link or compact build code (e.g.&nbsp;
-                        <code className="text-white/45 font-mono">C1:3,C2l:1|M1:5</code>)
-                    </p>
-                    <textarea
-                        rows={2}
-                        value={value}
-                        onChange={(e) => { setValue(e.target.value); setStatus('idle') }}
-                        onKeyDown={handleKeyDown}
-                        placeholder="https://raiderforge.com/skill-trees?b=…"
-                        className="w-full resize-none rounded-lg px-2.5 py-2 text-[11px] font-mono
-                                   text-white/70 placeholder-white/18 border border-white/[0.08]
-                                   focus:outline-none focus:border-white/20 transition-colors"
-                        style={{ background: 'rgba(7,9,13,0.85)' }}
-                        spellCheck={false}
-                        autoComplete="off"
-                    />
-
-                    {/* Status feedback */}
-                    {status === 'error' && (
-                        <p className="text-[10px] text-red-400/85 leading-snug">{errMsg}</p>
-                    )}
-                    {status === 'ok' && (
-                        <p className="text-[10px] text-emerald-400/85 leading-snug flex items-center gap-1.5">
-                            <svg width={10} height={10} viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" strokeWidth={2.5}
-                                 strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                            Build imported!
-                        </p>
-                    )}
-                    {status === 'clamped' && (
-                        <div className="rounded-lg border border-amber-400/20 px-2.5 py-2"
-                             style={{ background: 'rgba(251,191,36,0.06)' }}>
-                            <p className="text-[10px] font-semibold text-amber-300 mb-1 leading-snug">
-                                Build imported — some ranks adjusted to fit caps:
-                            </p>
-                            <ul className="space-y-0.5">
-                                {clampChanges.slice(0, 4).map((c, i) => (
-                                    <li key={i} className="text-[9px] text-amber-400/60 leading-relaxed">
-                                        • {c}
-                                    </li>
-                                ))}
-                                {clampChanges.length > 4 && (
-                                    <li className="text-[9px] text-amber-400/40">
-                                        …and {clampChanges.length - 4} more
-                                    </li>
-                                )}
-                            </ul>
-                        </div>
-                    )}
-
-                    <button
-                        type="button"
-                        onClick={handleApply}
-                        disabled={!value.trim()}
-                        className="self-end text-[11px] font-semibold rounded-lg px-3 py-1.5
-                                   border border-white/12 text-white/50
-                                   hover:border-white/22 hover:text-white/70 transition-colors
-                                   disabled:opacity-30 disabled:cursor-not-allowed"
-                        style={{ background: 'rgba(255,255,255,0.04)' }}
-                    >
-                        Apply
-                    </button>
-                </div>
-            )}
-        </div>
-    )
-}
-
-const ImportPanel = memo(ImportPanelInner)
-ImportPanel.displayName = 'ImportPanel'
-
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 
-function BuildSidebarInner({ allocs, spentTotal, branchSpent, onChange, maxPts, expeditionLevel, onExpeditionChange, onBuildShared }: Props) {
-    const [copied, setCopied] = useState(false)
-    const summary                       = useMemo(() => buildSummary(allocs), [allocs])
-    const total = spentTotal
+function BuildSidebarInner({ allocs, spentTotal, branchSpent, onChange, maxPts, expeditionLevel, onExpeditionChange }: Props) {
+    const summary   = useMemo(() => buildSummary(allocs), [allocs])
+    const total     = spentTotal
     const globalCap = maxPts
-
-    const handleShare = async () => {
-        /** Canonical `/skill-trees` URL so pasted links match OG metadata and work from any origin. */
-        const url = buildSkillTreeShareUrl(allocs, getSiteOrigin())
-        try {
-            await navigator.clipboard.writeText(url)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
-        } catch {
-            /* fallback: select + manual copy not needed for MVP */
-        }
-    }
 
     const handleResetBranch = (branch: SkillBranch) => {
         onChange(resetBranch(allocs, branch))
@@ -418,41 +228,6 @@ function BuildSidebarInner({ allocs, spentTotal, branchSpent, onChange, maxPts, 
 
             {/* Actions */}
             <div className="flex flex-col gap-2">
-                {/* Share */}
-                <button
-                    type="button"
-                    onClick={handleShare}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold
-                               border border-rf-red/30 bg-rf-red/10 text-rf-red
-                               hover:bg-rf-red/18 hover:border-rf-red/50 transition-colors"
-                >
-                    {copied ? (
-                        <>
-                            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                                <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                            Link copied!
-                        </>
-                    ) : (
-                        <>
-                            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                            </svg>
-                            Copy share link
-                        </>
-                    )}
-                </button>
-
-                {/* Share to community gallery */}
-                <ShareToGalleryPanel allocs={allocs} spentTotal={spentTotal} onShared={onBuildShared} />
-
-                {/* Import */}
-                <ImportPanel onImport={onChange} />
-
-                {/* Trial simulation */}
-                <TrialSimulatePanel allocs={allocs} maxPts={maxPts} onApply={(next) => onChange({ ...next })} />
-
                 {/* Reset all */}
                 <button
                     type="button"

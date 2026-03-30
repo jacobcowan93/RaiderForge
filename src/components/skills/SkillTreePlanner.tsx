@@ -19,7 +19,6 @@ import { loadSkillTreeSave, saveSkillTreeSave } from '@/lib/skill-tree/skillTree
 import { BranchTree } from './BranchTree'
 import { BuildSidebar } from './BuildSidebar'
 import { UnifiedSkillTreeCanvas } from './UnifiedSkillTreeCanvas'
-import type { SharedBuild } from './SharedBuildsGallery'
 
 const EXPEDITION_LEVEL_KEY = 'raiderforge.expedition-level.v1'
 
@@ -89,10 +88,8 @@ BranchTabBar.displayName = 'BranchTabBar'
  */
 
 export function SkillTreePlanner({
-    onBuildShared,
     onAllocsChange,
 }: {
-    onBuildShared?: (build: SharedBuild) => void
     onAllocsChange?: (allocs: BuildAllocations, spentTotal: number) => void
 }) {
     const searchParams = useSearchParams()
@@ -262,8 +259,7 @@ export function SkillTreePlanner({
                         maxPts={maxPts}
                         expeditionLevel={expeditionLevel}
                         onExpeditionChange={handleExpeditionChange}
-                        onBuildShared={onBuildShared ?? (() => {})}
-                    />
+                                            />
                 </div>
             )}
 
@@ -295,8 +291,7 @@ export function SkillTreePlanner({
                         maxPts={maxPts}
                         expeditionLevel={expeditionLevel}
                         onExpeditionChange={handleExpeditionChange}
-                        onBuildShared={onBuildShared ?? (() => {})}
-                    />
+                                            />
                 </div>
             </div>
 
