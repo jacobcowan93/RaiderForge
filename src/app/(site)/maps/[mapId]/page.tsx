@@ -69,7 +69,7 @@ export default async function MapDetailPage({ params }: Props) {
     }, {})
 
     return (
-        <div className="py-8 px-6 max-w-7xl mx-auto">
+        <div className="py-8 px-4 sm:px-6 xl:px-8 max-w-[1680px] mx-auto">
 
             {/* ── Breadcrumbs ──────────────────────────────────────────────────── */}
             <div className="mb-6 flex flex-wrap items-center gap-2">
@@ -165,19 +165,20 @@ export default async function MapDetailPage({ params }: Props) {
                 </div>
             </div>
 
+            {/* ── Native interactive map ─────────────────────────────────────── */}
+            <section className="mb-8">
+                <NativeMapExplorer
+                    map={map}
+                    mapQuests={mapQuests}
+                    mfLootAreas={mfLootAreas}
+                />
+            </section>
+
             {/* ── Content grid ─────────────────────────────────────────────────── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.75fr)_minmax(300px,0.9fr)] gap-8">
 
                 {/* ── Main column ── */}
-                <div className="lg:col-span-2 space-y-5">
-
-                    {/* ── Native interactive map ── */}
-                    <NativeMapExplorer
-                        map={map}
-                        mapQuests={mapQuests}
-                        mfLootAreas={mfLootAreas}
-                    />
-
+                <div className="space-y-5">
                     {/* Zone Overview */}
                     <div className="rf-card rounded-2xl p-5">
                         <h2 className="text-xs uppercase tracking-widest text-white/35 font-semibold mb-3">

@@ -11,7 +11,7 @@
  * Difficulty options and category groups are data-driven via map-interactive-config.ts.
  */
 
-import { useState, useMemo, useCallback, useRef, Fragment } from 'react'
+import { useState, useMemo, useCallback, useRef, Fragment, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import type { MapMeta } from '@/data/maps'
 import type { MergedQuest } from '@/types/quests'
@@ -65,7 +65,7 @@ export default function NativeMapExplorer({
     const [difficulty, setDifficulty]         = useState<Difficulty>('Normal')
     const [search, setSearch]                 = useState('')
     const [activeFloor, setActiveFloor]       = useState(0)
-    const [showPanel, setShowPanel]           = useState(false)
+    const [showPanel, setShowPanel]           = useState(true)
     const [selectedPoi, setSelectedPoi]       = useState<MapPoi | null>(null)
     const [selectedQuestName, setSelectedQuestName] = useState<string | null>(null)
     const [tileFallback, setTileFallback]     = useState(false)
@@ -75,11 +75,20 @@ export default function NativeMapExplorer({
     )
     const [dataLayers, setDataLayers] = useState<DataLayers>({
         quests:     true,
-        containers: false,
-        lootAreas:  false,
+        containers: true,
+        lootAreas:  mfLootAreas.length > 0,
     })
 
     const searchRef = useRef<HTMLInputElement>(null)
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+        const mq = window.matchMedia('(max-width: 1023px)')
+        const sync = () => setShowPanel(!mq.matches)
+        sync()
+        mq.addEventListener('change', sync)
+        return () => mq.removeEventListener('change', sync)
+    }, [])
 
     // ── Derived data ───────────────────────────────────────────────────────────
     const allPois      = useMemo(() => getPoisForMap(map.id), [map.id])
@@ -209,10 +218,8 @@ export default function NativeMapExplorer({
                                 className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-black/30 border border-white/[0.06]"
                                 title={`Curated pin: ${meta.label}`}
                             >
-                                <span
-                                    className="w-2 h-2 rounded-sm shrink-0"
-                                    style={{ background: meta.color }}
-                                />
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={meta.iconSrc} alt="" className="w-3 h-3 shrink-0 object-contain" />
                                 <span className="text-[9px] text-white/55 font-medium">{meta.label}</span>
                             </span>
                         )
@@ -373,13 +380,13 @@ export default function NativeMapExplorer({
             )}
 
             {/* ── Map area ────────────────────────────────────────────────────── */}
-            <div className="relative flex-1" style={{ height: 'min(70vh, 740px)' }}>
+            <div className="relative flex-1" style={{ height: 'clamp(42rem, 86vh, 72rem)' }}>
 
                 {/* ── Layer / category panel ──────────────────────── */}
                 {showPanel && (
                     <div
                         className="rf-panel-enter absolute top-0 right-0 bottom-0 z-[650]
-                                   flex flex-col w-60
+                                   flex flex-col w-72 max-w-[82vw]
                                    bg-[rgba(5,6,10,0.97)] backdrop-blur-xl
                                    border-l border-white/[0.07] shadow-2xl
                                    overflow-y-auto overscroll-contain"
@@ -560,6 +567,11 @@ export default function NativeMapExplorer({
                                         resetCategories()
                                         setDifficulty('Normal')
                                         setSearch('')
+                                        setDataLayers({
+                                            quests: true,
+                                            containers: true,
+                                            lootAreas: mfLootAreas.length > 0,
+                                        })
                                     }}
                                     className="w-full text-[10px] font-medium text-white/30
                                                hover:text-white/60 border border-white/8
@@ -624,7 +636,7 @@ export default function NativeMapExplorer({
             </div>
 
             {/* ── Status bar ──────────────────────────────────────────────────── */}
-            <div className="flex items-center justify-between gap-2 px-4 py-[5px]
+                <div className="flex items-center justify-between gap-2 px-4 py-[5px]
                             border-t border-white/[0.04] bg-white/[0.009] flex-wrap">
                 <div className="flex items-center gap-2">
                     <span className="text-[10px] text-white/22">
@@ -639,6 +651,9 @@ export default function NativeMapExplorer({
                     )}
                 </div>
                 <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-white/18">
+                        {dataLayers.quests ? mapQuests.length : 0} quests · {dataLayers.containers ? containers.length : 0} containers · {dataLayers.lootAreas ? lootAreas.length : 0} loot zones
+                    </span>
                     {difficulty !== 'Normal' && (
                         <span className="text-[9px] font-semibold uppercase tracking-wider
                                          border border-white/10 rounded-full px-2 py-px text-white/30">
