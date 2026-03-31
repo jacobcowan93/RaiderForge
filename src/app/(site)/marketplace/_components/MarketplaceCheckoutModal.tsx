@@ -215,19 +215,24 @@ export function MarketplaceCheckoutModal({
                                 </div>
                             )}
 
-                            {/* Note to seller */}
+                            {/* Embark ID */}
                             <div className="space-y-1.5">
-                                <label className={sectionHeading + ' flex gap-1'}>
-                                    Note to seller
-                                    <span className="opacity-50 normal-case tracking-normal text-[9px]">(optional)</span>
+                                <label className={sectionHeading + ' flex items-baseline gap-1.5'}>
+                                    Embark ID
+                                    <span className="opacity-50 normal-case tracking-normal text-[9px] font-normal">
+                                        so the seller can find you in-game
+                                    </span>
                                 </label>
-                                <textarea
-                                    className={inputCls + ' resize-none h-16 text-xs'}
-                                    placeholder="Any special instructions or questions…"
+                                <input
+                                    type="text"
+                                    className={inputCls + ' text-sm'}
+                                    placeholder="YourName#1234"
                                     value={buyerNote}
                                     onChange={(e) => setBuyerNote(e.target.value)}
-                                    maxLength={500}
+                                    maxLength={64}
                                     disabled={placing}
+                                    autoComplete="off"
+                                    spellCheck={false}
                                 />
                             </div>
 
@@ -252,7 +257,7 @@ export function MarketplaceCheckoutModal({
                             {errorMsg && <ErrorMsg msg={errorMsg} />}
 
                             <p className="text-[9px] text-rf-textSoft/35 text-center leading-relaxed">
-                                Placing an order notifies the seller. The seller will confirm and arrange payment.
+                                Placing an order notifies the seller. They will use your Embark ID to find you in-game and arrange delivery.
                                 Price is locked at time of order — verified server-side.
                             </p>
 
