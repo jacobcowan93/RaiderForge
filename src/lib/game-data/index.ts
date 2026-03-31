@@ -10,7 +10,9 @@ export type {
     GameMapEventsBundle,
     GameProject,
     GameQuest,
+    GameQuestReward,
     GameSkillNode,
+    GameTrade,
 } from './types'
 export { getGameDataProvider, type GameDataProvider } from './provider'
 export { clearGameDataCache } from './cache'

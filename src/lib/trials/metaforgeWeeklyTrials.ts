@@ -30,12 +30,47 @@ const TIER_FROM_DIFF: Record<WeeklyTrial['difficulty'], TrialDifficultyTier> = {
 
 function matchLocalTrialId(metaforgeName: string): string | undefined {
     const n = metaforgeName.toLowerCase()
-    if (n.includes('hornet')) return 'trial-hornet-havoc'
-    if (n.includes('bombardier')) return 'trial-bombardier-siege'
-    if (n.includes('flying') && n.includes('arc')) return 'trial-flying-arc-hunt'
-    if (n.includes('lightning')) return 'trial-lightning-gauntlet'
+
+    // ── Enemy-type damage trials ───────────────────────────────────────────────
+    if (n.includes('hornet'))                                       return 'trial-hornet-havoc'
+    if (n.includes('bombardier'))                                   return 'trial-bombardier-siege'
+    if (n.includes('shredder'))                                     return 'trial-damage-shredders'
+    if (n.includes('wasp'))                                         return 'trial-damage-wasps'
+    if (n.includes('rocketeer'))                                    return 'trial-damage-rocketeers'
+    if (n.includes('leaper'))                                       return 'trial-damage-leapers'
+    if (n.includes('bastion'))                                      return 'trial-damage-bastions'
+    if (n.includes('queen') || n.includes('matriarch'))             return 'trial-damage-queens'
+    if (n.includes('spotter'))                                      return 'trial-damage-spotters'
+    if (n.includes('snitch'))                                       return 'trial-damage-snitches'
+    if (n.includes('tick') || n.includes('fireball') || n.includes(' pop')) return 'trial-destroy-small-arc'
+    if (n.includes('flying') && n.includes('arc'))                  return 'trial-damage-flying-arc'
+    if (n.includes('ground-based') || n.includes('ground based'))   return 'trial-damage-ground-arc'
+    if (/\bdamage any arc\b/.test(n))                               return 'trial-damage-any-arc'
+    if (n.includes('swamp'))                                        return 'trial-swamp-arc'
+
+    // ── Condition / event-specific ────────────────────────────────────────────
+    if (n.includes('lightning'))                                    return 'trial-lightning-gauntlet'
+    if (n.includes('disarm') || (n.includes('mine') && n.includes('locked'))) return 'trial-disarm-mines'
+    if (n.includes('download') || (n.includes('bunker') && n.includes('information'))) return 'trial-download-bunker'
+
+    // ── Location-restricted trials ────────────────────────────────────────────
+    if (n.includes('west') && n.includes('highway'))                return 'trial-west-highway'
+    if ((n.includes('container') || n.includes('open')) && n.includes('tunnel')) return 'trial-traffic-tunnels'
+    if (n.includes('medical research'))                             return 'trial-medical-research'
+
+    // ── Collection / search trials ────────────────────────────────────────────
     if (n.includes('carriable') || /\bdeliver\b/i.test(metaforgeName)) return 'trial-carriable-dash'
+    if (n.includes('first wave') || (n.includes('search') && n.includes('husk'))) return 'trial-search-husks'
+    if (n.includes("bird") && n.includes('nest'))                   return 'trial-loot-bird-nests'
+    if (n.includes('raider cache'))                                 return 'trial-raider-caches'
+    if (n.includes('supply drop'))                                  return 'trial-supply-drops'
+    if (n.includes('harvest') && n.includes('plant'))               return 'trial-harvest-plants'
+    if (n.includes('arc probe'))                                    return 'trial-open-probes'
+
+    // ── Survival / endurance ──────────────────────────────────────────────────
     if (n.includes('frost') || n.includes('cold') || n.includes('stella')) return 'trial-frostline'
+    if (n.includes('get hit by lightning'))                         return 'trial-get-lightning'
+
     return undefined
 }
 

@@ -466,18 +466,25 @@ export default function SyncPage() {
   "skillTree": {
     "version": 1,
     "allocations": {
-      "conditioning_endurance": 2,
-      "mobility_sprint":        1
+      "Conditioning_1":  5,
+      "Conditioning_2l": 3,
+      "Mobility_1":      2
     }
   }
 }`}
                         </pre>
                         <p className="text-[11px] text-white/35 leading-relaxed">
-                            Blueprint IDs must match ARDB item IDs from{' '}
-                            <a href="https://ardb.app" target="_blank" rel="noopener noreferrer" className="text-yellow-300/60 hover:text-yellow-300 underline">
-                                ardb.app
+                            Skill node IDs follow the format <code className="text-yellow-300/70 bg-white/[0.06] px-1 rounded">Branch_position</code> (e.g.{' '}
+                            <code className="text-yellow-300/70 bg-white/[0.06] px-1 rounded">Conditioning_1</code>,{' '}
+                            <code className="text-yellow-300/70 bg-white/[0.06] px-1 rounded">Mobility_2l</code>,{' '}
+                            <code className="text-yellow-300/70 bg-white/[0.06] px-1 rounded">Survival_5c</code>).
+                            Arcdata community IDs (<code className="text-yellow-300/70 bg-white/[0.06] px-1 rounded">cond_1</code>,{' '}
+                            <code className="text-yellow-300/70 bg-white/[0.06] px-1 rounded">mob_2l</code>,{' '}
+                            <code className="text-yellow-300/70 bg-white/[0.06] px-1 rounded">surv_5c</code>) are also accepted and translated automatically.
+                            Blueprint IDs match items from the{' '}
+                            <a href="https://arcdata.mahcks.com/v1/items" target="_blank" rel="noopener noreferrer" className="text-yellow-300/60 hover:text-yellow-300 underline">
+                                arcdata community catalog
                             </a>.
-                            Skill tree node IDs match the node IDs shown in the URL of a shared build.
                         </p>
                     </SectionCard>
                 </div>
@@ -517,6 +524,22 @@ export default function SyncPage() {
                             <p className="text-[10px] text-white/25 leading-relaxed">
                                 No Embark API exists yet. We&apos;ll enable this the day it&apos;s available.
                             </p>
+                            <div className="border-t border-white/[0.06] pt-3 flex items-start gap-2">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5" aria-hidden>
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                <p className="text-[10px] text-white/35 leading-relaxed">
+                                    Game data (items, skill nodes, quests, maps) is already live-synced
+                                    from the{' '}
+                                    <a href="https://github.com/Mahcks/arcraiders-data-api" target="_blank" rel="noopener noreferrer" className="text-emerald-400/70 hover:text-emerald-400 underline">
+                                        arcdata community API
+                                    </a>{' '}
+                                    (backed by{' '}
+                                    <a href="https://github.com/RaidTheory/arcraiders-data" target="_blank" rel="noopener noreferrer" className="text-emerald-400/70 hover:text-emerald-400 underline">
+                                        RaidTheory
+                                    </a>).
+                                </p>
+                            </div>
                         </div>
                     </SectionCard>
 

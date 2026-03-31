@@ -103,16 +103,18 @@ export function SkillTreePlanner({
 
     const maxPts = EXPEDITION_CAPS[expeditionLevel]
 
-    // Initialise from URL ?b= param, then fall back to localStorage
+    // Initialise from URL ?b= param, then fall back to localStorage.
+    // ?new=1 forces an empty build (used by the "Build Your Own" CTA).
     const [allocs, setAllocs] = useState<BuildAllocations>(() => {
-        const urlParam = typeof window !== 'undefined'
-            ? new URLSearchParams(window.location.search).get('b')
-            : null
+        if (typeof window === 'undefined') return emptyBuild()
+        const params = new URLSearchParams(window.location.search)
+        // ?new=1 → always start blank regardless of saved state
+        if (params.get('new') === '1') return emptyBuild()
+        const urlParam = params.get('b')
         if (urlParam) {
             const decoded = decodeBuildFromUrlParam(urlParam)
             if (Object.keys(decoded).length > 0) return decoded
         }
-        if (typeof window === 'undefined') return emptyBuild()
         const saved = loadSkillTreeSave()
         return sanitizeBuild(saved.allocations, EXPEDITION_CAPS[loadExpeditionLevel()])
     })

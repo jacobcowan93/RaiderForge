@@ -13,6 +13,7 @@ import type {
     GameProject,
     GameQuest,
     GameSkillNode,
+    GameTrade,
 } from './types'
 import { MahcksGameDataProvider } from './providers/mahcks'
 
@@ -22,8 +23,10 @@ export type GameDataProvider = {
     getProjects(): Promise<GameProject[]>
     getSkillNodes(): Promise<GameSkillNode[]>
     getMapEventsBundle(): Promise<GameMapEventsBundle>
-    /** All quests (provider may paginate upstream internally). */
+    /** All quests (provider fetches individually from upstream). */
     getQuests(): Promise<GameQuest[]>
+    /** All trader barter entries. */
+    getTrades(): Promise<GameTrade[]>
     getItemsPage(params: { limit: number; offset: number }): Promise<GameDataPage<GameItem>>
     /** Single item by upstream id, or null if missing. */
     getItemById(id: string): Promise<GameItem | null>

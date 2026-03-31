@@ -5,6 +5,38 @@ const MAX_BLUEPRINTS = 2000
 const MAX_SKILL_NODES = 500
 const MAX_POINTS_PER_NODE = 20
 
+/**
+ * Translate arcdata.mahcks.com skill-node IDs to the planner's internal UIDs.
+ *
+ * arcdata IDs: "cond_1", "cond_2l", "mob_1", "surv_5c", …
+ * Planner UIDs: "Conditioning_1", "Conditioning_2l", "Mobility_1", "Survival_5c", …
+ *
+ * Mapping: first segment prefix → branch name.
+ * IDs that already look like "Conditioning_…", "Mobility_…", "Survival_…" are
+ * passed through unchanged so existing exports continue to work.
+ */
+const ARCDATA_PREFIX_MAP: Record<string, string> = {
+    cond: 'Conditioning',
+    mob:  'Mobility',
+    surv: 'Survival',
+}
+
+function translateSkillNodeId(raw: string): string {
+    const id = raw.trim()
+    // Already in planner format — pass through
+    if (/^(Conditioning|Mobility|Survival)_/.test(id)) return id
+    // Try arcdata prefix (e.g. "cond_2l" → "Conditioning_2l")
+    const under = id.indexOf('_')
+    if (under > 0) {
+        const prefix = id.slice(0, under).toLowerCase()
+        const suffix = id.slice(under + 1) // e.g. "2l"
+        const branch = ARCDATA_PREFIX_MAP[prefix]
+        if (branch && suffix) return `${branch}_${suffix}`
+    }
+    // Unknown format — keep as-is; the planner will ignore unrecognised UIDs
+    return id
+}
+
 export type ParseResult =
     | { ok: true; data: RaiderForgeImportV1; warnings: string[] }
     | { ok: false; error: string }
@@ -80,7 +112,9 @@ export function parseImportPayload(raw: unknown): ParseResult {
             }
             const points = typeof val === 'number' ? val : Number(val)
             if (!Number.isFinite(points) || points < 0) continue
-            allocations[key] = Math.min(Math.floor(points), MAX_POINTS_PER_NODE)
+            // Translate arcdata / community IDs to planner UIDs automatically
+            const uid = translateSkillNodeId(key)
+            allocations[uid] = Math.min(Math.floor(points), MAX_POINTS_PER_NODE)
             nodeCount++
         }
 

@@ -31,16 +31,33 @@ export type GameMap = {
     imageUrl: string | null
 }
 
+export type GameQuestReward = {
+    itemId: string
+    quantity: number
+}
+
 export type GameQuest = {
     id: string
     name: string
     description: string | null
     traderName: string | null
     xp: number | null
-    objectiveSummary: string | null
-    rewardItemIds: string[]
+    /** EN-extracted objective strings, one per task. */
+    objectives: string[]
+    rewards: GameQuestReward[]
     previousQuestIds: string[]
     nextQuestIds: string[]
+}
+
+export type GameTrade = {
+    trader: string
+    /** Item the trader gives you */
+    itemId: string
+    quantity: number
+    /** Item you give in exchange */
+    costItemId: string
+    costQuantity: number
+    dailyLimit: number | null
 }
 
 export type GameProject = {

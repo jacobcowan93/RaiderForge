@@ -26,6 +26,7 @@ import type {
     GameProject,
     GameQuest,
     GameSkillNode,
+    GameTrade,
 } from '../types'
 
 const DEFAULT_BASE = 'https://arcdata.mahcks.com'
@@ -35,11 +36,11 @@ const TTL_MAPS_MS = 30 * 60 * 1000
 const TTL_PROJECTS_MS = 30 * 60 * 1000
 const TTL_SKILL_MS = 30 * 60 * 1000
 const TTL_EVENTS_MS = 15 * 60 * 1000
-const TTL_QUESTS_MS = 20 * 60 * 1000
+const TTL_QUESTS_MS  = 20 * 60 * 1000
+const TTL_TRADES_MS  = 30 * 60 * 1000
 const TTL_ITEMS_PAGE_MS = 12 * 60 * 1000
 const TTL_SINGLE_ITEM_MS = 15 * 60 * 1000
 
-const MAX_QUEST_PAGES = 28
 const DEFAULT_ITEM_LIMIT = 45
 
 type MahcksPaginated<T> = {
@@ -116,23 +117,57 @@ export class MahcksGameDataProvider implements GameDataProvider {
 
     async getQuests(): Promise<GameQuest[]> {
         return withGameDataCache('mahcks:v1:quests:all', TTL_QUESTS_MS, async () => {
+            // Step 1 — fetch the ID list (no full=true; endpoint doesn't support it)
+            const list = await fetchUpstreamJson<{ count?: number; items?: Array<{ id: string }> }>(
+                url('/v1/quests'),
+                { revalidateSeconds: 900 },
+            )
+            const ids = (list.items ?? []).map((i) => i.id).filter(Boolean)
+
+            // Step 2 — fetch each quest individually with concurrency
+            const concurrency = 10
             const out: GameQuest[] = []
-            let nextPath: string | null = `/v1/quests?full=true&limit=45`
-
-            for (let page = 0; page < MAX_QUEST_PAGES && nextPath; page++) {
-                const data = await fetchUpstreamJson<MahcksPaginated<unknown>>(url(nextPath), {
-                    revalidateSeconds: 900,
-                })
-                const chunk = data.items ?? []
-                for (const row of chunk) {
-                    const q = normalizeGameQuest(row)
-                    if (q) out.push(q)
+            for (let i = 0; i < ids.length; i += concurrency) {
+                const batch = ids.slice(i, i + concurrency)
+                const settled = await Promise.allSettled(
+                    batch.map((id) =>
+                        fetchUpstreamJson<unknown>(url(`/v1/quests/${encodeURIComponent(id)}`), {
+                            revalidateSeconds: 900,
+                        }),
+                    ),
+                )
+                for (const r of settled) {
+                    if (r.status === 'fulfilled') {
+                        const q = normalizeGameQuest(r.value)
+                        if (q) out.push(q)
+                    }
                 }
-                const n = data.next
-                if (!n) break
-                nextPath = n.startsWith('http') ? n : url(n)
             }
+            return out
+        })
+    }
 
+    async getTrades(): Promise<GameTrade[]> {
+        return withGameDataCache('mahcks:v1:trades', TTL_TRADES_MS, async () => {
+            const raw = await fetchUpstreamJson<unknown[]>(url('/v1/trades'), {
+                revalidateSeconds: 1800,
+            })
+            if (!Array.isArray(raw)) return []
+            const out: GameTrade[] = []
+            for (const row of raw) {
+                if (!row || typeof row !== 'object') continue
+                const r = row as Record<string, unknown>
+                const trader     = typeof r.trader     === 'string' ? r.trader.trim()     : null
+                const itemId     = typeof r.itemId     === 'string' ? r.itemId.trim()     : null
+                const quantity   = typeof r.quantity   === 'number' ? r.quantity          : Number(r.quantity) || 1
+                const cost       = r.cost as Record<string, unknown> | null
+                const costItemId = cost && typeof cost.itemId   === 'string' ? cost.itemId.trim()           : null
+                const costQty    = cost && typeof cost.quantity === 'number' ? cost.quantity : Number(cost?.quantity) || 1
+                const daily      = r.dailyLimit != null ? (typeof r.dailyLimit === 'number' ? r.dailyLimit : Number(r.dailyLimit) || null) : null
+                if (trader && itemId && costItemId) {
+                    out.push({ trader, itemId, quantity, costItemId, costQuantity: costQty, dailyLimit: daily })
+                }
+            }
             return out
         })
     }

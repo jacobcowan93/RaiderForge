@@ -66,7 +66,7 @@ export default function SkillTreesPage() {
                     {/* ── Build Your Own CTA ─────────────────────────────────── */}
                     <div className="mt-5">
                         <Link
-                            href="/skill-trees/builder"
+                            href="/skill-trees/builder?new=1"
                             className="inline-flex items-center gap-2.5 rounded-xl px-5 py-2.5
                                        text-sm font-semibold border transition-all duration-150
                                        active:scale-[0.97] bg-green-700 text-white border-green-600/80
