@@ -111,9 +111,9 @@ export function MarketplaceSellTab({
             <div className="space-y-1.5">
                 <label className={sectionHeading}>Item</label>
                 {catalogLoading ? (
-                    <div className="flex items-center gap-2 py-3 text-rf-textSoft/50">
+                    <div className="flex items-center gap-2 py-3 text-white/55">
                         <Spinner size={14} />
-                        <span className="text-xs">Loading item catalog…</span>
+                        <span className="text-xs">Loading item catalog from ARDB…</span>
                     </div>
                 ) : catalogError ? (
                     <div className="space-y-1">

@@ -8,6 +8,71 @@ import { GUIDE_ARTICLES, GUIDE_HUB_SHORTCUTS } from '@/data/guides'
 import { fetchMetaforgeGuidesSnapshot } from '@/lib/data/metaforge-guides'
 import { METAFORGE_GUIDES_ATTRIBUTION } from '@/lib/live-data/attribution'
 
+// ── Community-curated external guides ────────────────────────────────────────
+
+const COMMUNITY_GUIDES = [
+    {
+        id: 1,
+        title: "The Ultimate Beginner's Guide to ARC Raiders",
+        type:  'video' as const,
+        source: 'YouTube',
+        author: 'Fallout Plays',
+        url:   'https://www.youtube.com/watch?v=yoGtsBfe2Gk',
+        thumbnail: 'https://i.ytimg.com/vi/yoGtsBfe2Gk/maxresdefault.jpg',
+        description: '400+ hours of experience packed into one complete new-player guide.',
+    },
+    {
+        id: 2,
+        title: '10 Tips You NEED To Know As A Beginner',
+        type:  'video' as const,
+        source: 'YouTube',
+        author: 'Community',
+        url:   'https://www.youtube.com/watch?v=9k8Lu6a8w30',
+        thumbnail: 'https://i.ytimg.com/vi/9k8Lu6a8w30/maxresdefault.jpg',
+        description: 'Essential beginner mechanics and survival tips every new raider should know.',
+    },
+    {
+        id: 3,
+        title: 'Tips and Tricks Guide for Beginners 2026',
+        type:  'article' as const,
+        source: 'Stitch and Snare',
+        author: 'Steve Sparacino',
+        url:   'https://stitchandsnare.com/blog/arc-raiders-tips-and-tricks-guide-for-beginners-2026/',
+        thumbnail: '',
+        description: 'Budget loadouts, PvP rules of thumb, and what not to do as a new raider.',
+    },
+    {
+        id: 4,
+        title: 'Progression Guide – Fastest Ways to Gear Up',
+        type:  'article' as const,
+        source: 'The GATE',
+        author: 'The GATE',
+        url:   'https://www.thegate.ca/tech-gadgets/072329/arc-raiders-progression-guide-fastest-ways-to-gear-up/',
+        thumbnail: '',
+        description: 'Workshop priority order and early-game power spikes to accelerate your gear curve.',
+    },
+    {
+        id: 5,
+        title: 'Ultimate Beginner\'s Guide – Top Tips & Tricks',
+        type:  'video' as const,
+        source: 'YouTube',
+        author: 'Community',
+        url:   'https://www.youtube.com/watch?v=tQIzJEB3e2g',
+        thumbnail: 'https://i.ytimg.com/vi/tQIzJEB3e2g/maxresdefault.jpg',
+        description: 'Resource tracking, in-raid crafting, and advanced tricks for experienced raiders.',
+    },
+    {
+        id: 6,
+        title: '68 Useful Tips & Tricks — Beginner & Advanced Mega List',
+        type:  'article' as const,
+        source: 'Reddit',
+        author: 'r/ArcRaiders',
+        url:   'https://www.reddit.com/r/ArcRaiders/comments/1olvjsg/a_bunch_of_useful_arc_raider_guides_for_new/',
+        thumbnail: '',
+        description: 'Community-compiled mega list covering mechanics, loot routes, and survival habits.',
+    },
+]
+
 export const metadata = {
     title: 'Guides — ARC Raiders | Raider Forge',
     description:
@@ -170,6 +235,67 @@ export default async function GuidesPage() {
                         </div>
                     </div>
                 )}
+            </section>
+
+            {/* ── Community guides: curated external videos + articles ─────────── */}
+            <section aria-labelledby="community-guides-heading" className="mb-12">
+                <h2 id="community-guides-heading" className="text-xs uppercase tracking-[0.2em] text-white/40 font-bold mb-1">
+                    Community Guides
+                </h2>
+                <p className="text-sm text-white/55 mb-6 max-w-2xl">
+                    Curated videos and articles from the community — full beginner breakdowns, progression tips, and advanced tricks.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {COMMUNITY_GUIDES.map((g) => (
+                        <a
+                            key={g.id}
+                            href={g.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex flex-col rounded-xl border border-white/[0.08] overflow-hidden
+                                       hover:border-yellow-400/30 hover:-translate-y-0.5 transition-all duration-200"
+                            style={{ background: 'rgba(10,14,22,0.85)' }}
+                        >
+                            {/* Thumbnail */}
+                            <div className="relative aspect-video bg-white/[0.04] overflow-hidden">
+                                {g.thumbnail.startsWith('http') ? (
+                                    <img
+                                        src={g.thumbnail}
+                                        alt={g.title}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <span className="text-white/20 text-3xl">
+                                            {g.type === 'video' ? '▶' : '📝'}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[9px] font-bold
+                                                bg-black/70 backdrop-blur-sm"
+                                     style={{ color: g.type === 'video' ? '#facc15' : 'rgba(255,255,255,0.65)' }}>
+                                    {g.type === 'video' ? '▶ VIDEO' : '📝 ARTICLE'}
+                                </div>
+                            </div>
+                            {/* Card body */}
+                            <div className="flex flex-col flex-1 p-4 gap-1.5">
+                                <p className="text-[10px] font-semibold text-yellow-400/75">{g.source}</p>
+                                <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2
+                                               group-hover:text-white/90">{g.title}</h3>
+                                <p className="text-xs text-white/55 leading-relaxed line-clamp-2 mt-0.5">{g.description}</p>
+                                <p className="text-[10px] text-white/30 mt-auto pt-2">by {g.author}</p>
+                            </div>
+                        </a>
+                    ))}
+                </div>
+                <p className="mt-6 text-xs text-white/35 text-center">
+                    Want your guide featured?{' '}
+                    <a href="https://reddit.com/r/ARCRaiders" target="_blank" rel="noopener noreferrer"
+                       className="text-white/50 hover:text-white/70 underline underline-offset-2">
+                        Post on r/ARCRaiders
+                    </a>
+                    {' '}or reach out on Discord.
+                </p>
             </section>
 
             <footer className="pt-6 border-t border-white/[0.06] text-center text-xs text-white/40 leading-relaxed">

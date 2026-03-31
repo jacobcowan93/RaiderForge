@@ -59,8 +59,15 @@ export default function Home() {
                                     Marketplace
                                 </Link>
                             </div>
-                            <p className="text-xs sm:text-sm text-white/50 max-w-md leading-relaxed">
+                            <p className="text-xs sm:text-sm text-white/60 max-w-md leading-relaxed">
                                 Track your blueprints — or browse and list items in the marketplace.
+                            </p>
+                            <p className="text-xs text-white/40">
+                                Already playing?{' '}
+                                <Link href="/sync" className="text-yellow-400/80 underline underline-offset-2 hover:text-yellow-400 transition-colors">
+                                    Sync your profile
+                                </Link>{' '}
+                                to auto-track blueprints &amp; progress.
                             </p>
                         </div>
                     </div>
