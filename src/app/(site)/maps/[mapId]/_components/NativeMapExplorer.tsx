@@ -23,7 +23,6 @@ import {
     filterPoisForFloor,
 } from '@/lib/maps/pois'
 import { getDifficultiesForMap, CATEGORY_GROUPS, DEFAULT_ACTIVE_CATEGORIES } from '@/lib/maps/map-interactive-config'
-import { getTcnoUrl } from '@/lib/maps/tcnoMaps'
 import { POI_CATEGORY_META } from '@/components/maps/MapPoiMarker'
 import { CONTAINERS_BY_MAP } from '@/data/containers'
 
@@ -85,7 +84,6 @@ export default function NativeMapExplorer({
     // ── Derived data ───────────────────────────────────────────────────────────
     const allPois      = useMemo(() => getPoisForMap(map.id), [map.id])
     const difficulties = useMemo(() => getDifficultiesForMap(map.id), [map.id])
-    const tcnoUrl      = getTcnoUrl(map.id)
     const isMultiFloor = map.mapType === 'multi-floor' && (map.floors?.length ?? 0) > 1
 
     // Pins that pass difficulty + search + floor — used for counts (ignores active category filter)
@@ -194,17 +192,7 @@ export default function NativeMapExplorer({
                         Interactive Map
                     </span>
                 </div>
-                <span className="text-[10px] text-white/18">
-                    Adapted with permission from{' '}
-                    <a
-                        href={tcnoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-white/32 hover:text-rf-blue/65 transition-colors underline underline-offset-2"
-                    >
-                        maps.tcno.co
-                    </a>
-                </span>
+                <span className="text-[10px] text-white/18">Hosted natively on RaiderForge</span>
             </div>
 
             {/* ── Pin legend (curated POIs + layer hints) ───────────────────── */}

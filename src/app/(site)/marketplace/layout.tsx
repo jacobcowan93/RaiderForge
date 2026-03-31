@@ -5,11 +5,11 @@ import { normalizePublicAssetUrl } from '@/lib/site/publicAssetUrl'
 export const metadata: Metadata = {
     title: 'Marketplace',
     description:
-        'Browse ARC Raiders items, post listings, and use the AI listing optimizer to write buyer-ready titles, tags, and descriptions. G2G-powered trading coming soon.',
+        'Browse ARC Raiders items, post live RaiderForge listings, and use the AI listing optimizer to write buyer-ready titles, tags, and descriptions.',
     openGraph: {
         title: 'ARC Raiders Marketplace • RaiderForge',
         description:
-            'Browse ARC Raiders items, post listings, and use the AI listing optimizer. G2G-powered trading coming soon.',
+            'Browse ARC Raiders items, post live RaiderForge listings, and use the AI listing optimizer.',
     },
 }
 

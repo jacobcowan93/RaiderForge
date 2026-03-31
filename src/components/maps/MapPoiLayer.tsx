@@ -54,11 +54,8 @@ export function MapPoiCategoryRow({
                                 : 'text-white/20 hover:text-white/45 hover:bg-white/5 border-white/6'
                         }`}
                     >
-                        <span
-                            className="w-2 h-2 rounded-sm flex-shrink-0 border border-white/20"
-                            style={{ background: meta.color }}
-                            aria-hidden
-                        />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={meta.iconSrc} alt="" className="h-3.5 w-3.5 flex-shrink-0 object-contain" />
                         {meta.label}
                     </button>
                 )

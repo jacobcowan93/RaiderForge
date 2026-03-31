@@ -16,7 +16,6 @@ import { getGameDataProvider } from '@/lib/game-data/provider'
 import { indexGameMapsByRfId, resolveMapHeroThumb } from '@/lib/maps/rfGameMapBridge'
 import { MapCoverImage } from '@/components/maps/MapCoverImage'
 import NativeMapExplorer from './_components/NativeMapExplorer'
-import { getTcnoUrl } from '@/lib/maps/tcnoMaps'
 
 type Props = { params: Promise<{ mapId: string }> }
 
@@ -72,7 +71,7 @@ export default async function MapDetailPage({ params }: Props) {
     return (
         <div className="py-8 px-6 max-w-7xl mx-auto">
 
-            {/* ── Breadcrumb + TroubleChute ───────────────────────────────────── */}
+            {/* ── Breadcrumbs ──────────────────────────────────────────────────── */}
             <div className="mb-6 flex flex-wrap items-center gap-2">
                 <Link
                     href="/maps"
@@ -89,21 +88,16 @@ export default async function MapDetailPage({ params }: Props) {
                     </svg>
                     Maps hub
                 </Link>
-                <a
-                    href={getTcnoUrl(map.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                <Link
+                    href={`/maps/hub/${map.id}`}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold
                                text-red-400/90 hover:text-red-300
                                bg-red-500/10 hover:bg-red-500/15
                                border border-red-500/25 hover:border-red-500/40
                                rounded-full px-3 py-1.5 transition-all"
                 >
-                    TroubleChute map
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                    </svg>
-                </a>
+                    Zone briefing
+                </Link>
             </div>
 
             {/* ── Compact hero ─────────────────────────────────────────────────── */}

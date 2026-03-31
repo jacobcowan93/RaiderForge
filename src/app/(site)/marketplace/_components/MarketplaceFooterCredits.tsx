@@ -8,7 +8,8 @@ export function MarketplaceFooterCredits() {
                 <div>
                     <p className="font-medium text-white/70">RaiderForge Marketplace</p>
                     <p className="mt-1 leading-relaxed">
-                        Native listings are live. Secure checkout, escrow, and buyer protection will be powered by the{' '}
+                        Native listings are live today. If enabled in a later release, checkout, escrow, and buyer-protection
+                        flows may be powered by the{' '}
                         <a
                             href="https://docs.g2g.com/"
                             target="_blank"
@@ -16,8 +17,7 @@ export function MarketplaceFooterCredits() {
                             className="underline hover:text-white/80 transition-colors"
                         >
                             G2G Public API
-                        </a>{' '}
-                        for dispute resolution and safe transactions.
+                        </a>.
                     </p>
                     <p className="mt-1 leading-relaxed">
                         Item catalog data from{' '}

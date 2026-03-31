@@ -5,11 +5,11 @@ import { normalizePublicAssetUrl } from '@/lib/site/publicAssetUrl'
 export const metadata: Metadata = {
     title: 'Interactive Maps',
     description:
-        'Explore all ARC Raiders zones with live MetaForge conditions, interactive maps, location filters, and icon legends — powered by maps.tcno.co and MetaForge data.',
+        'Explore all ARC Raiders zones with RaiderForge interactive maps, curated POIs, location filters, and live MetaForge conditions.',
     openGraph: {
         title: 'ARC Raiders Interactive Maps • RaiderForge',
         description:
-            'Live MetaForge conditions, interactive zone maps, and location filters for every ARC Raiders map.',
+            'RaiderForge interactive zone maps with curated POIs, filters, and live conditions for every ARC Raiders map.',
     },
 }
 

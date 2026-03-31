@@ -769,7 +769,7 @@ function renderPoiMarkers(
 
     const icon = L.divIcon({
       className: '',
-      html: buildPoiMarkerHtml(poi.category, isSelected),
+      html: buildPoiMarkerHtml(poi, isSelected),
       iconSize: [markerSize, markerSize],
       iconAnchor: [anchor, anchor],
       tooltipAnchor: [anchor + 4, 0],

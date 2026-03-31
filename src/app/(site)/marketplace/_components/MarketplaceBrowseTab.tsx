@@ -83,7 +83,7 @@ export function MarketplaceBrowseTab() {
                     >
                         ardb.app
                     </Link>
-                    . Live trading via G2G is coming soon — browse only for now.
+                    . RaiderForge listings are live now. G2G checkout and escrow are planned separately from this release.
                 </p>
             </div>
 

@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import { headers } from 'next/headers'
 import { MAPS } from '@/data/maps'
 import { fetchCurrentEvents } from '@/lib/data/metaforge-events'
 import { MapsTcnoCommandCenter } from '@/components/maps/MapsTcnoCommandCenter'
@@ -7,7 +6,6 @@ import { MapsHubSkeleton } from '@/components/maps/MapsHubSkeleton'
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 import { getGameDataProvider } from '@/lib/game-data/provider'
 import { indexGameMapsByRfId } from '@/lib/maps/rfGameMapBridge'
-import { shouldUseTcnoIframeEmbed } from '@/lib/maps/tcno-embed'
 import { resolveMapsHubZoneParam } from '@/lib/maps/maps-hub-zone'
 import { buildTcnoZoneVMs } from '@/lib/maps/build-maps-hub-zones'
 import type { MfEvent } from '@/lib/events/conditions'
@@ -15,7 +13,7 @@ import type { MfEvent } from '@/lib/events/conditions'
 export const metadata = {
     title: 'Maps (Live) — ARC Raiders Command Center | Raider Forge',
     description:
-        'Five ARC Raiders zones: TroubleChute interactive maps (with permission), live MetaForge conditions, and RaiderForge tactical maps with curated POIs.',
+        'Five ARC Raiders zones with RaiderForge interactive maps, curated POIs, and live MetaForge conditions.',
 }
 
 type PageProps = {
@@ -41,10 +39,6 @@ async function MapsPageContent({ searchParams }: PageProps) {
     const resolved = resolveMapsHubZoneParam(sp.zone)
     const initialZoneId =
         resolved && MAPS.some((m) => m.id === resolved) ? resolved : null
-
-    const h = await headers()
-    const host = h.get('x-forwarded-host') ?? h.get('host')
-    const useTcnoIframe = shouldUseTcnoIframeEmbed(host)
 
     const [eventsPayload, gameMaps] = await Promise.all([
         fetchCurrentEvents().catch(() => ({
@@ -85,24 +79,8 @@ async function MapsPageContent({ searchParams }: PageProps) {
                         <PageMaturityBadge level="live" />
                     </div>
                     <p className="mt-2.5 text-sm max-w-2xl text-white text-shadow-hero leading-relaxed">
-                        All five zones: TroubleChute interactive maps{' '}
-                        {useTcnoIframe ? (
-                            <span className="text-white/70">(embedded below where policy allows)</span>
-                        ) : (
-                            <>
-                                via{' '}
-                                <a
-                                    href="https://maps.tcno.co/arc"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-white/55 hover:text-white/80 transition-colors underline underline-offset-2"
-                                >
-                                    maps.tcno.co
-                                </a>{' '}
-                                <span className="text-white/50">(with permission)</span>
-                            </>
-                        )}
-                        , plus RaiderForge tactical view. Deep links:{' '}
+                        All five zones live here on RaiderForge with interactive tactical maps, curated POIs, and live condition
+                        tracking. Deep links:{' '}
                         <span className="text-white/50">/maps?zone=dam</span>,{' '}
                         <span className="text-white/50">/maps/hub/bluegate</span>, etc.
                     </p>
@@ -111,7 +89,7 @@ async function MapsPageContent({ searchParams }: PageProps) {
 
             <MapsTcnoCommandCenter
                 zones={tcnoZones}
-                useTcnoIframe={useTcnoIframe}
+                useTcnoIframe={false}
                 initialZoneId={initialZoneId}
                 liveConditionsUpdatedAt={eventsPayload.fetchedAt}
                 liveConditionsUpstreamOk={eventsPayload.upstreamOk}
@@ -119,16 +97,8 @@ async function MapsPageContent({ searchParams }: PageProps) {
             />
 
             <p className="mt-10 text-[11px] text-white/30 text-shadow-hero leading-relaxed max-w-3xl">
-                Interactive maps with permission from{' '}
-                <a
-                    href="https://maps.tcno.co/arc"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-white/50 transition-colors underline underline-offset-2"
-                >
-                    maps.tcno.co (TroubleChute)
-                </a>
-                . Item / tile reference data from{' '}
+                Interactive map experience hosted on RaiderForge. Source materials were incorporated with permission. Item / tile
+                reference data from{' '}
                 <a href="https://ardb.app" target="_blank" rel="noopener noreferrer"
                    className="hover:text-white/50 transition-colors underline underline-offset-2">
                     ardb.app

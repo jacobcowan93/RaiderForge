@@ -96,7 +96,7 @@ export function MarketplaceCatalogItemCard({ item }: { item: MarketplaceCatalogI
                         <p className="text-[9px] uppercase tracking-wider text-rf-textSoft/50 font-semibold">Offer status</p>
                         <p className="text-xs font-bold text-rf-textSoft/85 mt-0.5 leading-tight">No active listings</p>
                         <p className="text-[10px] text-rf-textSoft/48 mt-0.5 leading-snug">
-                            Reference catalog only — live offers queue behind G2G trading integration.
+                            Reference catalog card. Check the Buy tab for live RaiderForge listings when sellers post this item.
                         </p>
                     </div>
                     <Link href={ardbUrl} target="_blank" rel="noopener noreferrer" className={btnDetails}>

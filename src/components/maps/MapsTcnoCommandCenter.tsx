@@ -276,25 +276,13 @@ export function MapsTcnoCommandCenter({
                             </div>
                         )}
                         <div className="flex flex-col sm:flex-row flex-wrap gap-2.5">
-                            <a
-                                href={selected.tcnoUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <Link
+                                href={`/maps/${selected.id}`}
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-500
                                            text-white text-sm font-bold px-5 py-3 shadow-lg shadow-red-950/60
                                            transition-colors border border-red-400/25"
                             >
-                                Open full interactive map
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor" className="w-4 h-4 shrink-0">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                                </svg>
-                            </a>
-                            <Link
-                                href={`/maps/${selected.id}`}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/[0.04]
-                                           hover:bg-white/[0.08] hover:border-white/28 text-white text-sm font-semibold px-5 py-3 transition-colors"
-                            >
-                                RaiderForge tactical view
+                                Open RaiderForge interactive map
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 shrink-0">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
                                 </svg>
@@ -320,9 +308,8 @@ export function MapsTcnoCommandCenter({
                             <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/50 to-black/90 hidden lg:block" />
                             <div className="absolute inset-0 flex flex-col justify-center p-5 text-center lg:text-left">
                                 <p className="text-[11px] text-white/50 leading-relaxed">
-                                    TroubleChute only allows embedding on certain domains. Use{' '}
-                                    <span className="text-red-400/90 font-semibold">Open full interactive map</span> for the live layer
-                                    stack.
+                                    RaiderForge hosts the tactical map flow directly. Open the native map to browse curated POIs,
+                                    filters, quests, and loot layers on-site.
                                 </p>
                             </div>
                         </div>
@@ -334,31 +321,43 @@ export function MapsTcnoCommandCenter({
                         <>
                             <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-white/[0.06] bg-black/90 shrink-0">
                                 <span className="text-[10px] uppercase tracking-wider text-red-500/70 font-semibold truncate">
-                                    Live embed · tcno.co
+                                    Live zone preview
                                 </span>
-                                <a
-                                    href={selected.tcnoUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                <Link
+                                    href={`/maps/${selected.id}`}
                                     className="text-[10px] font-semibold text-red-400/90 hover:text-red-300 whitespace-nowrap"
                                 >
-                                    Pop out ↗
-                                </a>
+                                    Open RaiderForge map
+                                </Link>
                             </div>
                             <div className="relative flex-1 min-h-[min(68vh,880px)] w-full">
-                                <iframe
-                                    key={selected.tcnoUrl}
-                                    src={selected.tcnoUrl}
-                                    title={`${selected.displayName} — TroubleChute interactive map`}
-                                    className="absolute inset-0 w-full h-full border-0 bg-[#05070c]"
-                                    loading="lazy"
-                                    referrerPolicy="no-referrer-when-downgrade"
-                                    allow="fullscreen"
+                                <MapCoverImage
+                                    src={selected.thumb}
+                                    alt={`${selected.displayName} — zone preview`}
+                                    fill
+                                    sizes="100vw"
+                                    className="object-cover opacity-30"
                                 />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#020308] via-[#020308]/90 to-[#020308]/55" />
+                                <div className="relative z-10 flex h-full items-center justify-center p-8">
+                                    <div className="max-w-lg text-center">
+                                        <p className="text-xs uppercase tracking-[0.25em] text-red-500 font-bold mb-3">RaiderForge Maps</p>
+                                        <p className="text-lg font-bold text-white mb-2">Interactive maps stay on RaiderForge</p>
+                                        <p className="text-sm text-white/50 mb-6 leading-relaxed">
+                                            Open the native map for curated POIs, tactical filters, containers, quests, and live map
+                                            condition context without leaving the site.
+                                        </p>
+                                        <Link
+                                            href={`/maps/${selected.id}`}
+                                            className="inline-flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold px-8 py-3.5 border border-red-400/30 shadow-xl shadow-black/50"
+                                        >
+                                            Open RaiderForge interactive map
+                                        </Link>
+                                    </div>
+                                </div>
                             </div>
                             <div className="px-3 py-2 border-t border-white/[0.06] bg-red-950/25 text-[10px] text-white/50 leading-relaxed">
-                                If the area above is empty, the browser blocked the embed (CSP). Use{' '}
-                                <strong className="text-red-300/90">Open full interactive map</strong> — same map, guaranteed.
+                                RaiderForge tactical maps are the primary interactive surface for this release.
                             </div>
                         </>
                     ) : (
@@ -373,19 +372,16 @@ export function MapsTcnoCommandCenter({
                             <div className="absolute inset-0 bg-gradient-to-t from-[#020308] via-[#020308]/95 to-[#020308]/55" />
                             <div className="relative z-10 h-full flex flex-col items-center justify-center p-8 text-center max-w-lg mx-auto">
                                 <p className="text-xs uppercase tracking-[0.25em] text-red-500 font-bold mb-3">Tactical preview</p>
-                                <p className="text-lg font-bold text-white mb-2">Interactive map runs on TroubleChute</p>
+                                <p className="text-lg font-bold text-white mb-2">Interactive map runs on RaiderForge</p>
                                 <p className="text-sm text-white/50 mb-6 leading-relaxed">
-                                    Open the full map for pan/zoom and their pin set. RaiderForge tactical view keeps curated POIs and
-                                    filters on-site.
+                                    Open the native tactical map for pan, zoom, curated POIs, and RaiderForge-owned layer controls.
                                 </p>
-                                <a
-                                    href={selected.tcnoUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                <Link
+                                    href={`/maps/${selected.id}`}
                                     className="inline-flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold px-8 py-3.5 border border-red-400/30 shadow-xl shadow-black/50"
                                 >
-                                    Open full interactive map
-                                </a>
+                                    Open RaiderForge interactive map
+                                </Link>
                             </div>
                         </div>
                     )}

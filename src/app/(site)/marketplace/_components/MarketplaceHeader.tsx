@@ -12,8 +12,8 @@ export function MarketplaceHeader() {
                         <PageMaturityBadge level="beta" />
                     </div>
                     <p className="mt-1 text-sm text-white/60 max-w-lg">
-                        Browse real listings · List your gear with AI help ·{' '}
-                        G2G-powered secure trading &amp; buyer protection coming soon
+                        Browse live RaiderForge listings · List your gear with AI help ·{' '}
+                        G2G checkout and escrow planned for a future release
                     </p>
                 </div>
 

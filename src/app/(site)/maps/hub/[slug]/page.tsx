@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
 import { MAPS } from '@/data/maps'
 import { fetchCurrentEvents } from '@/lib/data/metaforge-events'
 import { getLiveMapConditions } from '@/lib/live-data/mapConditions'
@@ -9,8 +8,6 @@ import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 import { MapsHubLegend } from '@/components/maps/MapsHubLegend'
 import { getGameDataProvider } from '@/lib/game-data/provider'
 import { indexGameMapsByRfId } from '@/lib/maps/rfGameMapBridge'
-import { getTcnoUrl } from '@/lib/maps/tcnoMaps'
-import { shouldUseTcnoIframeEmbed } from '@/lib/maps/tcno-embed'
 import {
     resolveMapsHubZoneParam,
     canonicalHubSlugForMapId,
@@ -38,10 +35,6 @@ export default async function MapsHubZonePage({ params }: Props) {
     const map = MAPS.find((m) => m.id === mapId)
     if (!map) notFound()
 
-    const h = await headers()
-    const host = h.get('x-forwarded-host') ?? h.get('host')
-    const useTcnoIframe = shouldUseTcnoIframeEmbed(host)
-
     const [eventsPayload, gameMaps] = await Promise.all([
         fetchCurrentEvents().catch(() => ({
             events: [] as MfEvent[],
@@ -62,9 +55,7 @@ export default async function MapsHubZonePage({ params }: Props) {
     if (!zone) notFound()
 
     const conditions = getLiveMapConditions(map.id, now, eventsPayload.events, eventsPayload.upstreamOk)
-    const tcnoUrl = getTcnoUrl(map.id)
     const hubQuery = hubUrlForMapId(map.id)
-    const canonical = canonicalHubSlugForMapId(map.id)
 
     return (
         <div className="py-14 px-6 max-w-4xl mx-auto">
@@ -131,41 +122,21 @@ export default async function MapsHubZonePage({ params }: Props) {
                     )}
                     <p className="text-sm text-white/70 leading-relaxed max-w-2xl mb-5">{map.description}</p>
                     <div className="flex flex-col sm:flex-row flex-wrap gap-2.5">
-                        <a
-                            href={tcnoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold px-6 py-3 border border-red-400/25"
-                        >
-                            Open full interactive map
-                        </a>
                         <Link
                             href={`/maps/${map.id}`}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold px-6 py-3 border border-red-400/25"
+                        >
+                            Open RaiderForge interactive map
+                        </Link>
+                        <Link
+                            href="/maps"
                             className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
                         >
-                            RaiderForge tactical view
+                            Back to command center
                         </Link>
                     </div>
                 </div>
             </div>
-
-            {useTcnoIframe && (
-                <div className="rounded-2xl border border-white/10 overflow-hidden mb-8 bg-black min-h-[min(50vh,560px)] flex flex-col">
-                    <div className="px-3 py-2 border-b border-white/10 text-[10px] uppercase tracking-wider text-white/45">
-                        Live embed · {canonical}
-                    </div>
-                    <div className="relative flex-1 min-h-[min(48vh,520px)]">
-                        <iframe
-                            src={tcnoUrl}
-                            title={`${map.displayName} — TroubleChute`}
-                            className="absolute inset-0 w-full h-full border-0 bg-[#05070c]"
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                            allow="fullscreen"
-                        />
-                    </div>
-                </div>
-            )}
 
             <div className="rounded-xl border border-white/[0.08] bg-black/35 p-4 mb-8">
                 <h2 className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-2">Rotation snapshot</h2>
@@ -179,11 +150,7 @@ export default async function MapsHubZonePage({ params }: Props) {
             <MapsHubLegend defaultOpen variant="featured" className="mb-10" />
 
             <p className="text-[11px] text-white/30 leading-relaxed">
-                Interactive maps with permission from{' '}
-                <a href="https://maps.tcno.co/arc" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-white/50">
-                    tcno.co (TroubleChute)
-                </a>
-                . Tile data:{' '}
+                RaiderForge hosts the interactive map flow directly. Source materials were incorporated with permission. Tile data:{' '}
                 <a href="https://ardb.app" target="_blank" rel="noopener noreferrer" className="hover:text-white/50">
                     ardb.app
                 </a>

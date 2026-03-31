@@ -1,5 +1,5 @@
 /**
- * Shared attribution snippets for MetaForge, TroubleChute / tcno, ARDB.
+ * Shared attribution snippets for MetaForge and ARDB.
  * Use in Maps, Blueprints, Marketplace footers for consistency.
  */
 
@@ -17,9 +17,9 @@ export const METAFORGE_GUIDES_ATTRIBUTION = {
 } as const
 
 export const TCNO_ATTRIBUTION = {
-    name: 'TroubleChute',
-    short: 'Interactive maps with permission from maps.tcno.co (TroubleChute)',
-    url: 'https://maps.tcno.co/arc',
+    name: 'RaiderForge Maps',
+    short: 'Interactive maps hosted on RaiderForge using licensed source materials',
+    url: '',
 } as const
 
 export const ARDB_ATTRIBUTION = {

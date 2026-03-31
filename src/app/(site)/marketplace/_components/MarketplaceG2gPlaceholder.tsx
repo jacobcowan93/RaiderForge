@@ -27,16 +27,17 @@ export function MarketplaceG2gPlaceholder() {
                 <div className="space-y-3">
                     <div>
                         <p className="uppercase tracking-[0.125em] text-xs font-bold text-yellow-400/80">
-                            G2G Secure Trading · Coming Soon
+                            G2G Checkout Integration · Planned
                         </p>
                         <h3 className="text-lg font-semibold text-white mt-1">
-                            Full buyer protection &amp; checkout coming via G2G
+                            Native listings are already live on RaiderForge
                         </h3>
                     </div>
 
                     <p className="text-sm text-white/70 leading-relaxed">
-                        Native listings are live right now. Once G2G integration is complete,
-                        you&apos;ll get secure escrow, buyer protection, dispute resolution, and easy checkout.
+                        Signed-in users can post and manage listings today. A future G2G integration could add
+                        managed checkout, escrow, buyer-protection flows, and dispute handling without changing
+                        the current listing system.
                     </p>
 
                     <div className="inline-flex items-center gap-2 rounded-lg bg-black/60 border border-white/10 px-4 py-2 text-xs text-white/60">

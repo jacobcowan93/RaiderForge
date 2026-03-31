@@ -32,6 +32,8 @@ export type MapPoi = {
     mapId: string
     name: string
     category: PoiCategory
+    /** Optional exact icon key when this POI should use a specific sourced icon rather than category fallback. */
+    iconKey?: string
     /** Horizontal position, percent from left of the tactical map (0–100). */
     x: number
     /** Vertical position, percent from top of the tactical map (0–100). */
