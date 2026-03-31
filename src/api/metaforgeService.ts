@@ -41,8 +41,10 @@ async function mfFetch<T>(url: string, ttlMs: number, params?: Record<string, st
   const fullUrl = params ? `${url}?${new URLSearchParams(params)}` : url
   const res = await fetch(fullUrl, {
     headers: { Accept: 'application/json' },
-    // next.js cache revalidation — aligns with our in-memory TTL
-    next: { revalidate: Math.floor(ttlMs / 1000) },
+    // Opt out of Next.js data cache — rely on our own in-memory TTL so dynamic
+    // pages (force-dynamic) always get a fresh upstream call when the TTL expires
+    // rather than being served a build-time snapshot.
+    cache: 'no-store',
   })
 
   if (!res.ok) {

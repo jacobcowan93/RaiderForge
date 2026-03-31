@@ -8,6 +8,9 @@ import { resolveTrialsCountdownTarget } from '@/lib/trials/trialsCountdownTarget
 import { getUtcMondayMidnightOfCurrentWeekMs } from '@/lib/trials/weeklyReset'
 import { TRIALS_PAGE_MATURITY } from '@/lib/trials/trialsData'
 
+// Always fetch fresh — weekly trials rotate and must never be served from a stale ISR cache.
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
     title: 'Weekly Trials — Command Center | Raider Forge',
     description:
