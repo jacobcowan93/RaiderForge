@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
+import { SyncStatusBadge } from '@/components/SyncStatusBadge'
 import { SkillTreesClientSection } from '@/components/skills/SkillTreesClientSection'
 import { getSiteOrigin } from '@/lib/site/siteOrigin'
 
@@ -63,11 +64,12 @@ export default function SkillTreeBuilderPage() {
                         Character
                     </span>
                     <div className="mt-2 flex flex-wrap items-center gap-3">
-                        <h1 className="text-3xl font-bold tracking-tight text-white text-shadow-hero">
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white text-shadow-hero">
                             Skill Tree{' '}
                             <span className="text-green-500">Builder</span>
                         </h1>
                         <PageMaturityBadge level="beta" />
+                        <SyncStatusBadge />
                     </div>
                     <p className="mt-2.5 text-sm max-w-2xl text-white/85 leading-relaxed">
                         Allocate expedition points across three branches —{' '}

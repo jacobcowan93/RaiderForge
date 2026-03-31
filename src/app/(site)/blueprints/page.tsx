@@ -24,6 +24,7 @@ import {
     type SortMode,
 } from '@/lib/blueprints/sortBlueprints'
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
+import { SyncStatusBadge } from '@/components/SyncStatusBadge'
 import { warnIfAllowlistDriftFromGameOrder } from '@/lib/blueprints/blueprintInGameOrder'
 import { mergeAllowlistMatchedBlueprints } from '@/lib/blueprints/blueprintAllowlistMerge'
 import {
@@ -294,6 +295,7 @@ export default function BlueprintsPage() {
                                     Blueprint <span className="text-blue-500">Tracker</span>
                                 </h1>
                                 <PageMaturityBadge level="beta" />
+                                <SyncStatusBadge />
                             </div>
                             <p className="mt-2 text-xs text-rf-textSoft max-w-2xl leading-relaxed">
                                 Track which blueprints you&apos;ve collected and quickly see what&apos;s still missing.

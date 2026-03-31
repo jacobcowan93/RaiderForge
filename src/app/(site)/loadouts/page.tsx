@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
+import { SyncStatusBadge } from '@/components/SyncStatusBadge'
 import type { MarketplaceCatalogItem } from '@/lib/marketplace/catalog-types'
 import { ARDB_CATALOG_ATTRIBUTION } from '@/lib/marketplace/catalog-types'
 import {
@@ -167,6 +168,7 @@ export default function LoadoutsPage() {
                             Loadout <span className="text-rf-red">Builder</span>
                         </h1>
                         <PageMaturityBadge level="beta" />
+                        <SyncStatusBadge />
                     </div>
                     <p className="mt-2 text-xs text-rf-textSoft max-w-2xl leading-relaxed">
                         Build and save your raid loadouts • Synergy with live events coming soon
