@@ -99,165 +99,143 @@ export default function Home() {
                             What you can use today
                         </h2>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                            {/* ── Row 1 ── */}
+                        <div className="flex flex-col gap-3 max-w-3xl mx-auto">
 
                             {/* Weekly Trials — RED */}
                             <Link
                                 href="/trials"
-                                className="group flex flex-col rounded-xl border border-red-500/30 bg-gradient-to-b from-red-950/30 to-black/50 p-6
-                                           hover:border-red-500/55 hover:shadow-[0_0_40px_-10px_rgba(239,68,68,0.40)] transition-all hover:-translate-y-0.5"
+                                className="group flex items-center gap-5 rounded-xl border border-red-500/30 bg-gradient-to-r from-red-950/30 to-black/50 px-5 py-4
+                                           hover:border-red-500/55 hover:shadow-[0_0_30px_-10px_rgba(239,68,68,0.40)] transition-all hover:-translate-y-px"
                             >
-                                <div className="flex items-center justify-between gap-2 mb-3">
-                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-red-400">
-                                        Weekly Trials
-                                    </span>
-                                    <PageMaturityBadge level="live" />
-                                </div>
-                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-red-500/15 text-red-400 border border-red-500/30">
+                                <div className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-red-500/15 text-red-400 border border-red-500/30">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                     </svg>
                                 </div>
-                                <h3 className="font-semibold text-white mb-2">Trials command center</h3>
-                                <p className="text-sm text-white/65 leading-relaxed flex-1">
-                                    This week and next week rotations, max points, how-to-max tips, reset countdown, and the full filterable catalog.
-                                </p>
-                                <span className="mt-5 inline-flex items-center justify-center rounded-lg bg-red-600 group-hover:bg-red-500 text-white text-sm font-bold py-2.5 px-4 border border-red-400/30 transition-colors">
-                                    Open Weekly Trials
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="text-[10px] uppercase tracking-widest font-semibold text-red-400">Weekly Trials</span>
+                                        <PageMaturityBadge level="live" />
+                                    </div>
+                                    <p className="text-sm text-white/60 leading-snug truncate">This week's rotations, max-score tips, reset countdown, and the full filterable catalog.</p>
+                                </div>
+                                <span className="shrink-0 inline-flex items-center justify-center rounded-lg bg-red-600 group-hover:bg-red-500 text-white text-xs font-bold py-2 px-4 border border-red-400/30 transition-colors">
+                                    Open
                                 </span>
                             </Link>
 
                             {/* Interactive Maps — BLUE */}
                             <Link
                                 href="/maps"
-                                className="group flex flex-col rounded-xl border border-blue-500/30 bg-gradient-to-b from-blue-950/30 to-black/50 p-6
-                                           hover:border-blue-500/55 hover:shadow-[0_0_40px_-10px_rgba(59,130,246,0.35)] transition-all hover:-translate-y-0.5"
+                                className="group flex items-center gap-5 rounded-xl border border-blue-500/30 bg-gradient-to-r from-blue-950/30 to-black/50 px-5 py-4
+                                           hover:border-blue-500/55 hover:shadow-[0_0_30px_-10px_rgba(59,130,246,0.35)] transition-all hover:-translate-y-px"
                             >
-                                <div className="flex items-center justify-between gap-2 mb-3">
-                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-blue-400">
-                                        Interactive Maps
-                                    </span>
-                                    <PageMaturityBadge level="live" />
-                                </div>
-                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                                <div className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
                                     </svg>
                                 </div>
-                                <h3 className="font-semibold text-white mb-2">Maps command center</h3>
-                                <p className="text-sm text-white/65 leading-relaxed flex-1">
-                                    Browse all five zones with live MetaForge conditions and direct links to detailed maps.tcno.co views (with permission).
-                                </p>
-                                <span className="mt-5 inline-flex items-center justify-center rounded-lg bg-blue-600 group-hover:bg-blue-500 text-white text-sm font-bold py-2.5 px-4 border border-blue-400/30 transition-colors">
-                                    Go to Maps Command Center
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="text-[10px] uppercase tracking-widest font-semibold text-blue-400">Interactive Maps</span>
+                                        <PageMaturityBadge level="live" />
+                                    </div>
+                                    <p className="text-sm text-white/60 leading-snug truncate">All five zones with live MetaForge conditions and direct links to detailed map views.</p>
+                                </div>
+                                <span className="shrink-0 inline-flex items-center justify-center rounded-lg bg-blue-600 group-hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 border border-blue-400/30 transition-colors">
+                                    Open
                                 </span>
                             </Link>
 
                             {/* Loadout builder — ORANGE */}
                             <Link
                                 href="/loadouts"
-                                className="group flex flex-col rounded-xl border border-orange-500/30 bg-gradient-to-b from-orange-950/25 to-black/50 p-6
-                                           hover:border-orange-500/55 hover:shadow-[0_0_40px_-10px_rgba(249,115,22,0.35)] transition-all hover:-translate-y-0.5"
+                                className="group flex items-center gap-5 rounded-xl border border-orange-500/30 bg-gradient-to-r from-orange-950/25 to-black/50 px-5 py-4
+                                           hover:border-orange-500/55 hover:shadow-[0_0_30px_-10px_rgba(249,115,22,0.35)] transition-all hover:-translate-y-px"
                             >
-                                <div className="flex items-center justify-between gap-2 mb-3">
-                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-orange-400">
-                                        Loadout System
-                                    </span>
-                                    <PageMaturityBadge level="beta" />
-                                </div>
-                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                                <div className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/30">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
                                     </svg>
                                 </div>
-                                <h3 className="font-semibold text-white mb-2">Raid loadouts</h3>
-                                <p className="text-sm text-white/65 leading-relaxed flex-1">
-                                    Plan gear from the ARDB catalog, assign slots, and save builds in your browser. MetaForge event synergy is planned.
-                                </p>
-                                <span className="mt-5 inline-flex items-center justify-center rounded-lg bg-orange-600 group-hover:bg-orange-500 text-white text-sm font-bold py-2.5 px-4 border border-orange-400/30 transition-colors">
-                                    Open Loadout Builder
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="text-[10px] uppercase tracking-widest font-semibold text-orange-400">Loadout System</span>
+                                        <PageMaturityBadge level="beta" />
+                                    </div>
+                                    <p className="text-sm text-white/60 leading-snug truncate">Plan gear from the ARDB catalog, assign slots, and save builds in your browser.</p>
+                                </div>
+                                <span className="shrink-0 inline-flex items-center justify-center rounded-lg bg-orange-600 group-hover:bg-orange-500 text-white text-xs font-bold py-2 px-4 border border-orange-400/30 transition-colors">
+                                    Open
                                 </span>
                             </Link>
-
-                            {/* ── Row 2 ── */}
 
                             {/* Blueprint tracker — YELLOW */}
                             <Link
                                 href="/blueprints"
-                                className="group flex flex-col rounded-xl border border-yellow-500/30 bg-gradient-to-b from-yellow-950/25 to-black/50 p-6
-                                           hover:border-yellow-500/55 hover:shadow-[0_0_40px_-10px_rgba(234,179,8,0.35)] transition-all hover:-translate-y-0.5"
+                                className="group flex items-center gap-5 rounded-xl border border-yellow-500/30 bg-gradient-to-r from-yellow-950/25 to-black/50 px-5 py-4
+                                           hover:border-yellow-500/55 hover:shadow-[0_0_30px_-10px_rgba(234,179,8,0.35)] transition-all hover:-translate-y-px"
                             >
-                                <div className="flex items-center justify-between gap-2 mb-3">
-                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-yellow-400">
-                                        Blueprint Tracking
-                                    </span>
-                                    <PageMaturityBadge level="beta" />
-                                </div>
-                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">
+                                <div className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
                                     </svg>
                                 </div>
-                                <h3 className="font-semibold text-white mb-2">Blueprint tracker</h3>
-                                <p className="text-sm text-white/65 leading-relaxed flex-1">
-                                    Track ownership against the community spreadsheet list, filter by category, and jump to ARDB for full crafting details — data from ardb.app.
-                                </p>
-                                <span className="mt-5 inline-flex items-center justify-center rounded-lg bg-yellow-500 group-hover:bg-yellow-400 text-black text-sm font-bold py-2.5 px-4 border border-yellow-400/30 transition-colors">
-                                    Open Blueprint Tracker
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="text-[10px] uppercase tracking-widest font-semibold text-yellow-400">Blueprint Tracking</span>
+                                        <PageMaturityBadge level="beta" />
+                                    </div>
+                                    <p className="text-sm text-white/60 leading-snug truncate">Track owned blueprints against the community list, filter by category, jump to ARDB.</p>
+                                </div>
+                                <span className="shrink-0 inline-flex items-center justify-center rounded-lg bg-yellow-500 group-hover:bg-yellow-400 text-black text-xs font-bold py-2 px-4 border border-yellow-400/30 transition-colors">
+                                    Open
                                 </span>
                             </Link>
 
                             {/* Marketplace — ORANGE */}
                             <Link
                                 href="/marketplace"
-                                className="group flex flex-col rounded-xl border border-orange-500/30 bg-gradient-to-b from-orange-950/25 to-black/50 p-6
-                                           hover:border-orange-500/55 hover:shadow-[0_0_40px_-10px_rgba(249,115,22,0.35)] transition-all hover:-translate-y-0.5"
+                                className="group flex items-center gap-5 rounded-xl border border-orange-500/30 bg-gradient-to-r from-orange-950/25 to-black/50 px-5 py-4
+                                           hover:border-orange-500/55 hover:shadow-[0_0_30px_-10px_rgba(249,115,22,0.35)] transition-all hover:-translate-y-px"
                             >
-                                <div className="flex items-center justify-between gap-2 mb-3">
-                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-orange-400">
-                                        Marketplace
-                                    </span>
-                                    <PageMaturityBadge level="beta" />
-                                </div>
-                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                                <div className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/30">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
                                     </svg>
                                 </div>
-                                <h3 className="font-semibold text-white mb-2">Browse &amp; list items</h3>
-                                <p className="text-sm text-white/65 leading-relaxed flex-1">
-                                    Browse the item catalog, list gear for sale, and use the AI listing optimizer to write better titles and descriptions. G2G-powered trading coming soon.
-                                </p>
-                                <span className="mt-5 inline-flex items-center justify-center rounded-lg bg-orange-600 group-hover:bg-orange-500 text-white text-sm font-bold py-2.5 px-4 border border-orange-400/30 transition-colors">
-                                    Open Marketplace
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="text-[10px] uppercase tracking-widest font-semibold text-orange-400">Marketplace</span>
+                                        <PageMaturityBadge level="beta" />
+                                    </div>
+                                    <p className="text-sm text-white/60 leading-snug truncate">Browse the item catalog, list gear for sale, and use the AI listing optimizer.</p>
+                                </div>
+                                <span className="shrink-0 inline-flex items-center justify-center rounded-lg bg-orange-600 group-hover:bg-orange-500 text-white text-xs font-bold py-2 px-4 border border-orange-400/30 transition-colors">
+                                    Open
                                 </span>
                             </Link>
 
                             {/* Skill Tree Planner — BLUE */}
                             <Link
                                 href="/skill-trees"
-                                className="group flex flex-col rounded-xl border border-blue-500/30 bg-gradient-to-b from-blue-950/30 to-black/50 p-6
-                                           hover:border-blue-500/55 hover:shadow-[0_0_40px_-10px_rgba(59,130,246,0.35)] transition-all hover:-translate-y-0.5"
+                                className="group flex items-center gap-5 rounded-xl border border-blue-500/30 bg-gradient-to-r from-blue-950/30 to-black/50 px-5 py-4
+                                           hover:border-blue-500/55 hover:shadow-[0_0_30px_-10px_rgba(59,130,246,0.35)] transition-all hover:-translate-y-px"
                             >
-                                <div className="flex items-center justify-between gap-2 mb-3">
-                                    <span className="text-[10px] uppercase tracking-widest font-semibold text-blue-400">
-                                        Skill Trees
-                                    </span>
-                                    <PageMaturityBadge level="beta" />
-                                </div>
-                                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                                <div className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
                                     </svg>
                                 </div>
-                                <h3 className="font-semibold text-white mb-2">Skill tree planner</h3>
-                                <p className="text-sm text-white/65 leading-relaxed flex-1">
-                                    Allocate expedition points across Conditioning, Mobility, and Survival. Plan your build and share it with a link.
-                                </p>
-                                <span className="mt-5 inline-flex items-center justify-center rounded-lg bg-blue-600 group-hover:bg-blue-500 text-white text-sm font-bold py-2.5 px-4 border border-blue-400/30 transition-colors">
-                                    Open Skill Tree Planner
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="text-[10px] uppercase tracking-widest font-semibold text-blue-400">Skill Trees</span>
+                                        <PageMaturityBadge level="beta" />
+                                    </div>
+                                    <p className="text-sm text-white/60 leading-snug truncate">Allocate expedition points across Conditioning, Mobility, and Survival. Share your build.</p>
+                                </div>
+                                <span className="shrink-0 inline-flex items-center justify-center rounded-lg bg-blue-600 group-hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 border border-blue-400/30 transition-colors">
+                                    Open
                                 </span>
                             </Link>
                         </div>
