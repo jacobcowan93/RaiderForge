@@ -49,6 +49,7 @@ model User {
   buyerOrders         MarketplaceOrder[]     @relation("BuyerOrders")
   sellerOrders        MarketplaceOrder[]     @relation("SellerOrders")
   sharedBuilds        SharedSkillTreeBuild[]
+  profileSync         UserProfileSync?
 }
 
 /// Versioned JSON: per-map POI visit flags (quests / containers / loot areas).
@@ -79,6 +80,22 @@ model UserBlueprintOwnership {
 
   @@id([userId, blueprintId])
   @@index([userId])
+}
+
+/// Tracks the most recent profile import for a user (manual JSON upload or future OAuth).
+/// One row per user — upserted on every successful sync attempt.
+model UserProfileSync {
+  userId            String   @id
+  /// "manual" | "embark_oauth" (future)
+  source            String
+  /// "success" | "partial" | "failed"
+  status            String
+  importedAt        DateTime @updatedAt
+  blueprintsCount   Int      @default(0)
+  skillTreeImported Boolean  @default(false)
+  errorMessage      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {

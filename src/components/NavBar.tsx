@@ -278,6 +278,17 @@ export default function NavBar() {
                                 {profileOpen ? (
                                     <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-rf-border bg-rf-bg/95 backdrop-blur-md shadow-2xl shadow-black/60 overflow-hidden z-[60]">
                                         <Link
+                                            href="/sync"
+                                            onClick={() => setProfileOpen(false)}
+                                            className="flex items-center gap-2.5 px-4 py-3 text-sm text-yellow-300/90 hover:bg-rf-bgSoft transition-colors border-b border-white/[0.06]"
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-yellow-400/70 shrink-0" aria-hidden>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                            </svg>
+                                            Sync My Profile
+                                        </Link>
+
+                                        <Link
                                             href="/profile"
                                             onClick={() => setProfileOpen(false)}
                                             className="flex items-center gap-3 px-4 py-3 text-sm text-rf-text hover:bg-rf-bgSoft transition-colors"
@@ -366,6 +377,20 @@ export default function NavBar() {
                                     />
                                 </li>
                             ))}
+                            {session?.user && (
+                                <li>
+                                    <Link
+                                        href="/sync"
+                                        onClick={closeMobile}
+                                        className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-yellow-300/85 hover:bg-yellow-400/[0.08] transition-colors"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-yellow-400/70 shrink-0" aria-hidden>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                        </svg>
+                                        Sync My Profile
+                                    </Link>
+                                </li>
+                            )}
                         </ul>
                     </div>
                 ) : null}
