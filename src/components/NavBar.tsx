@@ -17,6 +17,23 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
 
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
+import { fetchUnreadCount } from '@/lib/messages/messages-api'
+
+function useUnreadMessages(enabled: boolean) {
+    const [count, setCount] = useState(0)
+    useEffect(() => {
+        if (!enabled) { setCount(0); return }
+        let cancelled = false
+        async function poll() {
+            const r = await fetchUnreadCount()
+            if (!cancelled && r.ok) setCount(r.count)
+        }
+        poll()
+        const id = setInterval(poll, 15_000)
+        return () => { cancelled = true; clearInterval(id) }
+    }, [enabled])
+    return count
+}
 
 type NavLinkItem = {
     href: string
@@ -148,6 +165,8 @@ export default function NavBar() {
         return () => document.removeEventListener('mousedown', handler)
     }, [])
 
+    const unreadCount = useUnreadMessages(!!session?.user)
+
     const closeMobile = () => setMobileNavOpen(false)
 
     const toggleMobile = () => {
@@ -233,6 +252,24 @@ export default function NavBar() {
                                 )}
                             </button>
                         </div>
+
+                        {session?.user ? (
+                            <Link
+                                href="/messages"
+                                onClick={closeMobile}
+                                aria-label={unreadCount > 0 ? `Messages — ${unreadCount} unread` : 'Messages'}
+                                className="relative inline-flex items-center justify-center h-9 w-9 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5" aria-hidden>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+                                </svg>
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-yellow-400 text-black text-[9px] font-bold leading-4 text-center">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
+                                )}
+                            </Link>
+                        ) : null}
 
                         {session?.user ? (
                             <div className="relative" ref={dropdownRef}>
@@ -377,6 +414,25 @@ export default function NavBar() {
                                     />
                                 </li>
                             ))}
+                            {session?.user && (
+                                <li>
+                                    <Link
+                                        href="/messages"
+                                        onClick={closeMobile}
+                                        className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 shrink-0" aria-hidden>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+                                        </svg>
+                                        Messages
+                                        {unreadCount > 0 && (
+                                            <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-yellow-400 text-black text-[9px] font-bold leading-[18px] text-center">
+                                                {unreadCount > 99 ? '99+' : unreadCount}
+                                            </span>
+                                        )}
+                                    </Link>
+                                </li>
+                            )}
                             {session?.user && (
                                 <li>
                                     <Link

@@ -15,6 +15,7 @@ import { formatListingPrice } from '../_lib/marketplace-formatters'
 import { formatOrderDate, formatOrderDateTime } from '../_lib/marketplace-formatters'
 import type { OrderRole, OrderStatus } from '../_lib/marketplace-types'
 import { ErrorMsg, ItemIcon, OrderStatusBadge, Spinner } from './MarketplaceShared'
+import { OrderMessageThread } from './OrderMessageThread'
 
 function TransitionButton({
     toStatus,
@@ -218,6 +219,12 @@ export function MarketplaceOrderCard({
                             <OrderTimeline events={order.events} />
                         </div>
                     )}
+
+                    {/* Order thread */}
+                    <div>
+                        <p className={sectionHeading + ' mb-2'}>Messages</p>
+                        <OrderMessageThread orderId={order.id} currentUserId={userId} />
+                    </div>
                 </div>
             )}
         </div>
