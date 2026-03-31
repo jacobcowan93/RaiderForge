@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth/options'
 import { getPrisma } from '@/lib/prisma'
 import { readCatalogStore } from '@/lib/marketplace/ardb/catalog-store'
+import { fetchItemById } from '@/lib/marketplace/ardb/client'
+import { normalizeArdbItemToCatalog } from '@/lib/marketplace/ardb/normalize'
+import type { MarketplaceCatalogItem } from '@/lib/marketplace/catalog-types'
 import { logMarketplacePersistenceMissing, MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 
 export const runtime = 'nodejs'
@@ -146,11 +149,29 @@ export async function POST(req: NextRequest) {
         return jsonError(400, 'validation_error', `currency must be one of: ${ALLOWED_CURRENCIES.join(', ')}.`)
     }
 
-    // Validate item exists in the local ARDB-synced catalog
+    // Validate item — try local catalog first, fall back to live ARDB lookup
     const store = await readCatalogStore().catch(() => null)
-    const catalogItem = store?.itemsById[ardbItemId] ?? null
+    let catalogItem: MarketplaceCatalogItem | null = store?.itemsById[ardbItemId] ?? null
+
     if (!catalogItem) {
-        return jsonError(404, 'item_not_found', 'Item not found in the synced ARDB catalog. Trigger a catalog sync and retry.')
+        // Local catalog empty (e.g. cold Vercel instance) — fetch directly from ARDB
+        try {
+            const detail = await fetchItemById(ardbItemId)
+            const listEntry = {
+                id: ardbItemId,
+                name: detail.name ?? ardbItemId,
+                type: detail.type ?? '',
+                rarity: detail.rarity ?? null,
+                description: detail.description,
+                foundIn: detail.foundIn ?? [],
+                value: detail.value ?? 0,
+                icon: detail.icon,
+                updatedAt: detail.updatedAt ?? new Date().toISOString(),
+            }
+            catalogItem = normalizeArdbItemToCatalog(listEntry, detail, new Date().toISOString())
+        } catch {
+            return jsonError(404, 'item_not_found', 'Item not found. Please select an item from the catalog picker and try again.')
+        }
     }
 
     const listing = await prisma.marketplaceListing.create({
