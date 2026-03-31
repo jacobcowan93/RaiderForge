@@ -17,25 +17,50 @@ import { isMajorEvent } from './eventsConfig'
 /**
  * Shape of an event returned by MetaForge /events-schedule.
  * Fields are optional/nullable because the API schema is not fully published.
- * Adjust as needed once real API responses are observed.
+ *
+ * Note: MetaForge sends startTime / endTime as Unix millisecond integers,
+ * not ISO strings. Both formats are accepted throughout this module.
  */
 export type MfEvent = {
-  map?: string          // Map identifier (may use various key formats)
-  mapId?: string        // Alternative map identifier
-  name?: string         // Event name, e.g. "Hurricane"
-  event?: string        // Alternative event name field
+  map?: string                  // Map identifier (may use various key formats)
+  mapId?: string                // Alternative map identifier
+  name?: string                 // Event name, e.g. "Hurricane"
+  event?: string                // Alternative event name field
   minor?: string | null
   major?: string | null
-  startTime?: string    // ISO timestamp
-  endTime?: string      // ISO timestamp
+  startTime?: string | number   // Unix ms integer OR ISO string
+  endTime?: string | number     // Unix ms integer OR ISO string
   [key: string]: unknown
+}
+
+/**
+ * Normalize a MetaForge timestamp (Unix ms number, numeric string, or ISO string)
+ * to epoch milliseconds. Returns null when the value is missing or unparseable.
+ */
+function parseMfTimestamp(v: string | number | undefined | null): number | null {
+  if (v == null) return null
+  if (typeof v === 'number') {
+    if (!Number.isFinite(v)) return null
+    // MetaForge timestamps are always in milliseconds (> 1e12 for post-2001 dates).
+    // Guard against accidental seconds values just in case.
+    return v < 1e10 ? v * 1000 : v
+  }
+  // String: try numeric first, then ISO
+  const trimmed = String(v).trim()
+  if (/^\d+$/.test(trimmed)) {
+    const n = Number(trimmed)
+    return Number.isFinite(n) ? (n < 1e10 ? n * 1000 : n) : null
+  }
+  const d = new Date(trimmed).getTime()
+  return Number.isNaN(d) ? null : d
 }
 
 /** Milliseconds remaining in the current UTC hour (shared schedule window tick). */
 export function msLeftInUtcHour(now: Date): number {
-  return (
-    (60 - now.getUTCMinutes()) * 60 * 1000 - now.getUTCSeconds() * 1000 - now.getUTCMilliseconds()
-  )
+  const ms = now.getTime()
+  // Floor to current hour boundary, then add one hour.
+  const nextHourMs = (Math.floor(ms / 3_600_000) + 1) * 3_600_000
+  return nextHourMs - ms
 }
 
 export type MapConditions = {
@@ -57,15 +82,30 @@ export type MapConditions = {
 
 /** Normalize various map key formats to our route IDs (exported for tests / batch tooling). */
 export function normalizeMapKey(raw: string): string {
-  const key = raw.toLowerCase().replace(/\s+/g, '-')
+  // Normalize: lowercase, collapse whitespace/underscores to hyphens
+  const key = raw.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '')
   const ALIASES: Record<string, string> = {
-    dam:               'dam-battlegrounds',
-    'dam-battleground': 'dam-battlegrounds',
-    buried:            'burial-city',
-    'buried-city':     'burial-city',
-    space:             'spaceport',
-    blue:              'blue-gate',
-    stella:            'stella-montis',
+    // Dam Battlegrounds
+    dam:                   'dam-battlegrounds',
+    'dam-battleground':    'dam-battlegrounds',
+    'dam-battlegrounds':   'dam-battlegrounds',
+    'the-dam':             'dam-battlegrounds',
+    battlegrounds:         'dam-battlegrounds',
+    // Burial City (MetaForge calls it "Buried City")
+    buried:                'burial-city',
+    'buried-city':         'burial-city',
+    'burial-city':         'burial-city',
+    // Spaceport
+    space:                 'spaceport',
+    spaceport:             'spaceport',
+    // Blue Gate
+    blue:                  'blue-gate',
+    'blue-gate':           'blue-gate',
+    bluegate:              'blue-gate',
+    // Stella Montis
+    stella:                'stella-montis',
+    'stella-montis':       'stella-montis',
+    stellamontis:          'stella-montis',
   }
   return ALIASES[key] ?? key
 }
@@ -79,9 +119,12 @@ export function mfEventMapRouteId(event: MfEvent): string | null {
 
 /** Whether the row is active at `now` when start/end are present. */
 export function mfEventIsActiveAt(event: MfEvent, now: Date): boolean {
-  if (!event.startTime || !event.endTime) return true
-  const start = new Date(event.startTime).getTime()
-  const end = new Date(event.endTime).getTime()
+  // If either timestamp is absent, treat the event as always active (defensive).
+  if (event.startTime == null || event.endTime == null) return true
+  const start = parseMfTimestamp(event.startTime)
+  const end   = parseMfTimestamp(event.endTime)
+  // If we can't parse the timestamps, don't hide the event.
+  if (start === null || end === null) return true
   const t = now.getTime()
   return t >= start && t < end
 }
@@ -90,9 +133,8 @@ export function mfEventIsActiveAt(event: MfEvent, now: Date): boolean {
 export function mfEventEarliestEndMsAfter(events: MfEvent[], referenceMs: number): number | null {
   let best: number | null = null
   for (const e of events) {
-    if (!e.endTime || typeof e.endTime !== 'string') continue
-    const end = new Date(e.endTime).getTime()
-    if (Number.isNaN(end) || end <= referenceMs) continue
+    const end = parseMfTimestamp(e.endTime)
+    if (end === null || end <= referenceMs) continue
     if (best === null || end < best) best = end
   }
   return best

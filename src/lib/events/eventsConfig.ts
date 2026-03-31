@@ -25,6 +25,7 @@ export const MINOR_EVENTS: readonly string[] = [
   'Launch Tower Loot',
   'Husk Graveyard',
   'Bird City',
+  'Uncovered Caches',
 ] as const
 
 /** MetaForge CDN icon URLs for events. Attribution required. */
