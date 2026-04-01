@@ -44,7 +44,7 @@ function fmtMfWindow(iso: string | null): string | null {
 export default async function TrialsPage() {
     const now = new Date()
     const weekly = await getWeeklyTrialsForPage(now)
-    const { thisWeek, nextWeek, metaforgeDebugLine } = weekly
+    const { thisWeek, metaforgeDebugLine } = weekly
 
     const eventsPayload = await fetchCurrentEvents().catch(() => ({
         events: [],
@@ -83,7 +83,7 @@ export default async function TrialsPage() {
                                     Weekly Trials
                                 </h1>
                                 <p className="mt-2 max-w-2xl text-xs sm:text-sm text-white/65 leading-relaxed">
-                                    This week&apos;s rotation and the next — max-score focus, no extra clutter.
+                                    This week&apos;s rotation — max-score focus, no extra clutter.
                                 </p>
                             </div>
                             <TrialsHeroCountdown
@@ -149,31 +149,6 @@ export default async function TrialsPage() {
                     </div>
                 </section>
 
-                <section
-                    aria-labelledby="next-week-heading"
-                    className="mb-6 border-t-4 border-orange-500 pt-6"
-                >
-                    <div className="mb-4">
-                        <h3
-                            id="next-week-heading"
-                            className="text-sm font-black uppercase tracking-[0.18em] text-yellow-400 sm:text-base"
-                        >
-                            NEXT WEEK&apos;S TRIALS
-                        </h3>
-                        <p className="mt-1 text-xs text-white/45">{nextWeek.label}</p>
-                        {nextWeek.subtitle ? (
-                            <p className="mt-0.5 text-[11px] text-white/35">{nextWeek.subtitle}</p>
-                        ) : null}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
-                        {nextWeek.trials.map((trial, i) => (
-                            <TrialCommandCard
-                                key={trial.sourceRowId ?? trial.trialId ?? `next-${trial.name}-${i}`}
-                                trial={trial}
-                            />
-                        ))}
-                    </div>
-                </section>
             </div>
         </div>
     )
