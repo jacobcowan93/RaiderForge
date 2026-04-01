@@ -152,10 +152,9 @@ export async function getWeeklyTrialsForPage(now: Date = new Date()): Promise<{
         const active = sortBySortOrder(mf.data.filter((t) => t.is_active)).slice(0, 5)
         const upcoming = sortBySortOrder(mf.data.filter((t) => t.upcoming)).slice(0, 5)
 
-        // MetaForge's `upcoming` flag tracks the actual current live rotation;
-        // `is_active` lags by one week. Show upcoming as "this week" and omit
-        // the stale active set entirely (nextWeek is left as a fallback shell).
-        if (upcoming.length > 0) {
+        // is_active = current live rotation. Show these as "this week".
+        // nextWeek shell is empty — the page only renders thisWeek now.
+        if (active.length > 0) {
             const fmt = (iso: string | null) =>
                 iso
                     ? new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }) +
@@ -163,21 +162,20 @@ export async function getWeeklyTrialsForPage(now: Date = new Date()): Promise<{
                     : null
 
             const dbgFmt = (iso: string | null) =>
-                iso ? new Date(iso).toISOString().replace(/\.\d{3}Z$/, 'Z') : '—'
+                iso ? new Date(iso).toISOString().replace(/\.\d{3}Z$/, 'Z') : '---'
             return {
                 source: 'metaforge',
-                activeWindowEnd: mf.nextWindowStart,   // next start = when current ends
-                nextWindowStart: null,
-                metaforgeDebugLine: `[Debug] MetaForge weekly-trials: source=live (upcoming-as-current) | rotation_end_utc=${dbgFmt(mf.nextWindowStart)} | this_section_rows=${upcoming.length}`,
+                activeWindowEnd: mf.activeWindowEnd,
+                nextWindowStart: mf.nextWindowStart,
+                metaforgeDebugLine: `[Debug] MetaForge weekly-trials: source=live | rotation_end_utc=${dbgFmt(mf.activeWindowEnd)} | this_section_rows=${active.length}`,
                 thisWeek: {
                     weekKey: 'metaforge-this',
-                    label: mf.nextWindowStart
-                        ? `This rotation (resets ${fmt(mf.nextWindowStart)})`
+                    label: mf.activeWindowEnd
+                        ? `This rotation (resets ${fmt(mf.activeWindowEnd)})`
                         : "This week's Trials (MetaForge)",
                     subtitle: undefined,
-                    trials: upcoming.map(metaforgeRowToBrief),
+                    trials: active.map(metaforgeRowToBrief),
                 },
-                // nextWeek is intentionally empty — the page no longer renders it
                 nextWeek: {
                     weekKey: 'metaforge-next',
                     label: '',
