@@ -12,9 +12,16 @@ import { TRIALS_PAGE_MATURITY } from '@/lib/trials/trialsData'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-    title: 'Weekly Trials — Command Center | Raider Forge',
+    title: 'Weekly Trials — This Week\'s ARC Raiders Rotations & Tips',
     description:
-        'This week and next week ARC Raiders Trials rotations, max-score tips, and reset countdown — tactical brief only.',
+        'Current ARC Raiders Trials rotations with max-score tips, reset countdown timer, and the full filterable trial catalog. Updated every Monday UTC. Never miss a weekly reset.',
+    keywords: ['ARC Raiders trials', 'weekly trials', 'trials rotation', 'ARC Raiders weekly reset', 'trials tips'],
+    openGraph: {
+        title: 'ARC Raiders Weekly Trials | RaiderForge',
+        description: 'This week\'s ARC Raiders Trials rotations, max-score tips, and live reset countdown.',
+        url: 'https://raiderforge.org/trials',
+    },
+    alternates: { canonical: 'https://raiderforge.org/trials' },
 }
 
 function formatUtcWeekOfLabel(now: Date): string {

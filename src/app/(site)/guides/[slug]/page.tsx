@@ -116,8 +116,7 @@ export default async function GuideArticlePage({ params }: PageProps) {
                     >
                         MetaForge
                     </a>
-                    . Pair with <Link href="/trials" className="text-rf-red/75 hover:text-rf-red">Trials</Link> and{' '}
-                    <Link href="/maps" className="text-rf-red/75 hover:text-rf-red">Maps</Link> for a full prep loop.
+                    . Pair with <Link href="/trials" className="text-rf-red/75 hover:text-rf-red">Trials</Link> for a full prep loop.
                 </p>
             </footer>
         </div>

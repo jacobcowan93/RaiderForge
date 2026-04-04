@@ -45,14 +45,6 @@ export const GUIDE_HUB_SHORTCUTS: GuideHubShortcut[] = [
         variant: 'internal',
     },
     {
-        id: 'maps-encounters',
-        title: 'Maps command center',
-        summary: 'Zone intel, TroubleChute embeds, tactical maps, and live conditions when MetaForge responds.',
-        href: '/maps',
-        cta: 'Open Maps',
-        variant: 'internal',
-    },
-    {
         id: 'metaforge-reference',
         title: 'MetaForge reference',
         summary: 'Quests, arcs, items, and community reference — pair with RaiderForge for planning.',
@@ -64,30 +56,6 @@ export const GUIDE_HUB_SHORTCUTS: GuideHubShortcut[] = [
 
 export const GUIDE_ARTICLES: GuideArticle[] = [
     {
-        slug: 'maps-command-center',
-        title: 'Using the Maps command center',
-        description: 'How to move between zone cards, TroubleChute, tactical maps, and live modifiers without losing context.',
-        kind: 'guide',
-        difficulty: 'onboarding',
-        estimatedMinutes: 6,
-        tags: ['maps', 'conditions', 'reference'],
-        relatedSlugs: ['live-conditions-and-rotation', 'weekly-trials-prep'],
-        sections: [
-            {
-                heading: 'What the hub is for',
-                body: 'The maps page is a single operations desk: pick a zone, open the interactive layer when embedding is allowed, and drop into RaiderForge tactical view for POIs. Treat it as mission select — not a wiki.',
-            },
-            {
-                heading: 'Live conditions strip',
-                body: 'When MetaForge returns data, you’ll see freshness and whether rotation fallback is in use. If upstream is down, assume rotation tables until a new poll succeeds — plan routes that don’t rely on a specific storm window.',
-            },
-            {
-                heading: 'Deep links',
-                body: 'Use `?zone=` slugs or `/maps/hub/...` dedicated pages when you want a shareable briefing. Tactical `/maps/[mapId]` is for pin density and filters once you’ve chosen a theater.',
-            },
-        ],
-    },
-    {
         slug: 'weekly-trials-prep',
         title: 'Preparing for weekly Trials',
         description: 'Read the playlist, match trials to maps, and stack habits that survive bad RNG.',
@@ -95,7 +63,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
         difficulty: 'casual',
         estimatedMinutes: 7,
         tags: ['trials', 'maps', 'teamplay', 'build'],
-        relatedSlugs: ['maps-command-center', 'roles-at-a-glance'],
+        relatedSlugs: ['roles-at-a-glance'],
         relatedTrialIds: ['trial-carriable-dash', 'trial-hornet-havoc'],
         sections: [
             {
@@ -143,12 +111,12 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
     {
         slug: 'live-conditions-and-rotation',
         title: 'Live conditions vs rotation fallback',
-        description: 'What the Live panel and maps strip mean when MetaForge is empty or unreachable.',
+        description: 'What the Live panel and rotation fallback mean when MetaForge is empty or unreachable.',
         kind: 'reference',
         difficulty: 'casual',
         estimatedMinutes: 4,
-        tags: ['conditions', 'maps', 'reference'],
-        relatedSlugs: ['maps-command-center'],
+        tags: ['conditions', 'reference'],
+        relatedSlugs: ['weekly-trials-prep'],
         sections: [
             {
                 heading: 'Live',

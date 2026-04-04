@@ -12,7 +12,7 @@ export function TermsDocument() {
                 <p>
                     These Terms of Use (&quot;Terms&quot;) govern your access to and use of raiderforge.org and all
                     associated features, tools, and services (collectively, the &quot;Services&quot;), including the blueprint
-                    tracker, raider profile sync, marketplace, interactive maps, Trials tools, and any other functionality.
+                    tracker, raider profile sync, marketplace, Trials tools, and any other functionality.
                 </p>
                 <p>
                     By accessing, registering for, or using the Services, you agree to these Terms. If you do not agree, do
@@ -127,12 +127,12 @@ export function TermsDocument() {
 
             <section className="space-y-4">
                 <h2 className="text-xl font-semibold text-white border-b border-rf-border/60 pb-2">
-                    Interactive Maps and Third-Party Services
+                    Third-Party Services
                 </h2>
                 <p className="text-rf-textSoft leading-relaxed">
-                    Interactive maps (including those from Wesley at maps.tcno.co/arc) are embedded or linked with permission.
-                    Your use of these maps is subject to any additional terms imposed by the map provider. We are not
-                    responsible for the accuracy, availability, or functionality of third-party maps or services.
+                    RaiderForge integrates with or links to third-party services including MetaForge and external data
+                    providers. Your use of those services is subject to their own terms. We are not responsible for the
+                    accuracy, availability, or functionality of third-party services.
                 </p>
             </section>
 

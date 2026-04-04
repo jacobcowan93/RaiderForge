@@ -76,18 +76,25 @@ const COMMUNITY_GUIDES = [
 ]
 
 export const metadata = {
-    title: 'Guides — ARC Raiders | Raider Forge',
+    title: 'Guides — ARC Raiders Strategy, Tips & Tutorials',
     description:
-        'RaiderForge guides: scannable briefings for maps, weekly Trials prep, live conditions, and squad roles — plus MetaForge reference snapshots.',
+        'ARC Raiders strategy guides, beginner tutorials, and tactical briefings from the RaiderForge community. Covers extractions, loot routes, weekly Trials prep, squad roles, and live MetaForge conditions.',
+    keywords: ['ARC Raiders guide', 'ARC Raiders tips', 'ARC Raiders tutorial', 'ARC Raiders strategy', 'extraction guide'],
+    alternates: { canonical: 'https://raiderforge.org/guides' },
+    openGraph: {
+        title: 'ARC Raiders Strategy Guides | RaiderForge',
+        description: 'Community guides, tactical briefings, and tutorials for ARC Raiders — from first extraction to endgame.',
+        url: 'https://raiderforge.org/guides',
+    },
 }
 
-const FEATURED_GUIDE_SLUGS = ['weekly-trials-prep', 'maps-command-center', 'roles-at-a-glance'] as const
+const FEATURED_GUIDE_SLUGS = ['weekly-trials-prep', 'live-conditions-and-rotation', 'roles-at-a-glance'] as const
 
 const FLOW_STEPS = [
     {
         id: 'pick',
         label: 'Pick your objective',
-        detail: 'Start with Trials, maps, loot habits, or role planning instead of scanning the whole library.',
+        detail: 'Start with Trials, loot habits, or role planning instead of scanning the whole library.',
     },
     {
         id: 'skim',
@@ -97,7 +104,7 @@ const FLOW_STEPS = [
     {
         id: 'branch',
         label: 'Open the right tool',
-        detail: 'Jump out to Maps, Trials, or MetaForge only when you need deeper reference data.',
+        detail: 'Jump out to Trials or MetaForge only when you need deeper reference data.',
     },
 ]
 

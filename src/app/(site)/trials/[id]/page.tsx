@@ -108,18 +108,6 @@ export default async function TrialDetailPage({ params }: PageProps) {
                     <p className="text-sm text-white/70 leading-relaxed max-w-2xl">{trial.shortDescription}</p>
                     <div className="mt-3 flex flex-wrap gap-2 items-center">
                         <LearningTagList tags={trial.tags} />
-                        {trial.mapRfId ? (
-                            <Link
-                                href={`/maps/${trial.mapRfId}`}
-                                className="text-xs font-semibold text-rf-red/90 hover:text-rf-red ml-auto sm:ml-0"
-                            >
-                                Tactical map →
-                            </Link>
-                        ) : (
-                            <Link href="/maps" className="text-xs font-semibold text-rf-red/90 hover:text-rf-red">
-                                Maps hub →
-                            </Link>
-                        )}
                     </div>
                     {liveLine ? (
                         <p className="text-[11px] text-white/45 mt-4 border-l border-white/15 pl-3">

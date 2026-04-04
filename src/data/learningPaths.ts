@@ -23,10 +23,9 @@ export type RecommendedLearningPath = {
 export const ONBOARDING_LEARNING_PATH: RecommendedLearningPath = {
     id: 'onboarding-arc',
     title: 'Onboarding to ARC Raiders',
-    blurb: 'Maps desk, squad roles, a forgiving trial, Trials prep, then a second run.',
+    blurb: 'Squad roles, a forgiving trial, Trials prep, then a second run.',
     difficultyBand: 'onboarding',
     steps: [
-        { kind: 'guide', slug: 'maps-command-center' },
         { kind: 'guide', slug: 'roles-at-a-glance' },
         { kind: 'trial', id: 'trial-carriable-dash' },
         { kind: 'guide', slug: 'weekly-trials-prep' },

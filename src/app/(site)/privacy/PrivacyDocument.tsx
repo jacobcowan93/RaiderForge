@@ -11,7 +11,7 @@ export function PrivacyDocument() {
                     RaiderForge (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the website raiderforge.org and
                     any associated subdomains, applications, or services (collectively, the &quot;Site&quot; or
                     &quot;Services&quot;). The Services include the blueprint tracker, raider profile sync, marketplace tools,
-                    interactive maps, Trials-related features, and all other tools, trackers, and community functions we
+                    Trials-related features, and all other tools, trackers, and community functions we
                     provide.
                 </p>
                 <p>
@@ -68,10 +68,10 @@ export function PrivacyDocument() {
                 <ul className="list-disc pl-6 space-y-2 text-rf-textSoft leading-relaxed">
                     <li>
                         Provide, operate, maintain, and improve the Services, including the blueprint tracker, raider profile
-                        sync, marketplace, interactive maps, and Trials tools.
+                        sync, marketplace, and Trials tools.
                     </li>
                     <li>Sync and display your ARC Raiders progression and profile data when you explicitly enable it.</li>
-                    <li>Personalize your experience (e.g., saved builds, preferences, or recommended maps).</li>
+                    <li>Personalize your experience (e.g., saved builds, preferences, or recommended guides).</li>
                     <li>Monitor performance, detect errors, prevent abuse/fraud, and ensure security.</li>
                     <li>Communicate with you about updates, security alerts, or support responses.</li>
                     <li>Comply with legal obligations or enforce our Terms of Use.</li>

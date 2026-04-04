@@ -18,6 +18,7 @@ import { useSession, signIn, signOut } from 'next-auth/react'
 
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 import { fetchUnreadCount } from '@/lib/messages/messages-api'
+import { GlobalSearch } from '@/components/GlobalSearch'
 
 function useUnreadMessages(enabled: boolean) {
     const [count, setCount] = useState(0)
@@ -48,7 +49,6 @@ const navLinks: NavLinkItem[] = [
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/blueprints', label: 'Blueprints' },
     { href: '/skill-trees', label: 'Skill Tree', badge: 'beta' },
-    { href: '/maps', label: 'Maps' },
     { href: '/quests', label: 'Quests' },
     { href: '/traders', label: 'Traders' },
     { href: '/trials', label: 'Trials', badge: 'live' },
@@ -89,7 +89,8 @@ function NavDestinationLink({
             <Link
                 href={href}
                 onClick={onNavigate}
-                className={`relative px-2.5 py-1.5 text-xs font-medium rounded transition-colors inline-flex items-center gap-1.5 ${base} ${idle}`}
+                className={`rf-focus-ring relative px-2.5 py-1.5 text-xs font-medium rounded transition-colors inline-flex items-center gap-1.5 ${base} ${idle}`}
+                aria-current={isActive ? 'page' : undefined}
             >
                 <span className={planner ? 'font-semibold tracking-tight' : ''}>{label}</span>
                 {badge === 'beta' ? (
@@ -99,7 +100,11 @@ function NavDestinationLink({
                     <PageMaturityBadge level="live" className="!px-1 !py-0 !text-[8px] !leading-tight" />
                 ) : null}
                 {isActive ? (
-                    <span className="absolute inset-x-1 -bottom-[11px] h-[3px] rounded-full bg-rf-green transition-all duration-200" />
+                    <span
+                        className="absolute inset-x-1 -bottom-[11px] h-[2.5px] rounded-full transition-all duration-200"
+                        style={{ background: '#22d3ee', boxShadow: '0 0 6px rgba(34,211,238,0.7)' }}
+                        aria-hidden="true"
+                    />
                 ) : null}
             </Link>
         )
@@ -110,8 +115,11 @@ function NavDestinationLink({
         <Link
             href={href}
             onClick={onNavigate}
-            className={`flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${mobPlanner} ${
-                isActive ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+            aria-current={isActive ? 'page' : undefined}
+            className={`rf-focus-ring flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${mobPlanner} ${
+                isActive
+                    ? 'bg-rf-cyan/[0.1] text-rf-cyan border border-rf-cyan/25'
+                    : 'text-white/80 hover:bg-white/5 hover:text-white border border-transparent'
             }`}
         >
             <span className={planner ? 'font-semibold' : ''}>{label}</span>
@@ -230,6 +238,7 @@ export default function NavBar() {
                     </div>
 
                     <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
+                        <GlobalSearch />
                         {/*
                          * Always rendered below `md` only — never remove without replacing with another
                          * visible entry to the same `navLinks` destinations on small screens.
@@ -237,7 +246,7 @@ export default function NavBar() {
                         <div className="flex shrink-0 md:hidden">
                             <button
                                 type="button"
-                                className="inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
+                                className="rf-focus-ring inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white hover:bg-white/10 transition-colors"
                                 aria-expanded={mobileNavOpen}
                                 aria-controls="mobile-site-nav"
                                 onClick={toggleMobile}

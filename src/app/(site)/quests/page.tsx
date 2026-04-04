@@ -3,26 +3,21 @@ import { Suspense } from 'react'
 import { getGameDataProvider } from '@/lib/game-data/provider'
 import type { GameQuest } from '@/lib/game-data/types'
 import { QuestsClientSection } from './_components/QuestsClientSection'
-import { getSiteOrigin } from '@/lib/site/siteOrigin'
 import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 
-const origin    = getSiteOrigin()
-const ogTitle   = 'Quests — ARC Raiders | RaiderForge'
-const ogDesc    = 'Browse all 94 ARC Raiders quests. Filter by trader — Celeste, Apollo, Lance, Shani, Tian Wen — and find objectives, rewards, and quest chains.'
-const ogImage   = '/images/header/ARC_Header.jpeg'
-
 export const metadata: Metadata = {
-    metadataBase: new URL(origin),
-    title: ogTitle,
-    description: ogDesc,
-    alternates: { canonical: '/quests' },
+    title: 'Quests — All ARC Raiders Quests by Trader',
+    description:
+        'Browse all ARC Raiders quests. Filter by trader — Celeste, Apollo, Lance, Shani, and Tian Wen — and find objectives, item requirements, rewards, and quest chains.',
+    keywords: ['ARC Raiders quests', 'ARC Raiders quest list', 'Celeste quests', 'Apollo quests', 'Lance quests', 'ARC Raiders objectives'],
+    alternates: { canonical: 'https://raiderforge.org/quests' },
     openGraph: {
-        title: ogTitle, description: ogDesc,
-        url: new URL('/quests', `${origin}/`).href,
-        siteName: 'RaiderForge', type: 'website', locale: 'en_US',
-        images: [{ url: ogImage, width: 1200, height: 630, alt: 'RaiderForge — ARC Raiders' }],
+        title: 'ARC Raiders Quest Browser | RaiderForge',
+        description: 'All ARC Raiders quests filterable by trader. Find objectives, rewards, and quest chains.',
+        url: 'https://raiderforge.org/quests',
+        siteName: 'RaiderForge',
     },
-    twitter: { card: 'summary_large_image', title: ogTitle, description: ogDesc, images: [ogImage] },
+    twitter: { card: 'summary_large_image', title: 'ARC Raiders Quest Browser | RaiderForge', description: 'All 94 ARC Raiders quests, filterable by trader.' },
 }
 
 async function QuestsContent() {

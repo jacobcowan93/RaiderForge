@@ -11,8 +11,10 @@
     --color-rf-redSoft: #b91c1c;
     --color-rf-orange: #f97316;
     --color-rf-blue: #38bdf8;
+    --color-rf-cyan: #22d3ee;
     --color-rf-yellow: #facc15;
     --color-rf-green: #22c55e;
+    --color-rf-bgPanel: #0d1120;
 }
 
 html,
@@ -210,7 +212,169 @@ body {
     outline-offset: 1px;
 }
 
-/* Blueprints — print “Missing Blueprints” sheet (save as PDF from browser dialog) */
+/* ── Neon glow utilities ─────────────────────────────────────────────────── */
+/* Keyboard-focus ring for interactive elements in the sci-fi theme */
+.rf-focus-ring:focus-visible {
+    outline: 2px solid rgba(34, 211, 238, 0.65);
+    outline-offset: 2px;
+}
+
+/* Neon cyan text glow — used for highlighted stat values, active nav items */
+.rf-glow-cyan {
+    text-shadow: 0 0 8px rgba(34, 211, 238, 0.55), 0 0 20px rgba(34, 211, 238, 0.25);
+}
+
+/* Neon orange text glow — used for accents, CTA labels */
+.rf-glow-orange {
+    text-shadow: 0 0 8px rgba(249, 115, 22, 0.55), 0 0 20px rgba(249, 115, 22, 0.25);
+}
+
+/* Box-shadow neon border glow — panels, cards on hover */
+.rf-glow-border-cyan {
+    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.4), 0 0 24px -4px rgba(34, 211, 238, 0.3);
+}
+.rf-glow-border-orange {
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.4), 0 0 24px -4px rgba(249, 115, 22, 0.25);
+}
+
+/* Primary CTA button style — neon cyan, maps to Explore / primary actions */
+.rf-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background-color: #22d3ee;
+    color: #000;
+    font-weight: 700;
+    font-size: 0.875rem;
+    padding: 0.75rem 2rem;
+    border: 1px solid rgba(34, 211, 238, 0.35);
+    box-shadow: 0 0 24px -3px rgba(34, 211, 238, 0.55), 0 4px 16px rgba(0,0,0,0.4);
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    text-decoration: none;
+}
+.rf-btn-primary:hover {
+    background-color: #67e8f9;
+    box-shadow: 0 0 28px -2px rgba(34, 211, 238, 0.6), 0 4px 20px rgba(0,0,0,0.5);
+}
+.rf-btn-primary:focus-visible {
+    outline: 2px solid rgba(34, 211, 238, 0.65);
+    outline-offset: 2px;
+}
+
+/* Secondary ghost button */
+.rf-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background-color: transparent;
+    color: rgba(255,255,255,0.85);
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.75rem 2rem;
+    border: 1px solid rgba(255,255,255,0.15);
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    text-decoration: none;
+}
+.rf-btn-ghost:hover {
+    background-color: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.28);
+    color: #fff;
+}
+.rf-btn-ghost:focus-visible {
+    outline: 2px solid rgba(34, 211, 238, 0.65);
+    outline-offset: 2px;
+}
+
+/* Animated neon pulse for hero CTA accent — subtle, respects prefers-reduced-motion */
+@keyframes rf-neon-pulse {
+    0%, 100% { box-shadow: 0 0 24px -3px rgba(34, 211, 238, 0.55), 0 4px 16px rgba(0,0,0,0.4); }
+    50%       { box-shadow: 0 0 40px -1px rgba(34, 211, 238, 0.80), 0 4px 24px rgba(0,0,0,0.5); }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .rf-neon-pulse {
+        animation: rf-neon-pulse 2.5s ease-in-out infinite;
+    }
+}
+
+/* Feature card — hoverable dark panel with neon cyan border glow */
+.rf-feature-card {
+    border-radius: 0.875rem;
+    border: 1px solid rgba(35, 39, 52, 0.9);
+    background: linear-gradient(135deg, rgba(13,17,32,0.95) 0%, rgba(5,6,10,0.9) 100%);
+    transition: border-color 0.2s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+.rf-feature-card:hover {
+    border-color: rgba(34, 211, 238, 0.45);
+    box-shadow: 0 0 40px -4px rgba(34, 211, 238, 0.40), 0 12px 40px rgba(0,0,0,0.6);
+    transform: translateY(-4px);
+}
+
+/* Horizontal neon divider line */
+.rf-divider-cyan {
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(34,211,238,0.55) 25%, rgba(34,211,238,0.55) 75%, transparent 100%);
+}
+
+/* Tactical corner accent — appears on panel corners for sci-fi UI feel */
+.rf-corner-accent {
+    position: relative;
+}
+.rf-corner-accent::before,
+.rf-corner-accent::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: rgba(34, 211, 238, 0.5);
+    border-style: solid;
+}
+.rf-corner-accent::before {
+    top: 0; left: 0;
+    border-width: 1px 0 0 1px;
+}
+.rf-corner-accent::after {
+    bottom: 0; right: 0;
+    border-width: 0 1px 1px 0;
+}
+
+/* Skip-to-content link for keyboard users (WCAG 2.4.1) */
+.rf-skip-link {
+    position: absolute;
+    top: -100%;
+    left: 8px;
+    z-index: 9999;
+    padding: 8px 16px;
+    background: #22d3ee;
+    color: #000;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 0 0 6px 6px;
+    text-decoration: none;
+    transition: top 0.1s;
+}
+.rf-skip-link:focus {
+    top: 0;
+}
+
+/* ── Smooth scrolling ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+/* ── Onboarding modal backdrop ────────────────────────────────────────────── */
+@keyframes rf-modal-enter {
+    from { opacity: 0; transform: scale(0.97) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.rf-modal-enter {
+    animation: rf-modal-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Blueprints — print “Missing Blueprints” sheet (save as PDF from browser dialog) */
 @media print {
     @page {
         margin: 14mm;

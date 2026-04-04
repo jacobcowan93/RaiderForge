@@ -3,8 +3,10 @@ import { LegalPageShell } from '@/components/legal/LegalPageShell'
 import { PrivacyDocument } from './PrivacyDocument'
 
 export const metadata: Metadata = {
-    title: 'Privacy Policy | Raider Forge',
-    description: 'How RaiderForge collects, uses, and protects your information.',
+    title: 'Privacy Policy — How We Handle Your Data',
+    description: 'RaiderForge privacy policy: what data we collect, how we use it, your rights, and how to contact us. We never sell your data.',
+    alternates: { canonical: 'https://raiderforge.org/privacy' },
+    robots: { index: true, follow: false },
 }
 
 export default function PrivacyPage() {

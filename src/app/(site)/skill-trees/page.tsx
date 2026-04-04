@@ -5,36 +5,23 @@ import { PageMaturityBadge } from '@/components/PageMaturityBadge'
 import { SharedBuildsGallery } from '@/components/skills/SharedBuildsGallery'
 import { getSiteOrigin } from '@/lib/site/siteOrigin'
 
-const origin = getSiteOrigin()
-const ogTitle = 'Community Skill Builds — ARC Raiders | RaiderForge'
-const ogDescription = (
-    'Browse ARC Raiders skill tree builds shared by the community. ' +
-    'Find powerful builds across Conditioning, Mobility, and Survival, or share your own.'
-)
-
-const ogImage = '/images/header/ARC_Header.jpeg'
-
 export const metadata: Metadata = {
-    metadataBase: new URL(origin),
-    title: ogTitle,
-    description: ogDescription,
-    alternates: {
-        canonical: '/skill-trees',
-    },
+    title: 'Skill Tree Planner — Build & Share ARC Raiders Builds',
+    description:
+        'Plan your ARC Raiders skill tree and allocate expedition points across Conditioning, Mobility, and Survival branches. Browse community builds, share your setup with a link, and find the meta.',
+    keywords: ['ARC Raiders skill tree', 'skill planner', 'ARC Raiders build', 'expedition points', 'ARC Raiders skills'],
+    alternates: { canonical: 'https://raiderforge.org/skill-trees' },
     openGraph: {
-        title: ogTitle,
-        description: ogDescription,
-        url: new URL('/skill-trees', `${origin}/`).href,
+        title: 'ARC Raiders Skill Tree Planner | RaiderForge',
+        description: 'Allocate expedition points, plan your ARC Raiders skill build, and browse community setups.',
+        url: 'https://raiderforge.org/skill-trees',
         siteName: 'RaiderForge',
         type: 'website',
-        locale: 'en_US',
-        images: [{ url: ogImage, width: 1200, height: 630, alt: 'RaiderForge — ARC Raiders tactical hub' }],
     },
     twitter: {
         card: 'summary_large_image',
-        title: ogTitle,
-        description: ogDescription,
-        images: [ogImage],
+        title: 'ARC Raiders Skill Tree Planner | RaiderForge',
+        description: 'Plan your ARC Raiders skill build across Conditioning, Mobility, and Survival.',
     },
 }
 
