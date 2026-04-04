@@ -16,7 +16,8 @@ export const metadata: Metadata = {
 }
 
 /**
- * Marketplace section — same full-viewport background as Maps (skill tree art + light tint).
+ * Marketplace section layout — immersive background image with amber safety notice.
+ * The amber banner (role="note") is always server-rendered and visible above all content.
  */
 export default function MarketplaceLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -38,35 +39,43 @@ export default function MarketplaceLayout({ children }: { children: React.ReactN
                     <div
                         role="note"
                         aria-label="Community marketplace disclaimer"
-                        className="relative flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-xl border border-amber-400/70 bg-amber-950/95 px-4 py-3.5 text-[11px] text-amber-100/90 leading-relaxed backdrop-blur-md"
-                        style={{ boxShadow: '0 0 0 1px rgba(217,119,6,0.50), 0 0 32px -4px rgba(217,119,6,0.55), 0 6px 24px rgba(0,0,0,0.65)' }}
+                        className="relative rounded-xl border border-amber-400/70 bg-amber-950/95 backdrop-blur-md overflow-hidden"
+                        style={{ boxShadow: '0 0 0 1px rgba(217,119,6,0.55), 0 0 40px -4px rgba(217,119,6,0.60), 0 8px 32px rgba(0,0,0,0.70)' }}
                     >
-                        {/* Icon + label */}
-                        <div className="flex items-center gap-2 shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-amber-400 shrink-0" aria-hidden="true">
-                                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                            </svg>
-                            <span className="font-bold text-amber-300 text-[11px] uppercase tracking-widest">Community Marketplace</span>
+                        {/* G2G integration badge row */}
+                        <div className="flex items-center gap-2 border-b border-amber-500/25 px-4 py-2">
+                            <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" aria-hidden="true" />
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
+                                Community Marketplace (Beta) · G2G Integration In Progress
+                            </span>
+                            <span className="ml-auto shrink-0 rounded-md border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-300">
+                                Beta
+                            </span>
                         </div>
 
-                        {/* Divider on sm+ */}
-                        <span className="hidden sm:block h-4 w-px bg-amber-500/30 shrink-0" aria-hidden="true" />
+                        {/* Main body */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 px-4 py-3 text-[11px] text-amber-100/90 leading-relaxed">
+                            {/* Icon */}
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-amber-400 shrink-0 self-start sm:self-auto" aria-hidden="true">
+                                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                            </svg>
 
-                        {/* Body */}
-                        <span className="flex-1">
-                            RaiderForge is an independent fan project — we do not facilitate real-money transactions or guarantee delivery.
-                            Listings are player-generated. Trade safely and verify with sellers.{' '}
-                            <strong className="text-amber-200/90 font-medium">Not affiliated with Embark Studios.</strong>
-                        </span>
+                            {/* Body text */}
+                            <span className="flex-1">
+                                Listings are community-generated. Use at your own risk — we do not guarantee delivery or facilitate real-money transactions.{' '}
+                                <strong className="text-amber-200 font-semibold">Full escrow and secure trading coming soon via official G2G API.</strong>{' '}
+                                Not affiliated with Embark Studios or G2G.
+                            </span>
 
-                        {/* Links */}
-                        <div className="flex items-center gap-3 shrink-0">
-                            <a href="/terms" className="underline underline-offset-2 text-amber-300/80 hover:text-amber-200 transition-colors font-medium">
-                                Terms
-                            </a>
-                            <a href="/privacy" className="underline underline-offset-2 text-amber-300/80 hover:text-amber-200 transition-colors font-medium">
-                                Privacy
-                            </a>
+                            {/* Links */}
+                            <div className="flex items-center gap-3 shrink-0">
+                                <a href="/terms" className="underline underline-offset-2 text-amber-300/85 hover:text-amber-200 transition-colors font-semibold whitespace-nowrap">
+                                    Terms
+                                </a>
+                                <a href="/privacy" className="underline underline-offset-2 text-amber-300/85 hover:text-amber-200 transition-colors font-semibold whitespace-nowrap">
+                                    Privacy
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

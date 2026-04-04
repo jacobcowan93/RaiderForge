@@ -31,14 +31,14 @@ export default function SkillTreesPage() {
 
             {/* ── Page header ───────────────────────────────────────────────── */}
             <div className="mb-10 pl-1">
-                <div className="border-l-2 border-green-600 pl-5">
-                    <span className="text-xs uppercase tracking-widest text-green-600 font-semibold drop-shadow-sm">
+                <div className="border-l-2 border-rf-cyan pl-5" style={{ borderColor: 'rgba(34,211,238,0.70)', boxShadow: '-2px 0 12px -2px rgba(34,211,238,0.25)' }}>
+                    <span className="text-xs uppercase tracking-widest font-bold rf-glow-cyan" style={{ color: '#22d3ee' }}>
                         Character
                     </span>
                     <div className="mt-2 flex flex-wrap items-center gap-3">
                         <h1 className="text-3xl font-bold tracking-tight text-white text-shadow-hero">
                             Community{' '}
-                            <span className="text-green-500">Skill Builds</span>
+                            <span className="text-rf-cyan" style={{ textShadow: '0 0 20px rgba(34,211,238,0.45)' }}>Skill Builds</span>
                         </h1>
                         <PageMaturityBadge level="beta" />
                     </div>
@@ -54,10 +54,7 @@ export default function SkillTreesPage() {
                     <div className="mt-5">
                         <Link
                             href="/skill-trees/builder?new=1"
-                            className="inline-flex items-center gap-2.5 rounded-xl px-5 py-2.5
-                                       text-sm font-semibold border transition-all duration-150
-                                       active:scale-[0.97] bg-green-700 text-white border-green-600/80
-                                       hover:bg-green-600 hover:border-green-500 shadow-lg shadow-green-900/40"
+                            className="rf-btn-primary inline-flex items-center gap-2.5 px-5 py-2.5 text-sm font-bold active:scale-[0.97]"
                         >
                             <svg width={15} height={15} viewBox="0 0 24 24" fill="none"
                                  stroke="currentColor" strokeWidth={2.5}

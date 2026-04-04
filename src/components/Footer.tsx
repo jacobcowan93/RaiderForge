@@ -42,13 +42,15 @@ function GitHubIcon({ className }: { className?: string }) {
 
 export default function Footer() {
     return (
-        <footer className="border-t border-rf-border bg-rf-bg" aria-label="Site footer">
+        <footer className="border-t border-rf-cyan/[0.12] bg-rf-bg" aria-label="Site footer"
+            style={{ boxShadow: 'inset 0 1px 0 0 rgba(34,211,238,0.06)' }}
+        >
             <div className="mx-auto max-w-7xl px-6 py-10">
 
                 {/* ── Brand + socials ────────────────────────────────────────── */}
-                <div className="flex flex-col items-center gap-4 text-center">
+                <div className="flex flex-col items-center gap-5 text-center">
                     <div className="flex items-center gap-2.5">
-                        <div className="relative h-8 w-8 rounded-md overflow-hidden ring-1 ring-white/10 shrink-0">
+                        <div className="relative h-8 w-8 rounded-md overflow-hidden ring-1 ring-rf-cyan/20 shrink-0">
                             <Image
                                 src="/images/logo/ARC_Header.jpeg"
                                 alt="RaiderForge logo"
@@ -58,27 +60,33 @@ export default function Footer() {
                             />
                         </div>
                         <span className="text-sm font-black tracking-[0.2em] uppercase">
-                            <span className="text-white">Raider</span><span className="text-rf-red">Forge</span>
+                            <span className="text-white">Raider</span>
+                            <span
+                                className="text-rf-cyan"
+                                style={{ textShadow: '0 0 12px rgba(34,211,238,0.55)' }}
+                            >Forge</span>
                         </span>
                     </div>
 
                     <p className="text-xs text-rf-textSoft leading-relaxed max-w-sm">
-                        The community toolkit for ARC Raiders — skill trees, blueprints, guides, and marketplace.
-                        Free. Fan-made. Independent.
+                        The community toolkit for ARC Raiders — skill trees, blueprints, trials, and marketplace.
+                        Free. Fan-made. Independent.{' '}
+                        <strong className="text-white/45 font-medium">Not affiliated with Embark Studios.</strong>
                     </p>
 
-                    {/* Social links */}
-                    <div className="flex items-center gap-2">
-                        {/* Discord — highlighted as primary CTA */}
+                    {/* Social links — Discord is the primary CTA, given full pill treatment */}
+                    <div className="flex flex-wrap items-center justify-center gap-2.5">
+                        {/* Discord — neon indigo pill with glow ring */}
                         <a
                             href="https://discord.gg/raiderforge"
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="Join the RaiderForge Discord server"
-                            className="rf-focus-ring inline-flex items-center gap-1.5 rounded-lg border border-indigo-500/35 bg-indigo-500/10 px-3 py-1.5 text-[11px] font-semibold text-indigo-300 hover:border-indigo-400/55 hover:bg-indigo-500/18 hover:text-indigo-200 transition-all"
+                            className="rf-focus-ring inline-flex items-center gap-2 rounded-xl border border-indigo-400/50 bg-indigo-500/15 px-5 py-2.5 text-sm font-bold text-indigo-200 transition-all hover:border-indigo-400/75 hover:bg-indigo-500/25 hover:text-white"
+                            style={{ boxShadow: '0 0 20px -4px rgba(99,102,241,0.50), 0 0 40px -8px rgba(99,102,241,0.25)' }}
                         >
-                            <DiscordIcon className="w-3.5 h-3.5" />
-                            Join Discord
+                            <DiscordIcon className="w-4 h-4" />
+                            Join the Discord
                         </a>
 
                         <a
@@ -86,9 +94,9 @@ export default function Footer() {
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="RaiderForge on X (Twitter)"
-                            className="rf-focus-ring inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] p-2 text-rf-textSoft hover:border-white/20 hover:text-rf-text transition-all"
+                            className="rf-focus-ring inline-flex items-center justify-center rounded-lg border border-white/12 bg-white/[0.04] p-2.5 text-rf-textSoft hover:border-white/22 hover:text-rf-text transition-all"
                         >
-                            <XIcon className="w-3.5 h-3.5" />
+                            <XIcon className="w-4 h-4" />
                         </a>
 
                         <a
@@ -96,7 +104,7 @@ export default function Footer() {
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="r/ARCraiders subreddit"
-                            className="rf-focus-ring inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[11px] font-semibold text-rf-textSoft hover:border-white/20 hover:text-rf-text transition-all"
+                            className="rf-focus-ring inline-flex items-center gap-1.5 rounded-lg border border-white/12 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-rf-textSoft hover:border-white/22 hover:text-rf-text transition-all"
                         >
                             r/ARCraiders
                         </a>
@@ -106,21 +114,21 @@ export default function Footer() {
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="RaiderForge on GitHub"
-                            className="rf-focus-ring inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] p-2 text-rf-textSoft hover:border-white/20 hover:text-rf-text transition-all"
+                            className="rf-focus-ring inline-flex items-center justify-center rounded-lg border border-white/12 bg-white/[0.04] p-2.5 text-rf-textSoft hover:border-white/22 hover:text-rf-text transition-all"
                         >
-                            <GitHubIcon className="w-3.5 h-3.5" />
+                            <GitHubIcon className="w-4 h-4" />
                         </a>
                     </div>
                 </div>
 
                 {/* ── Tool links ─────────────────────────────────────────────── */}
-                <nav aria-label="Footer navigation" className="mt-8 pt-6 border-t border-rf-border/40">
+                <nav aria-label="Footer navigation" className="mt-8 pt-6 border-t border-rf-cyan/[0.10]">
                     <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5">
                         {toolLinks.map(({ label, href }) => (
                             <li key={href}>
                                 <Link
                                     href={href}
-                                    className="rf-focus-ring text-xs text-rf-textSoft hover:text-rf-cyan transition-colors"
+                                    className="rf-focus-ring text-xs text-white/42 hover:text-rf-cyan transition-colors duration-150"
                                 >
                                     {label}
                                 </Link>
@@ -130,27 +138,32 @@ export default function Footer() {
                 </nav>
 
                 {/* ── Data attribution ───────────────────────────────────────── */}
-                <div className="mt-8 pt-5 border-t border-rf-border/40 text-center space-y-1.5">
-                    <p className="text-[11px] text-white/35 leading-relaxed">
-                        Some ARC Raiders data provided by{' '}
+                <div className="mt-8 pt-5 border-t border-rf-cyan/[0.08] text-center space-y-2">
+                    {/* Non-affiliation disclaimer — prominent */}
+                    <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2 text-[11px] text-white/45 leading-relaxed">
+                        <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 shrink-0 text-rf-cyan/50" aria-hidden>
+                            <path fillRule="evenodd" d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-3a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 5Zm0 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+                        </svg>
+                        <strong className="text-white/60 font-semibold">Independent community project</strong>
+                        {' '}— not affiliated with, endorsed by, or connected to Embark Studios.
+                        ARC Raiders™ is a trademark of Embark Studios AB.
+                    </div>
+                    <p className="text-[11px] text-white/30 leading-relaxed">
+                        Game data powered by{' '}
                         <a href="https://metaforge.app/arc-raiders" target="_blank" rel="noopener noreferrer"
-                            className="rf-focus-ring underline underline-offset-2 hover:text-white/60 transition-colors">
+                            className="rf-focus-ring underline underline-offset-2 hover:text-white/55 transition-colors">
                             MetaForge
                         </a>
-                        {' '}and{' '}
+                        {' '}·{' '}
                         <a href="https://ardb.app" target="_blank" rel="noopener noreferrer"
-                            className="rf-focus-ring underline underline-offset-2 hover:text-white/60 transition-colors">
+                            className="rf-focus-ring underline underline-offset-2 hover:text-white/55 transition-colors">
                             ardb.app
-                        </a>.
-                    </p>
-                    <p className="text-[11px] text-white/35 leading-relaxed">
-                        Marketplace framework inspired by{' '}
+                        </a>
+                        {' '}· Marketplace framework inspired by{' '}
                         <a href="https://docs.g2g.com/" target="_blank" rel="noopener noreferrer"
-                            className="rf-focus-ring underline underline-offset-2 hover:text-white/60 transition-colors">
+                            className="rf-focus-ring underline underline-offset-2 hover:text-white/55 transition-colors">
                             G2G
-                        </a>.
-                        {' '}RaiderForge is not affiliated with Embark Studios.
-                        ARC Raiders™ is a trademark of Embark Studios AB.
+                        </a>
                     </p>
                 </div>
 

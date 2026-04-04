@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     alternates: { canonical: 'https://raiderforge.org' },
     openGraph: {
         title: 'RaiderForge — The Definitive ARC Raiders Community Toolkit',
-        description: 'Maps, skill trees, blueprints, marketplace, and more — all free. The definitive ARC Raiders companion.',
+        description: 'Skill tree planner, blueprint tracker, loadout builder, weekly trials, and an AI-powered marketplace — all free. The definitive ARC Raiders companion.',
         url: 'https://raiderforge.org',
     },
 }
@@ -165,7 +165,10 @@ export default function Home() {
                         style={{ animationDelay: '0.18s' }}
                     >
                         <span className="text-white">Raider</span>
-                        <span className="text-rf-redSoft">Forge</span>
+                        <span
+                            className="text-rf-cyan"
+                            style={{ textShadow: '0 0 28px rgba(34,211,238,0.70), 0 0 60px rgba(34,211,238,0.35)' }}
+                        >Forge</span>
                     </h1>
 
                     {/* Sub */}
@@ -182,31 +185,38 @@ export default function Home() {
                         style={{ animationDelay: '0.44s' }}
                     >
                         <div className="flex flex-col sm:flex-row items-center gap-3">
-                            {/* Primary — neon cyan */}
+                            {/* Primary — neon cyan pulse */}
                             <Link
-                                href="/blueprints"
-                                className="rf-btn-primary rf-neon-pulse w-full sm:w-auto text-sm sm:text-base px-8 py-3.5 sm:px-10 sm:py-4"
+                                href="/sync"
+                                className="rf-btn-primary rf-neon-pulse w-full sm:w-auto text-sm sm:text-base px-8 py-3.5 sm:px-10 sm:py-4 inline-flex items-center gap-2.5"
                             >
-                                Blueprint Tracker
+                                <svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className="w-4 h-4 shrink-0" aria-hidden>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                </svg>
+                                Sync Your Profile
                             </Link>
                             {/* Secondary — ghost */}
-                            <Link
-                                href="/marketplace"
+                            <a
+                                href="#features"
                                 className="rf-btn-ghost w-full sm:w-auto text-sm sm:text-base px-8 py-3.5 sm:px-10 sm:py-4"
                             >
-                                Marketplace
-                            </Link>
+                                Explore Tools
+                            </a>
                         </div>
 
                         <p className="text-xs sm:text-sm text-white/55 max-w-md leading-relaxed text-shadow-hero">
-                            Track your blueprints — or browse and list items in the marketplace.
+                            Sync your Steam or Epic profile to auto-track blueprints, skills, and progress.
                         </p>
                         <p className="text-xs text-white/38 text-shadow-hero">
-                            Already playing?{' '}
-                            <Link href="/sync" className="text-rf-cyan/75 underline underline-offset-2 hover:text-rf-cyan transition-colors">
-                                Sync your profile
+                            No account?{' '}
+                            <Link href="/blueprints" className="text-rf-cyan/75 underline underline-offset-2 hover:text-rf-cyan transition-colors">
+                                Browse blueprints
                             </Link>{' '}
-                            to auto-track blueprints &amp; progress.
+                            or{' '}
+                            <Link href="/marketplace" className="text-rf-cyan/75 underline underline-offset-2 hover:text-rf-cyan transition-colors">
+                                check the marketplace
+                            </Link>{' '}
+                            — no sign-in required.
                         </p>
                     </div>
                 </div>
@@ -251,34 +261,37 @@ export default function Home() {
                     </div>
 
                     {/* Feature cards */}
-                    <div className="flex flex-col gap-2.5 max-w-3xl mx-auto">
+                    <div className="flex flex-col gap-3 max-w-3xl mx-auto">
                         {FEATURES.map(({ href, accentClass, hoverBorderClass, iconBgClass, iconTextClass, openBtnClass, label, labelClass, badge, desc, hoverShadow, icon }) => (
                             <Link
                                 key={href}
                                 href={href}
-                                className={`group flex items-center gap-5 rounded-xl border bg-gradient-to-r to-black/50 px-5 py-4 transition-all duration-200 hover:-translate-y-1 ${accentClass} ${hoverBorderClass} ${hoverShadow}`}
+                                className={`group relative flex items-center gap-5 rounded-xl border bg-gradient-to-r to-black/60 px-5 py-4 transition-all duration-250 hover:-translate-y-1.5 backdrop-blur-sm ${accentClass} ${hoverBorderClass} ${hoverShadow}`}
                             >
+                                {/* Subtle inner shine on hover */}
+                                <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-250 bg-gradient-to-br from-white/[0.04] to-transparent" aria-hidden="true" />
+
                                 {/* Icon */}
-                                <div className={`shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-lg border ${iconBgClass} ${iconTextClass}`}>
+                                <div className={`shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-lg border ${iconBgClass} ${iconTextClass} transition-all duration-200 group-hover:scale-110`}>
                                     {icon}
                                 </div>
 
                                 {/* Body */}
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                        <span className={`text-[10px] uppercase tracking-widest font-semibold ${labelClass}`}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className={`text-[10px] uppercase tracking-widest font-bold ${labelClass}`}>
                                             {label}
                                         </span>
                                         <PageMaturityBadge level={badge} />
                                     </div>
-                                    <p className="text-sm text-white/70 leading-snug truncate">{desc}</p>
+                                    <p className="text-sm text-white/75 leading-snug truncate group-hover:text-white/90 transition-colors duration-200">{desc}</p>
                                 </div>
 
                                 {/* Open pill */}
-                                <span className={`shrink-0 inline-flex items-center justify-center rounded-lg text-white text-xs font-bold py-2 px-4 border transition-colors ${openBtnClass}`}
+                                <span className={`shrink-0 inline-flex items-center justify-center rounded-lg text-white text-xs font-bold py-2 px-4 border transition-all duration-200 group-hover:scale-105 ${openBtnClass}`}
                                     aria-hidden="true"
                                 >
-                                    Open
+                                    Open →
                                 </span>
                             </Link>
                         ))}

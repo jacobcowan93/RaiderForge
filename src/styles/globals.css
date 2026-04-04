@@ -28,6 +28,36 @@ body {
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
+/* ── CSS scanline texture — tactical sci-fi screen effect ────────────────────
+   Fixed pseudo-element renders a repeating 2px horizontal scanline over the
+   entire viewport. Opacity 0.028 — just visible enough for the aesthetic
+   without darkening content. pointer-events:none ensures zero interaction cost.
+   prefers-reduced-motion: the pattern is static so it is always safe to keep. */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9990;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 1px,
+        rgba(0, 0, 0, 0.028) 1px,
+        rgba(0, 0, 0, 0.028) 2px
+    );
+}
+
+/* Subtle vignette over the whole page — darkens screen edges for depth */
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9990;
+    pointer-events: none;
+    background: radial-gradient(ellipse 110% 90% at 50% 40%, transparent 38%, rgba(0, 0, 0, 0.30) 100%);
+}
+
 /* Shared site copy readability pass: brighten body text without changing heading treatments. */
 .rf-readable-copy :where(p, li, dt, dd, blockquote, figcaption, label) {
     color: #fff;
@@ -221,45 +251,64 @@ body {
 
 /* Neon cyan text glow — used for highlighted stat values, active nav items */
 .rf-glow-cyan {
-    text-shadow: 0 0 8px rgba(34, 211, 238, 0.55), 0 0 20px rgba(34, 211, 238, 0.25);
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.75), 0 0 28px rgba(34, 211, 238, 0.40), 0 0 60px rgba(34, 211, 238, 0.15);
 }
 
 /* Neon orange text glow — used for accents, CTA labels */
 .rf-glow-orange {
-    text-shadow: 0 0 8px rgba(249, 115, 22, 0.55), 0 0 20px rgba(249, 115, 22, 0.25);
+    text-shadow: 0 0 10px rgba(249, 115, 22, 0.75), 0 0 28px rgba(249, 115, 22, 0.40), 0 0 60px rgba(249, 115, 22, 0.15);
 }
 
 /* Box-shadow neon border glow — panels, cards on hover */
 .rf-glow-border-cyan {
-    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.4), 0 0 24px -4px rgba(34, 211, 238, 0.3);
+    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.5), 0 0 32px -4px rgba(34, 211, 238, 0.45), 0 0 64px -8px rgba(34, 211, 238, 0.2);
 }
 .rf-glow-border-orange {
-    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.4), 0 0 24px -4px rgba(249, 115, 22, 0.25);
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.5), 0 0 32px -4px rgba(249, 115, 22, 0.40), 0 0 64px -8px rgba(249, 115, 22, 0.18);
 }
 
-/* Primary CTA button style — neon cyan, maps to Explore / primary actions */
+/* Glassmorphic dark panel — for modals, info cards, overlays */
+.rf-panel {
+    background: rgba(11, 15, 25, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(34, 211, 238, 0.12);
+    border-radius: 0.875rem;
+}
+
+/* Primary CTA button style — neon cyan, strong glow ring */
 .rf-btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 0.75rem;
-    background-color: #22d3ee;
+    background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
     color: #000;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 0.875rem;
+    letter-spacing: 0.01em;
     padding: 0.75rem 2rem;
-    border: 1px solid rgba(34, 211, 238, 0.35);
-    box-shadow: 0 0 24px -3px rgba(34, 211, 238, 0.55), 0 4px 16px rgba(0,0,0,0.4);
-    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    border: 1px solid rgba(34, 211, 238, 0.50);
+    box-shadow:
+        0 0 0 1px rgba(34, 211, 238, 0.20),
+        0 0 28px -3px rgba(34, 211, 238, 0.65),
+        0 0 56px -8px rgba(34, 211, 238, 0.30),
+        0 4px 16px rgba(0,0,0,0.45);
+    transition: background 0.15s ease, box-shadow 0.2s ease, transform 0.15s ease;
     text-decoration: none;
 }
 .rf-btn-primary:hover {
-    background-color: #67e8f9;
-    box-shadow: 0 0 28px -2px rgba(34, 211, 238, 0.6), 0 4px 20px rgba(0,0,0,0.5);
+    background: linear-gradient(135deg, #67e8f9 0%, #22d3ee 100%);
+    box-shadow:
+        0 0 0 1px rgba(34, 211, 238, 0.35),
+        0 0 36px -2px rgba(34, 211, 238, 0.80),
+        0 0 72px -6px rgba(34, 211, 238, 0.35),
+        0 6px 24px rgba(0,0,0,0.55);
+    transform: translateY(-1px);
 }
 .rf-btn-primary:focus-visible {
-    outline: 2px solid rgba(34, 211, 238, 0.65);
-    outline-offset: 2px;
+    outline: 2px solid rgba(34, 211, 238, 0.80);
+    outline-offset: 3px;
 }
 
 /* Secondary ghost button */
@@ -268,56 +317,78 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 0.75rem;
-    background-color: transparent;
+    background-color: rgba(255,255,255,0.03);
     color: rgba(255,255,255,0.85);
     font-weight: 600;
     font-size: 0.875rem;
     padding: 0.75rem 2rem;
-    border: 1px solid rgba(255,255,255,0.15);
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+    transition: background-color 0.15s ease, border-color 0.2s ease, color 0.15s ease, box-shadow 0.2s ease;
     text-decoration: none;
 }
 .rf-btn-ghost:hover {
-    background-color: rgba(255,255,255,0.07);
-    border-color: rgba(255,255,255,0.28);
+    background-color: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.32);
     color: #fff;
+    box-shadow: 0 0 16px -4px rgba(255,255,255,0.12);
 }
 .rf-btn-ghost:focus-visible {
-    outline: 2px solid rgba(34, 211, 238, 0.65);
-    outline-offset: 2px;
+    outline: 2px solid rgba(34, 211, 238, 0.80);
+    outline-offset: 3px;
 }
 
-/* Animated neon pulse for hero CTA accent — subtle, respects prefers-reduced-motion */
+/* Animated neon pulse for hero CTA accent — multi-stop glow cycle */
 @keyframes rf-neon-pulse {
-    0%, 100% { box-shadow: 0 0 24px -3px rgba(34, 211, 238, 0.55), 0 4px 16px rgba(0,0,0,0.4); }
-    50%       { box-shadow: 0 0 40px -1px rgba(34, 211, 238, 0.80), 0 4px 24px rgba(0,0,0,0.5); }
+    0%, 100% {
+        box-shadow:
+            0 0 0 1px rgba(34, 211, 238, 0.20),
+            0 0 28px -3px rgba(34, 211, 238, 0.65),
+            0 0 56px -8px rgba(34, 211, 238, 0.30),
+            0 4px 16px rgba(0,0,0,0.45);
+    }
+    50% {
+        box-shadow:
+            0 0 0 1px rgba(34, 211, 238, 0.38),
+            0 0 44px -1px rgba(34, 211, 238, 0.90),
+            0 0 80px -6px rgba(34, 211, 238, 0.45),
+            0 4px 24px rgba(0,0,0,0.55);
+    }
 }
 @media (prefers-reduced-motion: no-preference) {
     .rf-neon-pulse {
-        animation: rf-neon-pulse 2.5s ease-in-out infinite;
+        animation: rf-neon-pulse 2.2s ease-in-out infinite;
     }
 }
 
-/* Feature card — hoverable dark panel with neon cyan border glow */
+/* Feature card — hoverable dark glassmorphic panel with neon border glow.
+   6px lift on hover gives premium feel; wide glow halo bleeds outward.        */
 .rf-feature-card {
     border-radius: 0.875rem;
     border: 1px solid rgba(35, 39, 52, 0.9);
-    background: linear-gradient(135deg, rgba(13,17,32,0.95) 0%, rgba(5,6,10,0.9) 100%);
-    transition: border-color 0.2s ease, box-shadow 0.25s ease, transform 0.2s ease;
+    background: linear-gradient(135deg, rgba(13,17,32,0.95) 0%, rgba(5,6,10,0.90) 100%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
 .rf-feature-card:hover {
-    border-color: rgba(34, 211, 238, 0.45);
-    box-shadow: 0 0 40px -4px rgba(34, 211, 238, 0.40), 0 12px 40px rgba(0,0,0,0.6);
-    transform: translateY(-4px);
+    border-color: rgba(34, 211, 238, 0.50);
+    box-shadow:
+        0 0 0 1px rgba(34, 211, 238, 0.18),
+        0 0 48px -4px rgba(34, 211, 238, 0.45),
+        0 0 96px -8px rgba(34, 211, 238, 0.20),
+        0 16px 48px rgba(0,0,0,0.65);
+    transform: translateY(-6px);
 }
 
 /* Horizontal neon divider line */
 .rf-divider-cyan {
     height: 2px;
-    background: linear-gradient(90deg, transparent 0%, rgba(34,211,238,0.55) 25%, rgba(34,211,238,0.55) 75%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(34,211,238,0.18) 5%, rgba(34,211,238,0.65) 30%, rgba(34,211,238,0.65) 70%, rgba(34,211,238,0.18) 95%, transparent 100%);
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.40);
 }
 
-/* Tactical corner accent — appears on panel corners for sci-fi UI feel */
+/* Tactical corner accent — sci-fi bracket corners on panel edges */
 .rf-corner-accent {
     position: relative;
 }
@@ -325,18 +396,20 @@ body {
 .rf-corner-accent::after {
     content: '';
     position: absolute;
-    width: 8px;
-    height: 8px;
-    border-color: rgba(34, 211, 238, 0.5);
+    width: 10px;
+    height: 10px;
+    border-color: rgba(34, 211, 238, 0.60);
     border-style: solid;
 }
 .rf-corner-accent::before {
     top: 0; left: 0;
-    border-width: 1px 0 0 1px;
+    border-width: 1.5px 0 0 1.5px;
+    box-shadow: -1px -1px 4px rgba(34, 211, 238, 0.25);
 }
 .rf-corner-accent::after {
     bottom: 0; right: 0;
-    border-width: 0 1px 1px 0;
+    border-width: 0 1.5px 1.5px 0;
+    box-shadow: 1px 1px 4px rgba(34, 211, 238, 0.25);
 }
 
 /* Skip-to-content link for keyboard users (WCAG 2.4.1) */
@@ -346,16 +419,30 @@ body {
     left: 8px;
     z-index: 9999;
     padding: 8px 16px;
-    background: #22d3ee;
+    background: linear-gradient(135deg, #22d3ee, #06b6d4);
     color: #000;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 14px;
-    border-radius: 0 0 6px 6px;
+    border-radius: 0 0 8px 8px;
     text-decoration: none;
     transition: top 0.1s;
+    box-shadow: 0 0 20px rgba(34,211,238,0.6);
 }
 .rf-skip-link:focus {
     top: 0;
+}
+
+/* ── Neon sweep — shimmer animation for decorative accents ─────────────────── */
+@keyframes rf-sweep {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .rf-sweep {
+        background: linear-gradient(90deg, transparent 25%, rgba(34,211,238,0.6) 50%, transparent 75%);
+        background-size: 200% 100%;
+        animation: rf-sweep 3s linear infinite;
+    }
 }
 
 /* ── Smooth scrolling ─────────────────────────────────────────────────────── */

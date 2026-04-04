@@ -79,9 +79,14 @@ export function MarketplaceListingOptimizer({
         <section className="space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                    <p className={sectionHeading}>AI Listing Optimizer</p>
+                    <div className="flex items-center gap-2">
+                        <p className={sectionHeading}>AI Listing Optimizer</p>
+                        <span className="inline-flex items-center gap-1 rounded-md border border-rf-cyan/25 bg-rf-cyan/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-rf-cyan/80">
+                            G2G-Ready
+                        </span>
+                    </div>
                     <p className="text-sm text-white/78 leading-relaxed">
-                        Generate a RaiderForge-ready title, description, tags, visual guidance, and pricing note from the selected item.
+                        Generate a listing-ready title, description, tags, and pricing note — structured for both RaiderForge and the upcoming G2G offer format (title, description, price, quantity, attributes).
                     </p>
                 </div>
                 <button type="button" className={btnPrimary} onClick={handleGenerate} disabled={!canGenerate}>

@@ -199,11 +199,12 @@ export default function NavBar() {
             ) : null}
 
             <nav
-                className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 border-b-2 border-rf-red/40 ${
+                className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
                     scrolled
-                        ? 'bg-rf-bg/[0.97] backdrop-blur-md shadow-lg shadow-black/50'
-                        : 'bg-[#05060a]/92 backdrop-blur-md shadow-[0_8px_32px_-12px_rgba(0,0,0,0.65)]'
+                        ? 'bg-rf-bg/[0.97] backdrop-blur-md shadow-lg shadow-black/60 border-b border-rf-cyan/[0.18]'
+                        : 'bg-[#05060a]/90 backdrop-blur-md border-b border-rf-cyan/[0.10] shadow-[0_8px_32px_-12px_rgba(0,0,0,0.70)]'
                 }`}
+                style={{ boxShadow: scrolled ? undefined : '0 1px 0 0 rgba(34,211,238,0.08)' }}
             >
                 <div className="flex flex-nowrap items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-3 max-w-7xl mx-auto min-h-[52px]">
                     <Link href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0 max-w-[min(100%,11rem)] sm:max-w-none" onClick={closeMobile}>
@@ -290,7 +291,7 @@ export default function NavBar() {
                                         setProfileOpen((v) => !v)
                                         setMobileNavOpen(false)
                                     }}
-                                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/10 transition-colors min-h-[40px]"
+                                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-rf-cyan/[0.08] border border-transparent hover:border-rf-cyan/20 transition-all duration-200 min-h-[40px]"
                                     aria-expanded={profileOpen}
                                     aria-haspopup="menu"
                                     aria-label={`Account menu, signed in as ${session.user.name ?? 'user'}`}
@@ -299,11 +300,12 @@ export default function NavBar() {
                                         <img
                                             src={session.user.image as string}
                                             alt=""
-                                            className="h-7 w-7 rounded-full ring-1 ring-rf-red/60"
+                                            className="h-7 w-7 rounded-full ring-1 ring-rf-cyan/50"
+                                            style={{ boxShadow: '0 0 8px rgba(34,211,238,0.30)' }}
                                             aria-hidden
                                         />
                                     ) : (
-                                        <div className="h-7 w-7 rounded-full bg-rf-red/20 flex items-center justify-center text-xs font-bold text-rf-red">
+                                        <div className="h-7 w-7 rounded-full bg-rf-cyan/15 flex items-center justify-center text-xs font-bold text-rf-cyan border border-rf-cyan/30">
                                             {session.user.name?.[0]?.toUpperCase() ?? '?'}
                                         </div>
                                     )}
@@ -390,14 +392,14 @@ export default function NavBar() {
                                 <button
                                     type="button"
                                     onClick={() => signIn()}
-                                    className="rounded-md bg-[#22c55e] px-3 py-2 sm:px-4 text-[11px] sm:text-xs font-semibold text-white shadow-md shadow-[#22c55e]/40 transition-all hover:bg-[#16a34a] min-h-[40px]"
+                                    className="rf-focus-ring rounded-md border border-rf-cyan/35 bg-rf-cyan/10 px-3 py-2 sm:px-4 text-[11px] sm:text-xs font-semibold text-rf-cyan shadow-[0_0_16px_-4px_rgba(34,211,238,0.40)] transition-all hover:bg-rf-cyan/18 hover:border-rf-cyan/55 hover:text-white min-h-[40px]"
                                 >
                                     Sign In
                                 </button>
                                 <Link
                                     href="/auth/signin?intent=signup"
                                     onClick={closeMobile}
-                                    className="rounded-md bg-rf-red px-3 py-2 sm:px-4 text-[11px] sm:text-xs font-semibold text-white shadow-md shadow-rf-red/40 transition-all hover:bg-rf-redSoft inline-flex items-center min-h-[40px]"
+                                    className="rf-focus-ring rounded-md bg-gradient-to-r from-rf-cyan to-cyan-500 px-3 py-2 sm:px-4 text-[11px] sm:text-xs font-bold text-black shadow-[0_0_16px_-4px_rgba(34,211,238,0.55)] transition-all hover:from-cyan-300 hover:to-rf-cyan inline-flex items-center min-h-[40px]"
                                 >
                                     Sign Up
                                 </Link>
