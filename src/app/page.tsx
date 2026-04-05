@@ -189,13 +189,13 @@ export default function Home() {
                         <span className="h-px w-10 bg-gradient-to-l from-transparent to-rf-red/70" />
                     </span>
 
-                    {/* Title — raider red "Forge" with extreme neon glow */}
+                    {/* Title */}
                     <h1
                         className="hero-enter text-shadow-hero text-6xl font-black tracking-tight sm:text-8xl leading-none"
                         style={{ animationDelay: '0.18s' }}
                     >
                         <span className="text-white" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.9), 0 0 60px rgba(0,0,0,0.6)' }}>Raider</span>
-                        <span className="text-rf-red rf-neon-title">Forge</span>
+                        <span className="text-rf-red">Forge</span>
                     </h1>
 
                     {/* Sub */}
