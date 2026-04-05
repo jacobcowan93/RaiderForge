@@ -13,7 +13,7 @@ import { MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 
 import { sectionHeading } from '../_lib/marketplace-constants'
 import { Divider, ErrorMsg, Spinner, Toast } from './MarketplaceShared'
-import { MarketplaceG2gPlaceholder } from './MarketplaceG2gPlaceholder'
+import { MarketplaceG2gOfferPanel } from './MarketplaceG2gOfferPanel'
 import { MarketplaceItemPicker } from './MarketplaceItemPicker'
 import { MarketplaceListingForm } from './MarketplaceListingForm'
 import { MarketplaceListingOptimizer } from './MarketplaceListingOptimizer'
@@ -41,6 +41,15 @@ export function MarketplaceSellTab({
     const [submitting, setSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [toast, setToast] = useState<string | null>(null)
+
+    // Lifted AI optimizer output — passed to G2G offer panel
+    const [optimizerTitle, setOptimizerTitle] = useState('')
+    const [optimizerOutput, setOptimizerOutput] = useState('')
+
+    function handleOptimizerOutput(title: string, output: string) {
+        setOptimizerTitle(title)
+        setOptimizerOutput(output)
+    }
 
     useEffect(() => {
         let cancelled = false
@@ -106,7 +115,10 @@ export function MarketplaceSellTab({
                 </p>
             </div>
 
-            <MarketplaceG2gPlaceholder />
+            <MarketplaceG2gOfferPanel
+                optimizerTitle={optimizerTitle}
+                optimizerDescription={optimizerOutput}
+            />
 
             <div className="space-y-1.5">
                 <label className={sectionHeading}>Item</label>
@@ -158,6 +170,7 @@ export function MarketplaceSellTab({
                 quantity={quantity}
                 notes={notes}
                 disabled={submitting || persistenceDisabled}
+                onOutputChange={handleOptimizerOutput}
             />
 
             <Divider />

@@ -45,11 +45,11 @@ export default async function MarketplaceLayout({ children }: { children: React.
                         className="relative rounded-xl border border-amber-400/70 bg-amber-950/95 backdrop-blur-md overflow-hidden"
                         style={{ boxShadow: '0 0 0 1px rgba(217,119,6,0.55), 0 0 40px -4px rgba(217,119,6,0.60), 0 8px 32px rgba(0,0,0,0.70)' }}
                     >
-                        {/* G2G integration badge row */}
+                        {/* Header badge row */}
                         <div className="flex items-center gap-2 border-b border-amber-500/25 px-4 py-2 flex-wrap">
                             <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" aria-hidden="true" />
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
-                                Community Marketplace (Beta) · G2G Integration In Progress
+                                Marketplace Beta — Powered by G2G Escrow
                             </span>
 
                             {/* G2G Connected — only rendered when API keys are present server-side */}
@@ -78,9 +78,10 @@ export default async function MarketplaceLayout({ children }: { children: React.
 
                             {/* Body text */}
                             <span className="flex-1">
-                                Listings are community-generated. Use at your own risk — we do not guarantee delivery or facilitate real-money transactions.{' '}
-                                <strong className="text-amber-200 font-semibold">Full escrow and secure trading coming soon via official G2G API.</strong>{' '}
-                                Not affiliated with Embark Studios or G2G.
+                                Real-money transactions are handled through{' '}
+                                <strong className="text-amber-200 font-semibold">G2G&apos;s secure checkout with full escrow and buyer protection.</strong>{' '}
+                                RaiderForge does not hold, process, or touch any funds — all payments go directly through G2G.{' '}
+                                Community listings visible to all players. Not affiliated with Embark Studios.
                             </span>
 
                             {/* Links */}

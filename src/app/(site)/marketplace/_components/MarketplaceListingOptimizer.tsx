@@ -14,6 +14,7 @@ export function MarketplaceListingOptimizer({
     quantity,
     notes,
     disabled,
+    onOutputChange,
 }: {
     item: CatalogItemSummary | null
     price: string
@@ -21,6 +22,8 @@ export function MarketplaceListingOptimizer({
     quantity: string
     notes: string
     disabled?: boolean
+    /** Called whenever a new AI output is generated. `title` is the first non-empty line; `output` is the full text. */
+    onOutputChange?: (title: string, output: string) => void
 }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -57,6 +60,12 @@ export function MarketplaceListingOptimizer({
 
             setOutput(result.output)
             setModel(result.model)
+
+            // Lift title + full output to parent for G2G offer panel
+            if (onOutputChange) {
+                const firstLine = result.output.split('\n').find((l) => l.trim().length > 0) ?? ''
+                onOutputChange(firstLine.replace(/^#+\s*/, '').trim(), result.output)
+            }
         } catch {
             setError('Could not reach the listing optimizer right now.')
         } finally {
