@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { normalizePublicAssetUrl } from '@/lib/site/publicAssetUrl'
+import { checkG2gConfigured } from './actions'
 
 export const metadata: Metadata = {
     title: 'Marketplace — Buy & Sell ARC Raiders Items',
@@ -19,7 +20,9 @@ export const metadata: Metadata = {
  * Marketplace section layout — immersive background image with amber safety notice.
  * The amber banner (role="note") is always server-rendered and visible above all content.
  */
-export default function MarketplaceLayout({ children }: { children: React.ReactNode }) {
+export default async function MarketplaceLayout({ children }: { children: React.ReactNode }) {
+    const g2gConnected = await checkG2gConfigured()
+
     return (
         <div className="relative min-h-[100dvh]">
             <div className="pointer-events-none fixed inset-0 z-[5]" aria-hidden>
@@ -43,11 +46,24 @@ export default function MarketplaceLayout({ children }: { children: React.ReactN
                         style={{ boxShadow: '0 0 0 1px rgba(217,119,6,0.55), 0 0 40px -4px rgba(217,119,6,0.60), 0 8px 32px rgba(0,0,0,0.70)' }}
                     >
                         {/* G2G integration badge row */}
-                        <div className="flex items-center gap-2 border-b border-amber-500/25 px-4 py-2">
-                            <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" aria-hidden="true" />
+                        <div className="flex items-center gap-2 border-b border-amber-500/25 px-4 py-2 flex-wrap">
+                            <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" aria-hidden="true" />
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
                                 Community Marketplace (Beta) · G2G Integration In Progress
                             </span>
+
+                            {/* G2G Connected — only rendered when API keys are present server-side */}
+                            {g2gConnected && (
+                                <span
+                                    className="inline-flex items-center gap-1.5 rounded-md border border-emerald-400/50 bg-emerald-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-300"
+                                    style={{ boxShadow: '0 0 8px rgba(52,211,153,0.30), 0 0 20px rgba(52,211,153,0.12)' }}
+                                    title="G2G API keys loaded — integration active"
+                                >
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" aria-hidden="true" />
+                                    G2G Connected
+                                </span>
+                            )}
+
                             <span className="ml-auto shrink-0 rounded-md border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-300">
                                 Beta
                             </span>

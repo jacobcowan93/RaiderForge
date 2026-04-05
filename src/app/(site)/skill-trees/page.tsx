@@ -31,14 +31,14 @@ export default function SkillTreesPage() {
 
             {/* ── Page header ───────────────────────────────────────────────── */}
             <div className="mb-10 pl-1">
-                <div className="border-l-2 border-rf-cyan pl-5" style={{ borderColor: 'rgba(34,211,238,0.70)', boxShadow: '-2px 0 12px -2px rgba(34,211,238,0.25)' }}>
-                    <span className="text-xs uppercase tracking-widest font-bold rf-glow-cyan" style={{ color: '#22d3ee' }}>
+                <div className="border-l-2 border-rf-red pl-5" style={{ borderColor: 'rgba(255,64,64,0.70)', boxShadow: '-2px 0 12px -2px rgba(255,64,64,0.25)' }}>
+                    <span className="text-xs uppercase tracking-widest font-bold rf-glow-red" style={{ color: '#ff4040' }}>
                         Character
                     </span>
                     <div className="mt-2 flex flex-wrap items-center gap-3">
                         <h1 className="text-3xl font-bold tracking-tight text-white text-shadow-hero">
                             Community{' '}
-                            <span className="text-rf-cyan" style={{ textShadow: '0 0 20px rgba(34,211,238,0.45)' }}>Skill Builds</span>
+                            <span className="text-rf-red" style={{ textShadow: '0 0 20px rgba(255,64,64,0.50)' }}>Skill Builds</span>
                         </h1>
                         <PageMaturityBadge level="beta" />
                     </div>

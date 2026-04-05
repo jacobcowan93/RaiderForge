@@ -141,7 +141,7 @@ export default function MarketplacePage() {
                         >
                             {label}
                             {tab === id && (
-                                <span className="absolute bottom-0 inset-x-0 h-[2px] bg-yellow-400 rounded-t-full" />
+                                <span className="absolute bottom-0 inset-x-0 h-[2px] bg-orange-500 rounded-t-full" style={{ boxShadow: '0 0 6px rgba(249,115,22,0.65)' }} />
                             )}
                         </button>
                     ))}

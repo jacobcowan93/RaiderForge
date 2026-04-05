@@ -102,7 +102,7 @@ function NavDestinationLink({
                 {isActive ? (
                     <span
                         className="absolute inset-x-1 -bottom-[11px] h-[2.5px] rounded-full transition-all duration-200"
-                        style={{ background: '#22d3ee', boxShadow: '0 0 6px rgba(34,211,238,0.7)' }}
+                        style={{ background: '#ff4040', boxShadow: '0 0 6px rgba(255,64,64,0.7)' }}
                         aria-hidden="true"
                     />
                 ) : null}
@@ -118,7 +118,7 @@ function NavDestinationLink({
             aria-current={isActive ? 'page' : undefined}
             className={`rf-focus-ring flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${mobPlanner} ${
                 isActive
-                    ? 'bg-rf-cyan/[0.1] text-rf-cyan border border-rf-cyan/25'
+                    ? 'bg-rf-red/[0.1] text-rf-red border border-rf-red/25'
                     : 'text-white/80 hover:bg-white/5 hover:text-white border border-transparent'
             }`}
         >
@@ -201,10 +201,10 @@ export default function NavBar() {
             <nav
                 className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
                     scrolled
-                        ? 'bg-rf-bg/[0.97] backdrop-blur-md shadow-lg shadow-black/60 border-b border-rf-cyan/[0.18]'
-                        : 'bg-[#05060a]/90 backdrop-blur-md border-b border-rf-cyan/[0.10] shadow-[0_8px_32px_-12px_rgba(0,0,0,0.70)]'
+                        ? 'bg-rf-bg/[0.97] backdrop-blur-md shadow-lg shadow-black/60 border-b border-rf-red/[0.22]'
+                        : 'bg-[#05060a]/90 backdrop-blur-md border-b border-rf-red/[0.10] shadow-[0_8px_32px_-12px_rgba(0,0,0,0.70)]'
                 }`}
-                style={{ boxShadow: scrolled ? undefined : '0 1px 0 0 rgba(34,211,238,0.08)' }}
+                style={{ boxShadow: scrolled ? undefined : '0 1px 0 0 rgba(255,64,64,0.08)' }}
             >
                 <div className="flex flex-nowrap items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-3 max-w-7xl mx-auto min-h-[52px]">
                     <Link href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0 max-w-[min(100%,11rem)] sm:max-w-none" onClick={closeMobile}>
@@ -220,7 +220,7 @@ export default function NavBar() {
                         </div>
                         <span className="text-sm font-black tracking-[0.18em] uppercase truncate">
                             <span className="text-white">Raider</span>
-                            <span className="text-rf-redSoft">Forge</span>
+                            <span className="text-rf-red" style={{ textShadow: '0 0 10px rgba(255,64,64,0.70), 0 0 24px rgba(255,64,64,0.30)' }}>Forge</span>
                         </span>
                     </Link>
 
@@ -291,7 +291,7 @@ export default function NavBar() {
                                         setProfileOpen((v) => !v)
                                         setMobileNavOpen(false)
                                     }}
-                                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-rf-cyan/[0.08] border border-transparent hover:border-rf-cyan/20 transition-all duration-200 min-h-[40px]"
+                                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-rf-red/[0.08] border border-transparent hover:border-rf-red/20 transition-all duration-200 min-h-[40px]"
                                     aria-expanded={profileOpen}
                                     aria-haspopup="menu"
                                     aria-label={`Account menu, signed in as ${session.user.name ?? 'user'}`}
@@ -300,12 +300,12 @@ export default function NavBar() {
                                         <img
                                             src={session.user.image as string}
                                             alt=""
-                                            className="h-7 w-7 rounded-full ring-1 ring-rf-cyan/50"
-                                            style={{ boxShadow: '0 0 8px rgba(34,211,238,0.30)' }}
+                                            className="h-7 w-7 rounded-full ring-1 ring-rf-red/50"
+                                            style={{ boxShadow: '0 0 8px rgba(255,64,64,0.30)' }}
                                             aria-hidden
                                         />
                                     ) : (
-                                        <div className="h-7 w-7 rounded-full bg-rf-cyan/15 flex items-center justify-center text-xs font-bold text-rf-cyan border border-rf-cyan/30">
+                                        <div className="h-7 w-7 rounded-full bg-rf-red/15 flex items-center justify-center text-xs font-bold text-rf-red border border-rf-red/30">
                                             {session.user.name?.[0]?.toUpperCase() ?? '?'}
                                         </div>
                                     )}
@@ -392,14 +392,14 @@ export default function NavBar() {
                                 <button
                                     type="button"
                                     onClick={() => signIn()}
-                                    className="rf-focus-ring rounded-md border border-rf-cyan/35 bg-rf-cyan/10 px-3 py-2 sm:px-4 text-[11px] sm:text-xs font-semibold text-rf-cyan shadow-[0_0_16px_-4px_rgba(34,211,238,0.40)] transition-all hover:bg-rf-cyan/18 hover:border-rf-cyan/55 hover:text-white min-h-[40px]"
+                                    className="rf-focus-ring rounded-md border border-rf-red/35 bg-rf-red/10 px-3 py-2 sm:px-4 text-[11px] sm:text-xs font-semibold text-rf-red shadow-[0_0_16px_-4px_rgba(255,64,64,0.35)] transition-all hover:bg-rf-red/18 hover:border-rf-red/55 hover:text-white min-h-[40px]"
                                 >
                                     Sign In
                                 </button>
                                 <Link
                                     href="/auth/signin?intent=signup"
                                     onClick={closeMobile}
-                                    className="rf-focus-ring rounded-md bg-gradient-to-r from-rf-cyan to-cyan-500 px-3 py-2 sm:px-4 text-[11px] sm:text-xs font-bold text-black shadow-[0_0_16px_-4px_rgba(34,211,238,0.55)] transition-all hover:from-cyan-300 hover:to-rf-cyan inline-flex items-center min-h-[40px]"
+                                    className="rf-focus-ring rounded-md bg-gradient-to-r from-rf-red to-red-600 px-3 py-2 sm:px-4 text-[11px] sm:text-xs font-bold text-white shadow-[0_0_16px_-4px_rgba(255,64,64,0.55)] transition-all hover:from-red-400 hover:to-rf-red inline-flex items-center min-h-[40px]"
                                 >
                                     Sign Up
                                 </Link>

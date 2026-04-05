@@ -17,6 +17,19 @@
     --color-rf-bgPanel: #0d1120;
 }
 
+/* ── ARC Raiders game palette — matches logo + in-game identity ──────────────
+   These four colours map directly to game categories:
+     raider-red    = brand / raiders / logo (Skill Trees)
+     raider-blue   = information / tracking (Blueprint Tracker, Trials)
+     raider-yellow = gear / equipment / challenge (Loadouts, Weekly Trials)
+     raider-orange = marketplace / trading / energy (Marketplace)          */
+:root {
+    --raider-red:    #ff4040;   /* 255  64  64 */
+    --raider-blue:   #38bdf8;   /*  56 189 248 */
+    --raider-yellow: #facc15;   /* 250 204  21 */
+    --raider-orange: #f97316;   /* 249 115  22 */
+}
+
 html,
 body,
 #__next {
@@ -48,14 +61,18 @@ body::before {
     );
 }
 
-/* Subtle vignette over the whole page — darkens screen edges for depth */
+/* Deeper vignette over the whole page — darkens screen edges for immersion */
 body::after {
     content: '';
     position: fixed;
     inset: 0;
     z-index: 9990;
     pointer-events: none;
-    background: radial-gradient(ellipse 110% 90% at 50% 40%, transparent 38%, rgba(0, 0, 0, 0.30) 100%);
+    background:
+        /* Edge vignette */
+        radial-gradient(ellipse 100% 80% at 50% 40%, transparent 30%, rgba(0, 0, 0, 0.42) 100%),
+        /* Top-of-viewport darkening — makes nav always legible */
+        linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, transparent 8%);
 }
 
 /* Shared site copy readability pass: brighten body text without changing heading treatments. */
@@ -216,16 +233,15 @@ body::after {
 }
 
 /* ── Shared checkbox — Blueprint tracker (card + filter bar) ───────────────── */
-/* appearance-none removes all native browser chrome. The yellow border is the  */
-/* ARC Raiders accent. Checked state switches to rf-green fill; the checkmark   */
-/* is rendered as a peer SVG sibling in JSX (avoids CSS data-URI parse issues). */
+/* appearance-none removes all native browser chrome. The blue border is the    */
+/* Blueprint Tracking category accent. Checked state uses rf-blue fill.         */
 .rf-checkbox {
     -webkit-appearance: none;
     appearance: none;
     width: 1rem;
     height: 1rem;
     border-radius: 4px;
-    border: 1.5px solid #facc15;           /* rf-yellow */
+    border: 1.5px solid #38bdf8;           /* rf-blue — blueprint category */
     background-color: rgba(0, 0, 0, 0.55);
     cursor: pointer;
     flex-shrink: 0;
@@ -233,33 +249,56 @@ body::after {
 }
 
 .rf-checkbox:checked {
-    background-color: #22c55e;             /* rf-green */
-    border-color: #22c55e;
+    background-color: #38bdf8;             /* rf-blue — owned state */
+    border-color: #38bdf8;
 }
 
 .rf-checkbox:focus-visible {
-    outline: 2px solid rgba(250, 204, 21, 0.45);
+    outline: 2px solid rgba(56, 189, 248, 0.45);
     outline-offset: 1px;
 }
 
 /* ── Neon glow utilities ─────────────────────────────────────────────────── */
 /* Keyboard-focus ring for interactive elements in the sci-fi theme */
 .rf-focus-ring:focus-visible {
-    outline: 2px solid rgba(34, 211, 238, 0.65);
+    outline: 2px solid rgba(255, 64, 64, 0.65);
     outline-offset: 2px;
 }
 
-/* Neon cyan text glow — used for highlighted stat values, active nav items */
+/* ── Per-category accent text glows ─────────────────────────────────────── */
+
+/* Red — brand / raiders / Skill Trees */
+.rf-glow-red {
+    text-shadow: 0 0 10px rgba(255, 64, 64, 0.80), 0 0 28px rgba(255, 64, 64, 0.45), 0 0 60px rgba(255, 64, 64, 0.20);
+}
+
+/* Blue — Blueprint Tracking / information */
+.rf-glow-blue {
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.80), 0 0 28px rgba(56, 189, 248, 0.45), 0 0 60px rgba(56, 189, 248, 0.20);
+}
+
+/* Cyan — kept as legacy / neutral utility */
 .rf-glow-cyan {
     text-shadow: 0 0 10px rgba(34, 211, 238, 0.75), 0 0 28px rgba(34, 211, 238, 0.40), 0 0 60px rgba(34, 211, 238, 0.15);
 }
 
-/* Neon orange text glow — used for accents, CTA labels */
+/* Orange — Marketplace / trading */
 .rf-glow-orange {
     text-shadow: 0 0 10px rgba(249, 115, 22, 0.75), 0 0 28px rgba(249, 115, 22, 0.40), 0 0 60px rgba(249, 115, 22, 0.15);
 }
 
-/* Box-shadow neon border glow — panels, cards on hover */
+/* Yellow — Loadouts / Weekly Trials / gear */
+.rf-glow-yellow {
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.75), 0 0 28px rgba(250, 204, 21, 0.40), 0 0 60px rgba(250, 204, 21, 0.15);
+}
+
+/* ── Box-shadow neon border glows ─────────────────────────────────────────── */
+.rf-glow-border-red {
+    box-shadow: 0 0 0 1px rgba(255, 64, 64, 0.50), 0 0 32px -4px rgba(255, 64, 64, 0.45), 0 0 64px -8px rgba(255, 64, 64, 0.20);
+}
+.rf-glow-border-blue {
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.50), 0 0 32px -4px rgba(56, 189, 248, 0.45), 0 0 64px -8px rgba(56, 189, 248, 0.20);
+}
 .rf-glow-border-cyan {
     box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.5), 0 0 32px -4px rgba(34, 211, 238, 0.45), 0 0 64px -8px rgba(34, 211, 238, 0.2);
 }
@@ -267,47 +306,187 @@ body::after {
     box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.5), 0 0 32px -4px rgba(249, 115, 22, 0.40), 0 0 64px -8px rgba(249, 115, 22, 0.18);
 }
 
+/* ── Per-category accent classes — border + ambient glow ─────────────────── */
+
+/* Red accent — brand / Skill Trees */
+.rf-accent-red {
+    border-color: rgba(255, 64, 64, 0.35);
+    box-shadow:
+        0 0 0 1px rgba(255, 64, 64, 0.12),
+        0 0 24px -6px rgba(255, 64, 64, 0.30),
+        0 0 60px -12px rgba(255, 64, 64, 0.14);
+}
+.rf-accent-red:hover {
+    border-color: rgba(255, 64, 64, 0.65);
+    box-shadow:
+        0 0 0 1px rgba(255, 64, 64, 0.22),
+        0 0 56px -4px rgba(255, 64, 64, 0.55),
+        0 0 120px -8px rgba(255, 64, 64, 0.28),
+        0 20px 60px rgba(0, 0, 0, 0.70);
+}
+
+/* Blue accent — Blueprint Tracking */
+.rf-accent-blue {
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow:
+        0 0 0 1px rgba(56, 189, 248, 0.12),
+        0 0 24px -6px rgba(56, 189, 248, 0.30),
+        0 0 60px -12px rgba(56, 189, 248, 0.14);
+}
+.rf-accent-blue:hover {
+    border-color: rgba(56, 189, 248, 0.65);
+    box-shadow:
+        0 0 0 1px rgba(56, 189, 248, 0.22),
+        0 0 56px -4px rgba(56, 189, 248, 0.55),
+        0 0 120px -8px rgba(56, 189, 248, 0.28),
+        0 20px 60px rgba(0, 0, 0, 0.70);
+}
+
+/* Yellow accent — Loadouts / Weekly Trials */
+.rf-accent-yellow {
+    border-color: rgba(250, 204, 21, 0.30);
+    box-shadow:
+        0 0 0 1px rgba(250, 204, 21, 0.10),
+        0 0 24px -6px rgba(250, 204, 21, 0.25),
+        0 0 60px -12px rgba(250, 204, 21, 0.12);
+}
+.rf-accent-yellow:hover {
+    border-color: rgba(250, 204, 21, 0.60);
+    box-shadow:
+        0 0 0 1px rgba(250, 204, 21, 0.20),
+        0 0 56px -4px rgba(250, 204, 21, 0.50),
+        0 0 120px -8px rgba(250, 204, 21, 0.25),
+        0 20px 60px rgba(0, 0, 0, 0.70);
+}
+
+/* Orange accent — Marketplace */
+.rf-accent-orange {
+    border-color: rgba(249, 115, 22, 0.35);
+    box-shadow:
+        0 0 0 1px rgba(249, 115, 22, 0.12),
+        0 0 24px -6px rgba(249, 115, 22, 0.30),
+        0 0 60px -12px rgba(249, 115, 22, 0.14);
+}
+.rf-accent-orange:hover {
+    border-color: rgba(249, 115, 22, 0.65);
+    box-shadow:
+        0 0 0 1px rgba(249, 115, 22, 0.22),
+        0 0 56px -4px rgba(249, 115, 22, 0.55),
+        0 0 120px -8px rgba(249, 115, 22, 0.28),
+        0 20px 60px rgba(0, 0, 0, 0.70);
+}
+
 /* Glassmorphic dark panel — for modals, info cards, overlays */
 .rf-panel {
     background: rgba(11, 15, 25, 0.82);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(34, 211, 238, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 0.875rem;
 }
 
-/* Primary CTA button style — neon cyan, strong glow ring */
+/* Primary CTA button style — raider red, strong glow ring */
 .rf-btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 0.75rem;
-    background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
-    color: #000;
+    background: linear-gradient(135deg, #ff4040 0%, #e03030 100%);
+    color: #fff;
     font-weight: 800;
     font-size: 0.875rem;
     letter-spacing: 0.01em;
     padding: 0.75rem 2rem;
-    border: 1px solid rgba(34, 211, 238, 0.50);
+    border: 1px solid rgba(255, 64, 64, 0.50);
     box-shadow:
-        0 0 0 1px rgba(34, 211, 238, 0.20),
-        0 0 28px -3px rgba(34, 211, 238, 0.65),
-        0 0 56px -8px rgba(34, 211, 238, 0.30),
+        0 0 0 1px rgba(255, 64, 64, 0.20),
+        0 0 28px -3px rgba(255, 64, 64, 0.65),
+        0 0 56px -8px rgba(255, 64, 64, 0.30),
         0 4px 16px rgba(0,0,0,0.45);
     transition: background 0.15s ease, box-shadow 0.2s ease, transform 0.15s ease;
     text-decoration: none;
 }
 .rf-btn-primary:hover {
-    background: linear-gradient(135deg, #67e8f9 0%, #22d3ee 100%);
+    background: linear-gradient(135deg, #ff6060 0%, #ff4040 100%);
     box-shadow:
-        0 0 0 1px rgba(34, 211, 238, 0.35),
-        0 0 36px -2px rgba(34, 211, 238, 0.80),
-        0 0 72px -6px rgba(34, 211, 238, 0.35),
+        0 0 0 1px rgba(255, 64, 64, 0.35),
+        0 0 36px -2px rgba(255, 64, 64, 0.80),
+        0 0 72px -6px rgba(255, 64, 64, 0.35),
         0 6px 24px rgba(0,0,0,0.55);
     transform: translateY(-1px);
 }
 .rf-btn-primary:focus-visible {
-    outline: 2px solid rgba(34, 211, 238, 0.80);
+    outline: 2px solid rgba(255, 64, 64, 0.80);
+    outline-offset: 3px;
+}
+
+/* Blue CTA button — Blueprint Tracker primary action */
+.rf-btn-blue {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+    color: #000;
+    font-weight: 800;
+    font-size: 0.875rem;
+    letter-spacing: 0.01em;
+    padding: 0.75rem 2rem;
+    border: 1px solid rgba(56, 189, 248, 0.50);
+    box-shadow:
+        0 0 0 1px rgba(56, 189, 248, 0.20),
+        0 0 28px -3px rgba(56, 189, 248, 0.65),
+        0 0 56px -8px rgba(56, 189, 248, 0.30),
+        0 4px 16px rgba(0,0,0,0.45);
+    transition: background 0.15s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    text-decoration: none;
+}
+.rf-btn-blue:hover {
+    background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
+    box-shadow:
+        0 0 0 1px rgba(56, 189, 248, 0.35),
+        0 0 36px -2px rgba(56, 189, 248, 0.80),
+        0 0 72px -6px rgba(56, 189, 248, 0.35),
+        0 6px 24px rgba(0,0,0,0.55);
+    transform: translateY(-1px);
+}
+.rf-btn-blue:focus-visible {
+    outline: 2px solid rgba(56, 189, 248, 0.80);
+    outline-offset: 3px;
+}
+
+/* Orange CTA button — Marketplace primary action */
+.rf-btn-orange {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #f97316 0%, #ea6c0a 100%);
+    color: #000;
+    font-weight: 800;
+    font-size: 0.875rem;
+    letter-spacing: 0.01em;
+    padding: 0.75rem 2rem;
+    border: 1px solid rgba(249, 115, 22, 0.50);
+    box-shadow:
+        0 0 0 1px rgba(249, 115, 22, 0.20),
+        0 0 28px -3px rgba(249, 115, 22, 0.65),
+        0 0 56px -8px rgba(249, 115, 22, 0.30),
+        0 4px 16px rgba(0,0,0,0.45);
+    transition: background 0.15s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    text-decoration: none;
+}
+.rf-btn-orange:hover {
+    background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+    box-shadow:
+        0 0 0 1px rgba(249, 115, 22, 0.35),
+        0 0 36px -2px rgba(249, 115, 22, 0.80),
+        0 0 72px -6px rgba(249, 115, 22, 0.35),
+        0 6px 24px rgba(0,0,0,0.55);
+    transform: translateY(-1px);
+}
+.rf-btn-orange:focus-visible {
+    outline: 2px solid rgba(249, 115, 22, 0.80);
     outline-offset: 3px;
 }
 
@@ -334,24 +513,24 @@ body::after {
     box-shadow: 0 0 16px -4px rgba(255,255,255,0.12);
 }
 .rf-btn-ghost:focus-visible {
-    outline: 2px solid rgba(34, 211, 238, 0.80);
+    outline: 2px solid rgba(255, 64, 64, 0.80);
     outline-offset: 3px;
 }
 
-/* Animated neon pulse for hero CTA accent — multi-stop glow cycle */
+/* Animated neon pulse for hero CTA accent — raider red glow cycle */
 @keyframes rf-neon-pulse {
     0%, 100% {
         box-shadow:
-            0 0 0 1px rgba(34, 211, 238, 0.20),
-            0 0 28px -3px rgba(34, 211, 238, 0.65),
-            0 0 56px -8px rgba(34, 211, 238, 0.30),
+            0 0 0 1px rgba(255, 64, 64, 0.20),
+            0 0 28px -3px rgba(255, 64, 64, 0.65),
+            0 0 56px -8px rgba(255, 64, 64, 0.30),
             0 4px 16px rgba(0,0,0,0.45);
     }
     50% {
         box-shadow:
-            0 0 0 1px rgba(34, 211, 238, 0.38),
-            0 0 44px -1px rgba(34, 211, 238, 0.90),
-            0 0 80px -6px rgba(34, 211, 238, 0.45),
+            0 0 0 1px rgba(255, 64, 64, 0.38),
+            0 0 44px -1px rgba(255, 64, 64, 0.90),
+            0 0 80px -6px rgba(255, 64, 64, 0.45),
             0 4px 24px rgba(0,0,0,0.55);
     }
 }
@@ -362,33 +541,65 @@ body::after {
 }
 
 /* Feature card — hoverable dark glassmorphic panel with neon border glow.
-   6px lift on hover gives premium feel; wide glow halo bleeds outward.        */
+   8px lift on hover; 120px+ halo bleed for maximum premium impact.
+   Category-specific hover shadows are applied inline per card.               */
 .rf-feature-card {
     border-radius: 0.875rem;
     border: 1px solid rgba(35, 39, 52, 0.9);
-    background: linear-gradient(135deg, rgba(13,17,32,0.95) 0%, rgba(5,6,10,0.90) 100%);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
-}
-.rf-feature-card:hover {
-    border-color: rgba(34, 211, 238, 0.50);
-    box-shadow:
-        0 0 0 1px rgba(34, 211, 238, 0.18),
-        0 0 48px -4px rgba(34, 211, 238, 0.45),
-        0 0 96px -8px rgba(34, 211, 238, 0.20),
-        0 16px 48px rgba(0,0,0,0.65);
-    transform: translateY(-6px);
+    background: linear-gradient(135deg, rgba(13,17,32,0.96) 0%, rgba(5,6,10,0.92) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: border-color 0.25s ease, box-shadow 0.28s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Horizontal neon divider line */
+/* ── Neon title — raider red, extreme multi-layer glow for hero heading ─────── */
+.rf-neon-title {
+    text-shadow:
+        0 0 10px  rgba(255, 64, 64, 0.95),
+        0 0 20px  rgba(255, 64, 64, 0.85),
+        0 0 40px  rgba(255, 64, 64, 0.65),
+        0 0 80px  rgba(255, 64, 64, 0.40),
+        0 0 140px rgba(255, 64, 64, 0.18);
+}
+
+/* ── Blueprint progress bar — sky-blue fill with glow ──────────────────────── */
+.rf-progress-track {
+    height: 6px;
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+.rf-progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 60%, #7dd3fc 100%);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.65), 0 0 24px rgba(56, 189, 248, 0.30);
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Horizontal neon divider line — red (brand) */
+.rf-divider-red {
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,64,64,0.18) 5%, rgba(255,64,64,0.65) 30%, rgba(255,64,64,0.65) 70%, rgba(255,64,64,0.18) 95%, transparent 100%);
+    box-shadow: 0 0 8px rgba(255, 64, 64, 0.40);
+}
+
+/* Kept for backward-compat with any existing blue/cyan divider usage */
 .rf-divider-cyan {
     height: 2px;
     background: linear-gradient(90deg, transparent 0%, rgba(34,211,238,0.18) 5%, rgba(34,211,238,0.65) 30%, rgba(34,211,238,0.65) 70%, rgba(34,211,238,0.18) 95%, transparent 100%);
     box-shadow: 0 0 8px rgba(34, 211, 238, 0.40);
 }
 
-/* Tactical corner accent — sci-fi bracket corners on panel edges */
+/* Blueprint blue divider */
+.rf-divider-blue {
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(56,189,248,0.18) 5%, rgba(56,189,248,0.65) 30%, rgba(56,189,248,0.65) 70%, rgba(56,189,248,0.18) 95%, transparent 100%);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.40);
+}
+
+/* Tactical corner accent — sci-fi bracket corners, raider red */
 .rf-corner-accent {
     position: relative;
 }
@@ -398,18 +609,18 @@ body::after {
     position: absolute;
     width: 10px;
     height: 10px;
-    border-color: rgba(34, 211, 238, 0.60);
+    border-color: rgba(255, 64, 64, 0.60);
     border-style: solid;
 }
 .rf-corner-accent::before {
     top: 0; left: 0;
     border-width: 1.5px 0 0 1.5px;
-    box-shadow: -1px -1px 4px rgba(34, 211, 238, 0.25);
+    box-shadow: -1px -1px 4px rgba(255, 64, 64, 0.25);
 }
 .rf-corner-accent::after {
     bottom: 0; right: 0;
     border-width: 0 1.5px 1.5px 0;
-    box-shadow: 1px 1px 4px rgba(34, 211, 238, 0.25);
+    box-shadow: 1px 1px 4px rgba(255, 64, 64, 0.25);
 }
 
 /* Skip-to-content link for keyboard users (WCAG 2.4.1) */
@@ -419,14 +630,14 @@ body::after {
     left: 8px;
     z-index: 9999;
     padding: 8px 16px;
-    background: linear-gradient(135deg, #22d3ee, #06b6d4);
-    color: #000;
+    background: linear-gradient(135deg, #ff4040, #e03030);
+    color: #fff;
     font-weight: 800;
     font-size: 14px;
     border-radius: 0 0 8px 8px;
     text-decoration: none;
     transition: top 0.1s;
-    box-shadow: 0 0 20px rgba(34,211,238,0.6);
+    box-shadow: 0 0 20px rgba(255,64,64,0.6);
 }
 .rf-skip-link:focus {
     top: 0;
@@ -439,9 +650,31 @@ body::after {
 }
 @media (prefers-reduced-motion: no-preference) {
     .rf-sweep {
-        background: linear-gradient(90deg, transparent 25%, rgba(34,211,238,0.6) 50%, transparent 75%);
+        background: linear-gradient(90deg, transparent 25%, rgba(255,64,64,0.6) 50%, transparent 75%);
         background-size: 200% 100%;
         animation: rf-sweep 3s linear infinite;
+    }
+}
+
+/* ── Hero scan sweep — red-tinted horizontal radar line ───────────────────── */
+/* Subtle raider-red tint — keeps game identity. Gated behind prefers-reduced. */
+@keyframes rf-scan-sweep {
+    0%   { transform: translateY(-100%); opacity: 0; }
+    5%   { opacity: 1; }
+    95%  { opacity: 1; }
+    100% { transform: translateY(100vh); opacity: 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .rf-hero-scan::after {
+        content: '';
+        position: absolute;
+        inset-x: 0;
+        top: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,64,64,0.05) 20%, rgba(255,64,64,0.12) 50%, rgba(255,64,64,0.05) 80%, transparent 100%);
+        pointer-events: none;
+        z-index: 3;
+        animation: rf-scan-sweep 8s linear infinite;
     }
 }
 
@@ -461,7 +694,7 @@ body::after {
     animation: rf-modal-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* ── Blueprints — print “Missing Blueprints” sheet (save as PDF from browser dialog) */
+/* ── Blueprints — print "Missing Blueprints" sheet (save as PDF from browser dialog) */
 @media print {
     @page {
         margin: 14mm;

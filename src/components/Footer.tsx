@@ -42,15 +42,15 @@ function GitHubIcon({ className }: { className?: string }) {
 
 export default function Footer() {
     return (
-        <footer className="border-t border-rf-cyan/[0.12] bg-rf-bg" aria-label="Site footer"
-            style={{ boxShadow: 'inset 0 1px 0 0 rgba(34,211,238,0.06)' }}
+        <footer className="border-t border-rf-red/[0.18] bg-rf-bg" aria-label="Site footer"
+            style={{ boxShadow: 'inset 0 1px 0 0 rgba(255,64,64,0.08)' }}
         >
             <div className="mx-auto max-w-7xl px-6 py-10">
 
                 {/* ── Brand + socials ────────────────────────────────────────── */}
                 <div className="flex flex-col items-center gap-5 text-center">
                     <div className="flex items-center gap-2.5">
-                        <div className="relative h-8 w-8 rounded-md overflow-hidden ring-1 ring-rf-cyan/20 shrink-0">
+                        <div className="relative h-8 w-8 rounded-md overflow-hidden ring-1 ring-rf-red/25 shrink-0">
                             <Image
                                 src="/images/logo/ARC_Header.jpeg"
                                 alt="RaiderForge logo"
@@ -62,8 +62,8 @@ export default function Footer() {
                         <span className="text-sm font-black tracking-[0.2em] uppercase">
                             <span className="text-white">Raider</span>
                             <span
-                                className="text-rf-cyan"
-                                style={{ textShadow: '0 0 12px rgba(34,211,238,0.55)' }}
+                                className="text-rf-red"
+                                style={{ textShadow: '0 0 12px rgba(255,64,64,0.65), 0 0 28px rgba(255,64,64,0.30)' }}
                             >Forge</span>
                         </span>
                     </div>
@@ -122,13 +122,13 @@ export default function Footer() {
                 </div>
 
                 {/* ── Tool links ─────────────────────────────────────────────── */}
-                <nav aria-label="Footer navigation" className="mt-8 pt-6 border-t border-rf-cyan/[0.10]">
+                <nav aria-label="Footer navigation" className="mt-8 pt-6 border-t border-white/[0.08]">
                     <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5">
                         {toolLinks.map(({ label, href }) => (
                             <li key={href}>
                                 <Link
                                     href={href}
-                                    className="rf-focus-ring text-xs text-white/42 hover:text-rf-cyan transition-colors duration-150"
+                                    className="rf-focus-ring text-xs text-white/42 hover:text-rf-red transition-colors duration-150"
                                 >
                                     {label}
                                 </Link>
@@ -138,10 +138,10 @@ export default function Footer() {
                 </nav>
 
                 {/* ── Data attribution ───────────────────────────────────────── */}
-                <div className="mt-8 pt-5 border-t border-rf-cyan/[0.08] text-center space-y-2">
+                <div className="mt-8 pt-5 border-t border-white/[0.06] text-center space-y-2">
                     {/* Non-affiliation disclaimer — prominent */}
                     <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2 text-[11px] text-white/45 leading-relaxed">
-                        <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 shrink-0 text-rf-cyan/50" aria-hidden>
+                        <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3 shrink-0 text-white/35" aria-hidden>
                             <path fillRule="evenodd" d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-3a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 5Zm0 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
                         </svg>
                         <strong className="text-white/60 font-semibold">Independent community project</strong>

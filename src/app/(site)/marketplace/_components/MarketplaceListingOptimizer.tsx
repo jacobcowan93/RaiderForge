@@ -81,7 +81,7 @@ export function MarketplaceListingOptimizer({
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
                         <p className={sectionHeading}>AI Listing Optimizer</p>
-                        <span className="inline-flex items-center gap-1 rounded-md border border-rf-cyan/25 bg-rf-cyan/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-rf-cyan/80">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-rf-orange/30 bg-rf-orange/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-rf-orange/85">
                             G2G-Ready
                         </span>
                     </div>
