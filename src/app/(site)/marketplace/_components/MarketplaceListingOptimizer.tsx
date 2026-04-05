@@ -14,7 +14,6 @@ export function MarketplaceListingOptimizer({
     quantity,
     notes,
     disabled,
-    onOutputChange,
 }: {
     item: CatalogItemSummary | null
     price: string
@@ -22,8 +21,6 @@ export function MarketplaceListingOptimizer({
     quantity: string
     notes: string
     disabled?: boolean
-    /** Called whenever a new AI output is generated. `title` is the first non-empty line; `output` is the full text. */
-    onOutputChange?: (title: string, output: string) => void
 }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -60,12 +57,6 @@ export function MarketplaceListingOptimizer({
 
             setOutput(result.output)
             setModel(result.model)
-
-            // Lift title + full output to parent for G2G offer panel
-            if (onOutputChange) {
-                const firstLine = result.output.split('\n').find((l) => l.trim().length > 0) ?? ''
-                onOutputChange(firstLine.replace(/^#+\s*/, '').trim(), result.output)
-            }
         } catch {
             setError('Could not reach the listing optimizer right now.')
         } finally {
@@ -90,12 +81,9 @@ export function MarketplaceListingOptimizer({
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
                         <p className={sectionHeading}>AI Listing Optimizer</p>
-                        <span className="inline-flex items-center gap-1 rounded-md border border-rf-orange/30 bg-rf-orange/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-rf-orange/85">
-                            G2G-Ready
-                        </span>
                     </div>
                     <p className="text-sm text-white/78 leading-relaxed">
-                        Generate a listing-ready title, description, tags, and pricing note — structured for both RaiderForge and the upcoming G2G offer format (title, description, price, quantity, attributes).
+                        Generate a community post — compelling title, description, tags, and pricing note that helps buyers find your listing and builds trust before they reach out.
                     </p>
                 </div>
                 <button type="button" className={btnPrimary} onClick={handleGenerate} disabled={!canGenerate}>

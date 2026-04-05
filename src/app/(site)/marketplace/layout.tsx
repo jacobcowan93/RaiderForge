@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { normalizePublicAssetUrl } from '@/lib/site/publicAssetUrl'
-import { checkG2gConfigured } from './actions'
 
 export const metadata: Metadata = {
     title: 'Marketplace — Buy & Sell ARC Raiders Items',
@@ -17,12 +16,10 @@ export const metadata: Metadata = {
 }
 
 /**
- * Marketplace section layout — immersive background image with amber safety notice.
+ * Marketplace section layout — immersive background image with transparency notice.
  * The amber banner (role="note") is always server-rendered and visible above all content.
  */
 export default async function MarketplaceLayout({ children }: { children: React.ReactNode }) {
-    const g2gConnected = await checkG2gConfigured()
-
     return (
         <div className="relative min-h-[100dvh]">
             <div className="pointer-events-none fixed inset-0 z-[5]" aria-hidden>
@@ -37,7 +34,7 @@ export default async function MarketplaceLayout({ children }: { children: React.
             </div>
             <div className="pointer-events-none fixed inset-0 z-[5] bg-black/60" aria-hidden="true" />
             <div className="relative z-[6]">
-                {/* ── Safety & transparency notice — always server-rendered ── */}
+                {/* ── Community-only transparency notice — always server-rendered ── */}
                 <div className="mx-auto max-w-7xl px-4 pt-4">
                     <div
                         role="note"
@@ -45,25 +42,12 @@ export default async function MarketplaceLayout({ children }: { children: React.
                         className="relative rounded-xl border border-amber-400/70 bg-amber-950/95 backdrop-blur-md overflow-hidden"
                         style={{ boxShadow: '0 0 0 1px rgba(217,119,6,0.55), 0 0 40px -4px rgba(217,119,6,0.60), 0 8px 32px rgba(0,0,0,0.70)' }}
                     >
-                        {/* Header badge row */}
+                        {/* Header row */}
                         <div className="flex items-center gap-2 border-b border-amber-500/25 px-4 py-2 flex-wrap">
                             <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" aria-hidden="true" />
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
-                                Marketplace Beta — Powered by G2G Escrow
+                                Marketplace Beta — Community Listings Only
                             </span>
-
-                            {/* G2G Connected — only rendered when API keys are present server-side */}
-                            {g2gConnected && (
-                                <span
-                                    className="inline-flex items-center gap-1.5 rounded-md border border-emerald-400/50 bg-emerald-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-300"
-                                    style={{ boxShadow: '0 0 8px rgba(52,211,153,0.30), 0 0 20px rgba(52,211,153,0.12)' }}
-                                    title="G2G API keys loaded — integration active"
-                                >
-                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" aria-hidden="true" />
-                                    G2G Connected
-                                </span>
-                            )}
-
                             <span className="ml-auto shrink-0 rounded-md border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-300">
                                 Beta
                             </span>
@@ -78,10 +62,9 @@ export default async function MarketplaceLayout({ children }: { children: React.
 
                             {/* Body text */}
                             <span className="flex-1">
-                                Real-money transactions are handled through{' '}
-                                <strong className="text-amber-200 font-semibold">G2G&apos;s secure checkout with full escrow and buyer protection.</strong>{' '}
-                                RaiderForge does not hold, process, or touch any funds — all payments go directly through G2G.{' '}
-                                Community listings visible to all players. Not affiliated with Embark Studios.
+                                <strong className="text-amber-200 font-semibold">Real-money transactions are not yet enabled on RaiderForge.</strong>{' '}
+                                All listings are community-generated — buyers and sellers arrange deals directly. Use at your own risk.{' '}
+                                RaiderForge does not process payments, hold funds, or provide escrow. Not affiliated with Embark Studios.
                             </span>
 
                             {/* Links */}
