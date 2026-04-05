@@ -125,7 +125,7 @@ export function GlobalSearch() {
             <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="rf-focus-ring hidden sm:flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-rf-textSoft hover:border-rf-cyan/25 hover:bg-rf-cyan/[0.06] hover:text-rf-text transition-all"
+                className="rf-focus-ring hidden sm:flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-rf-textSoft hover:border-white/25 hover:bg-white/[0.06] hover:text-rf-text transition-all"
                 aria-label="Open global search (Ctrl+K)"
                 aria-haspopup="dialog"
             >
@@ -166,15 +166,15 @@ export function GlobalSearch() {
 
                     {/* Panel */}
                     <div className="relative w-full max-w-lg rounded-2xl border border-rf-border bg-rf-bgPanel shadow-2xl shadow-black/70 overflow-hidden"
-                        style={{ boxShadow: '0 0 0 1px rgba(34,211,238,0.12), 0 0 40px -8px rgba(34,211,238,0.15), 0 25px 50px -12px rgba(0,0,0,0.8)' }}
+                        style={{ boxShadow: '0 0 0 1px rgba(255,64,64,0.10), 0 0 40px -8px rgba(255,64,64,0.10), 0 25px 50px -12px rgba(0,0,0,0.8)' }}
                     >
-                        {/* Top neon stripe */}
-                        <div className="h-[1.5px] w-full bg-gradient-to-r from-transparent via-rf-cyan/50 to-transparent" aria-hidden="true" />
+                        {/* Top accent stripe */}
+                        <div className="h-[1.5px] w-full bg-gradient-to-r from-transparent via-rf-red/50 to-transparent" aria-hidden="true" />
 
                         {/* Input row */}
                         <div className="flex items-center gap-2.5 px-4 py-3 border-b border-rf-border/60">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                className="h-4 w-4 shrink-0 text-rf-cyan/60" aria-hidden="true">
+                                className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true">
                                 <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
                             </svg>
                             <input
@@ -249,18 +249,18 @@ export function GlobalSearch() {
                                                         onMouseEnter={() => setActiveIdx(idx)}
                                                         className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                                                             isActive
-                                                                ? 'bg-rf-cyan/[0.1] border-l-2 border-rf-cyan/60'
+                                                                ? 'bg-rf-red/[0.08] border-l-2 border-rf-red/50'
                                                                 : 'border-l-2 border-transparent hover:bg-white/[0.05]'
                                                         }`}
                                                     >
                                                         <div className="flex-1 min-w-0">
-                                                            <p className={`text-sm font-medium truncate ${isActive ? 'text-rf-cyan' : 'text-white'}`}>
+                                                            <p className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-white'}`}>
                                                                 {entry.label}
                                                             </p>
                                                             <p className="text-[11px] text-rf-textSoft truncate">{entry.desc}</p>
                                                         </div>
                                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
-                                                            className={`h-3.5 w-3.5 shrink-0 transition-colors ${isActive ? 'text-rf-cyan/60' : 'text-white/20'}`}
+                                                            className={`h-3.5 w-3.5 shrink-0 transition-colors ${isActive ? 'text-rf-red/60' : 'text-white/20'}`}
                                                             aria-hidden="true">
                                                             <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
                                                         </svg>

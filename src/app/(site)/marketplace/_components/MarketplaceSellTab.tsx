@@ -13,6 +13,7 @@ import { MARKETPLACE_PERSISTENCE_UNAVAILABLE } from '@/lib/marketplace/messages'
 
 import { sectionHeading } from '../_lib/marketplace-constants'
 import { Divider, ErrorMsg, Spinner, Toast } from './MarketplaceShared'
+import { MarketplaceBlueprintBulkImport } from './MarketplaceBlueprintBulkImport'
 import { MarketplaceItemPicker } from './MarketplaceItemPicker'
 import { MarketplaceListingForm } from './MarketplaceListingForm'
 import { MarketplaceListingOptimizer } from './MarketplaceListingOptimizer'
@@ -104,6 +105,9 @@ export function MarketplaceSellTab({
                     Community listings — post your item and it will appear in the Browse tab. Deals are arranged directly between players. No payment processing on RaiderForge.
                 </p>
             </div>
+
+            {/* Blueprint bulk import helper */}
+            <MarketplaceBlueprintBulkImport />
 
             <div className="space-y-1.5">
                 <label className={sectionHeading}>Item</label>
