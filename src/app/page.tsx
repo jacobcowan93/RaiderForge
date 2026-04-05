@@ -53,8 +53,8 @@ const FEATURES: FeatureCard[] = [
     {
         href: '/blueprints',
         featured: true,
-        accentClass: 'border-sky-500/35 from-sky-950/30',
-        hoverBorderClass: 'hover:border-sky-400/70',
+        accentClass: 'border-sky-500/55 from-sky-950/30',
+        hoverBorderClass: 'hover:border-sky-400/85',
         iconBgClass: 'bg-sky-500/15 border-sky-500/30',
         iconTextClass: 'text-sky-400',
         openBtnClass: 'bg-sky-600 group-hover:bg-sky-500 border-sky-400/30 text-white',
@@ -74,8 +74,8 @@ const FEATURES: FeatureCard[] = [
     {
         href: '/marketplace',
         featured: true,
-        accentClass: 'border-orange-500/35 from-orange-950/30',
-        hoverBorderClass: 'hover:border-orange-400/70',
+        accentClass: 'border-orange-500/55 from-orange-950/30',
+        hoverBorderClass: 'hover:border-orange-400/85',
         iconBgClass: 'bg-orange-500/15 border-orange-500/30',
         iconTextClass: 'text-orange-400',
         openBtnClass: 'bg-orange-600 group-hover:bg-orange-500 border-orange-400/30 text-white',
@@ -96,8 +96,8 @@ const FEATURES: FeatureCard[] = [
     // ── STANDARD ─────────────────────────────────────────────────────────────
     {
         href: '/skill-trees',
-        accentClass: 'border-red-500/30 from-red-950/30',
-        hoverBorderClass: 'hover:border-red-400/70',
+        accentClass: 'border-red-500/55 from-red-950/30',
+        hoverBorderClass: 'hover:border-red-400/85',
         iconBgClass: 'bg-red-500/15 border-red-500/30',
         iconTextClass: 'text-red-400',
         openBtnClass: 'bg-red-600 group-hover:bg-red-500 border-red-400/30 text-white',
@@ -115,8 +115,8 @@ const FEATURES: FeatureCard[] = [
     },
     {
         href: '/loadouts',
-        accentClass: 'border-yellow-500/30 from-yellow-950/25',
-        hoverBorderClass: 'hover:border-yellow-400/65',
+        accentClass: 'border-yellow-500/55 from-yellow-950/25',
+        hoverBorderClass: 'hover:border-yellow-400/80',
         iconBgClass: 'bg-yellow-500/15 border-yellow-500/30',
         iconTextClass: 'text-yellow-400',
         openBtnClass: 'bg-yellow-600 group-hover:bg-yellow-500 border-yellow-400/30 text-white',
@@ -134,8 +134,8 @@ const FEATURES: FeatureCard[] = [
     },
     {
         href: '/trials',
-        accentClass: 'border-yellow-600/25 from-yellow-950/20',
-        hoverBorderClass: 'hover:border-yellow-500/60',
+        accentClass: 'border-yellow-600/50 from-yellow-950/20',
+        hoverBorderClass: 'hover:border-yellow-500/75',
         iconBgClass: 'bg-yellow-600/12 border-yellow-600/25',
         iconTextClass: 'text-yellow-500',
         openBtnClass: 'bg-yellow-700 group-hover:bg-yellow-600 border-yellow-500/30 text-white',

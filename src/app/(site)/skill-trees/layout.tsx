@@ -44,6 +44,10 @@ export default function SkillTreesLayout({ children }: { children: React.ReactNo
                 />
             </div>
 
+            {/* Red category accent — Skill Trees identity */}
+            <div className="pointer-events-none fixed inset-x-0 top-0 z-[6] h-[3px] bg-gradient-to-r from-transparent via-red-500/70 to-transparent" aria-hidden />
+            <div className="pointer-events-none fixed inset-x-0 top-0 z-[6] h-40 bg-[radial-gradient(ellipse_60%_100%_at_50%_0%,rgba(255,64,64,0.07)_0%,transparent_100%)]" aria-hidden />
+
             {/* Page content above the background */}
             <div className="relative z-10">
                 {children}

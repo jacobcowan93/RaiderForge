@@ -55,7 +55,7 @@ export function MarketplaceListingCard({
 
     return (
         <div
-            className={`group relative rf-card rounded-xl border border-white/[0.08] overflow-hidden flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:border-white/[0.14] ${rarityGlow(listing.itemRarity)}`}
+            className={`group relative rf-card rounded-xl border border-orange-500/[0.28] overflow-hidden flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-400/[0.55] ${rarityGlow(listing.itemRarity)}`}
         >
             {/* Rarity accent stripe */}
             <div

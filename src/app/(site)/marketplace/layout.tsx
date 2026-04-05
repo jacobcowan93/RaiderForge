@@ -22,6 +22,8 @@ export const metadata: Metadata = {
 export default async function MarketplaceLayout({ children }: { children: React.ReactNode }) {
     return (
         <div className="relative min-h-[100dvh]">
+            {/* Orange category accent — Marketplace identity */}
+            <div className="pointer-events-none fixed inset-x-0 top-0 z-[7] h-[3px] bg-gradient-to-r from-transparent via-orange-400/75 to-transparent" aria-hidden />
             <div className="pointer-events-none fixed inset-0 z-[5]" aria-hidden>
                 <Image
                     src={normalizePublicAssetUrl('/images/ARC_Marketplace.jpg')}
