@@ -94,13 +94,6 @@ export type MfQuest = {
   [key: string]: unknown
 }
 
-export type MfTrader = {
-  id?: string
-  name?: string
-  inventory?: MfItem[]
-  [key: string]: unknown
-}
-
 export type MfMapData = {
   [key: string]: unknown
 }
@@ -268,13 +261,3 @@ export async function fetchMfQuests(): Promise<MfQuestRaw[]> {
   }
 }
 
-/** Fetch trader inventories. TTL: 15 min. */
-export async function fetchMfTraders(): Promise<MfTrader[]> {
-  try {
-    const data = await mfFetch<unknown>(`${ARC_BASE}/traders`, TTL_SEMI_STATIC)
-    return Array.isArray(data) ? (data as MfTrader[]) : []
-  } catch (err) {
-    console.error('[MetaForge] Failed to fetch traders:', err)
-    return []
-  }
-}

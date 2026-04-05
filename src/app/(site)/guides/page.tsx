@@ -347,9 +347,6 @@ export default async function GuidesPage() {
                                     snapshot.quests.map((q) => (
                                         <li key={q.id} className="border-b border-white/[0.04] pb-3 last:border-0">
                                             <span className="font-semibold text-white/80">{q.name}</span>
-                                            {q.traderName ? (
-                                                <span className="text-white/35 text-xs ml-2">· {q.traderName}</span>
-                                            ) : null}
                                             {q.objectivesPreview && q.objectivesPreview.length > 0 ? (
                                                 <ul className="mt-1.5 text-xs text-white/40 list-disc list-inside space-y-0.5">
                                                     {q.objectivesPreview.map((o, i) => (
@@ -361,10 +358,6 @@ export default async function GuidesPage() {
                                     ))
                                 )}
                             </ul>
-                            <p className="text-xs text-white/35 mt-4">
-                                Traders in rotation (count):{' '}
-                                <span className="tabular-nums text-white/50">{snapshot.traderCount}</span>
-                            </p>
                         </div>
                     </div>
                 )}

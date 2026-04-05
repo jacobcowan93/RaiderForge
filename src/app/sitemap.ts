@@ -15,7 +15,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
         { url: `${origin}/trials`,              lastModified: now, changeFrequency: 'weekly',  priority: 0.8 },
         { url: `${origin}/guides`,              lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
         { url: `${origin}/quests`,              lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-        { url: `${origin}/traders`,             lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
         { url: `${origin}/loadouts`,            lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
         { url: `${origin}/sync`,                lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
         { url: `${origin}/profile`,             lastModified: now, changeFrequency: 'monthly', priority: 0.4 },

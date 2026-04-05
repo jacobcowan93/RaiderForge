@@ -12,7 +12,6 @@ const toolLinks = [
     { label: 'Marketplace',        href: '/marketplace' },
     { label: 'Weekly Trials',      href: '/trials'      },
     { label: 'Quests',             href: '/quests'      },
-    { label: 'Traders',            href: '/traders'     },
 ]
 
 /* ── Icon SVGs ─────────────────────────────────────────────────────────────── */

@@ -50,7 +50,6 @@ const navLinks: NavLinkItem[] = [
     { href: '/blueprints', label: 'Blueprints' },
     { href: '/skill-trees', label: 'Skill Tree', badge: 'beta' },
     { href: '/quests', label: 'Quests' },
-    { href: '/traders', label: 'Traders' },
     { href: '/trials', label: 'Trials', badge: 'live' },
     { href: '/guides', label: 'Guides' },
 ]

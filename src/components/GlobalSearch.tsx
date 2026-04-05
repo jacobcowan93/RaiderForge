@@ -14,7 +14,6 @@ const SEARCH_INDEX: SearchEntry[] = [
     { label: 'Weekly Trials',      desc: "This week's rotations, tips & reset countdown", href: '/trials',      keywords: ['trial', 'weekly', 'rotation', 'reset', 'score', 'tips', 'monday'] },
     { label: 'Strategy Guides',    desc: 'Tips, tutorials, and tactical briefings',       href: '/guides',      keywords: ['guide', 'tip', 'tutorial', 'beginner', 'strategy', 'briefing', 'learn', 'how'] },
     { label: 'Quest Browser',      desc: 'All quests filterable by trader',               href: '/quests',      keywords: ['quest', 'mission', 'objective', 'reward', 'celeste', 'apollo', 'lance', 'shani', 'tian wen', 'task'] },
-    { label: 'Traders',            desc: 'Vendor inventories for all five traders',       href: '/traders',     keywords: ['trader', 'vendor', 'shop', 'inventory', 'buy from', 'npc', 'stock'] },
     { label: 'Profile',            desc: 'Your raider profile and progress',              href: '/profile',     keywords: ['profile', 'account', 'progress', 'stats', 'me'] },
     { label: 'Profile Sync',       desc: 'Import your in-game profile data',              href: '/sync',        keywords: ['sync', 'import', 'profile', 'json', 'data', 'transfer'] },
     { label: 'Privacy Policy',     desc: 'How we handle your data',                       href: '/privacy',     keywords: ['privacy', 'data', 'gdpr', 'legal', 'cookies'] },
